@@ -33,6 +33,8 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - When testing normalized Japanese text, compare `unicodeScalars`, not `==`: Swift's `==` treats `フ` + `゙` and `ブ` as equal, but `NSRegularExpression` does not.
 - Storage: never edit `KakeiboSchemaV1` models once shipped. Copy them into `KakeiboSchemaV2`, add a stage to `KakeiboMigrationPlan`, and repoint the `Expense`/`LineItem` typealiases. Enums are stored as `…Raw` strings; use the typed properties (`expense.payment`) in code and the raw fields only in `#Predicate`. Read items with `orderedItems`, since SwiftData does not keep relationship order. Use `ExpenseRepository` (main actor) rather than inserting models directly; tests use `KakeiboStore.makeContainer(inMemory: true)`.
 - Photos: save and read them only through `PhotoStore` (`<UUID>.jpg` in Application Support/Receipts; GPS is stripped on save). Create `ExpenseRepository` with the photo store so deleting an expense deletes its photo, and call `removeOrphanPhotos()` at launch. Do not set file protection or backup-exclusion options on photo files.
+- OCR results are `TextObservation` (Core) with a top-left, 0–1 `BoundingBox`. In files that import Vision, write `OCRTextObservation`: Vision has its own `TextObservation`, and `KakeiboCore.TextObservation` does not compile because the `KakeiboCore` enum hides the module name.
+- Do not name a package resource folder `Resources` in a test target that uses `.copy`: iOS code signing rejects the bundle ("bundle format unrecognized"). Use a descriptive name such as `SampleImages` or `Fixtures`.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

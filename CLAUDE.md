@@ -25,6 +25,10 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - `Kakeibo.xcodeproj` uses folder-synced groups: files added under `App/` or `UITests/` are picked up automatically, so do not edit `project.pbxproj` just to add a file. New packages are added as local package references.
 - Money is `Int` yen everywhere. Dates for grouping use `dayKey` (`yyyy-MM-dd`, Asia/Tokyo).
 - Every user-facing string goes in `Localizable.xcstrings` with `ja` and `en`.
+  Exception: `ExpenseCategory` names (`japaneseName`, `englishName`) live in Core code, because screens show both names together and CSV exports need fixed names. `swift test` cannot compile a String Catalog inside a package.
+- The category enum is `ExpenseCategory`, not `Category`: Objective-C's `Category` type makes the short name ambiguous wherever SwiftUI or UIKit is imported.
+- Raw values of `ExpenseCategory`, `PaymentMethod`, `Confidence` and `ReceiptField` are stored on disk. Never rename them.
+- Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands
 

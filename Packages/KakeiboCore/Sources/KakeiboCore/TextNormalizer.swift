@@ -26,7 +26,9 @@ public enum TextNormalizer {
 
     /// Normalizes one line. Returns an empty string for a blank line.
     public static func normalizeLine(_ line: String) -> String {
-        var s = line.precomposedStringWithCompatibilityMapping
+        // NFKC, then NFC: Foundation's NFKC leaves half-width ﾌﾞ as フ + U+3099 instead of ブ.
+        // Swift's == hides the difference, but regular expressions do not.
+        var s = line.precomposedStringWithCompatibilityMapping.precomposedStringWithCanonicalMapping
         s = s.replacingOccurrences(of: "\\", with: "¥")
             .replacingOccurrences(of: "￥", with: "¥")
         s = replace(whitespaceRun, in: s, with: " ")

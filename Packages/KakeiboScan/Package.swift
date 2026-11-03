@@ -13,6 +13,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "KakeiboScan", dependencies: ["KakeiboCore"]),
-        .testTarget(name: "KakeiboScanTests", dependencies: ["KakeiboScan"]),
+        .testTarget(name: "KakeiboScanTests", dependencies: ["KakeiboScan"], resources: [.copy("SampleImages")]),
     ]
 )

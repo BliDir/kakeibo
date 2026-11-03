@@ -1,0 +1,27 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "app.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kakeibo" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "家計簿" } }
+      }
+    },
+    "ledger.empty.message" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan a receipt to add your first expense." } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "レシートをスキャンして最初の支出を追加しましょう。" } }
+      }
+    },
+    "ledger.empty.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No expenses yet" } },
+        "ja" : { "stringUnit" : { "state" : "translated", "value" : "まだ支出がありません" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

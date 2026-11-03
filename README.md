@@ -39,7 +39,7 @@ Packages/
 UITests/
 ```
 
-The project and packages are created in Linear issue DAI-425 ([T-01]).
+Open `Kakeibo.xcodeproj` in Xcode 26 or later. See `CLAUDE.md` for build and test commands.
 
 ## Planning
 

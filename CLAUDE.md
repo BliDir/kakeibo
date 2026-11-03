@@ -32,16 +32,26 @@ Fast core tests (no simulator):
 
 ```
 swift test --package-path Packages/KakeiboCore
+swift test --package-path Packages/KakeiboScan
 swift test --package-path Packages/KakeiboStore
 ```
 
-Full app build and tests:
+Full app build and tests (runs the `Kakeibo` test plan: all package tests plus UI tests, on the simulator):
 
 ```
 xcodebuild test -scheme Kakeibo -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 If that simulator name is unavailable, list devices with `xcrun simctl list devices available` and pick an iOS 26 iPhone.
+
+## CI
+
+Xcode Cloud runs two workflows (details and owner setup in `docs/ci.md`):
+
+- **Pull Request** (PRs into `main`): `swift test` for all three packages via `ci_scripts/ci_pre_xcodebuild.sh`, then the `Kakeibo` test plan on an iOS 26 simulator.
+- **Main to TestFlight** (push to `main`): the same tests, then archive and upload to TestFlight internal testing.
+
+Once the owner has connected Xcode Cloud, a PR is ready to merge only when the Xcode Cloud check is green. To run the same checks locally, run `ci_scripts/test_packages.sh` and the `xcodebuild test` command above. When you add a package test target, add it to `Kakeibo.xctestplan` and to the scheme's build entries, or CI will skip it silently.
 
 ## Parser fixtures
 

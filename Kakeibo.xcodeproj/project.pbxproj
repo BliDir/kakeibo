@@ -25,6 +25,9 @@
 /* Begin PBXFileReference section */
 		0A0000000000000000000006 /* Kakeibo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kakeibo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0A0000000000000000000007 /* KakeiboUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KakeiboUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0000000000000000000060 /* KakeiboCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = KakeiboCore; sourceTree = "<group>"; };
+		0A0000000000000000000061 /* KakeiboScan */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = KakeiboScan; sourceTree = "<group>"; };
+		0A0000000000000000000062 /* KakeiboStore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = KakeiboStore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -66,6 +69,7 @@
 			children = (
 				0A0000000000000000000004 /* App */,
 				0A0000000000000000000005 /* UITests */,
+				0A0000000000000000000063 /* Packages */,
 				0A0000000000000000000003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -77,6 +81,16 @@
 				0A0000000000000000000007 /* KakeiboUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		0A0000000000000000000063 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000060 /* KakeiboCore */,
+				0A0000000000000000000061 /* KakeiboScan */,
+				0A0000000000000000000062 /* KakeiboStore */,
+			);
+			path = Packages;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -277,6 +291,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kakeibo Scanner";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -309,6 +324,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Kakeibo Scanner";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

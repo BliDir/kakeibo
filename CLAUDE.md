@@ -22,6 +22,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - `Packages/KakeiboScan`: Vision OCR, VisionKit wrappers, Foundation Models refiner, `ExtractionPipeline`. Depends on Core.
 - `Packages/KakeiboStore`: SwiftData models (`VersionedSchema`), `ExpenseRepository`, `PhotoStore`. Depends on Core.
 - `App/`: SwiftUI screens and wiring only. Business logic belongs in a package.
+- `Kakeibo.xcodeproj` uses folder-synced groups: files added under `App/` or `UITests/` are picked up automatically, so do not edit `project.pbxproj` just to add a file. New packages are added as local package references.
 - Money is `Int` yen everywhere. Dates for grouping use `dayKey` (`yyyy-MM-dd`, Asia/Tokyo).
 - Every user-facing string goes in `Localizable.xcstrings` with `ja` and `en`.
 

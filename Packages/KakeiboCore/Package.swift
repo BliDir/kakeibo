@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "KakeiboCore", targets: ["KakeiboCore"]),
     ],
     targets: [
-        .target(name: "KakeiboCore"),
+        .target(name: "KakeiboCore", resources: [.process("Resources")]),
         .testTarget(
             name: "KakeiboCoreTests",
             dependencies: ["KakeiboCore"],

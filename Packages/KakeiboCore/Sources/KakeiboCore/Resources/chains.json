@@ -1,0 +1,727 @@
+{
+  "version": 1,
+  "chains": [
+    {
+      "name": "まいばすけっと",
+      "category": "groceries",
+      "match": [
+        "まいばすけっと"
+      ],
+      "nameEn": "My Basket"
+    },
+    {
+      "name": "イオン",
+      "category": "groceries",
+      "match": [
+        "イオン",
+        "AEON"
+      ],
+      "nameEn": "AEON"
+    },
+    {
+      "name": "マックスバリュ",
+      "category": "groceries",
+      "match": [
+        "マックスバリュ",
+        "MAXVALU"
+      ],
+      "nameEn": "MaxValu"
+    },
+    {
+      "name": "西友",
+      "category": "groceries",
+      "match": [
+        "西友",
+        "SEIYU"
+      ],
+      "nameEn": "Seiyu"
+    },
+    {
+      "name": "ライフ",
+      "category": "groceries",
+      "match": [
+        "ライフ"
+      ],
+      "nameEn": "LIFE"
+    },
+    {
+      "name": "オーケー",
+      "category": "groceries",
+      "match": [
+        "オーケー",
+        "OKストア"
+      ],
+      "nameEn": "OK Store"
+    },
+    {
+      "name": "サミット",
+      "category": "groceries",
+      "match": [
+        "サミット"
+      ],
+      "nameEn": "Summit"
+    },
+    {
+      "name": "セブン-イレブン",
+      "category": "groceries",
+      "match": [
+        "セブン-イレブン",
+        "セブンイレブン",
+        "7-ELEVEN",
+        "SEVEN-ELEVEN"
+      ],
+      "nameEn": "7-Eleven"
+    },
+    {
+      "name": "ファミリーマート",
+      "category": "groceries",
+      "match": [
+        "ファミリーマート",
+        "FAMILYMART",
+        "ファミマ"
+      ],
+      "nameEn": "FamilyMart"
+    },
+    {
+      "name": "ローソン",
+      "category": "groceries",
+      "match": [
+        "ローソン",
+        "LAWSON"
+      ],
+      "nameEn": "Lawson"
+    },
+    {
+      "name": "ミニストップ",
+      "category": "groceries",
+      "match": [
+        "ミニストップ",
+        "MINISTOP"
+      ],
+      "nameEn": "Ministop"
+    },
+    {
+      "name": "デイリーヤマザキ",
+      "category": "groceries",
+      "match": [
+        "デイリーヤマザキ"
+      ],
+      "nameEn": "Daily Yamazaki"
+    },
+    {
+      "name": "セイコーマート",
+      "category": "groceries",
+      "match": [
+        "セイコーマート"
+      ],
+      "nameEn": "Seicomart"
+    },
+    {
+      "name": "イトーヨーカドー",
+      "category": "groceries",
+      "match": [
+        "イトーヨーカドー"
+      ],
+      "nameEn": "Ito-Yokado"
+    },
+    {
+      "name": "マルエツ",
+      "category": "groceries",
+      "match": [
+        "マルエツ"
+      ],
+      "nameEn": "Maruetsu"
+    },
+    {
+      "name": "成城石井",
+      "category": "groceries",
+      "match": [
+        "成城石井"
+      ],
+      "nameEn": "Seijo Ishii"
+    },
+    {
+      "name": "業務スーパー",
+      "category": "groceries",
+      "match": [
+        "業務スーパー"
+      ],
+      "nameEn": "Gyomu Super"
+    },
+    {
+      "name": "ヤオコー",
+      "category": "groceries",
+      "match": [
+        "ヤオコー"
+      ],
+      "nameEn": "Yaoko"
+    },
+    {
+      "name": "いなげや",
+      "category": "groceries",
+      "match": [
+        "いなげや"
+      ],
+      "nameEn": "Inageya"
+    },
+    {
+      "name": "東急ストア",
+      "category": "groceries",
+      "match": [
+        "東急ストア"
+      ],
+      "nameEn": "Tokyu Store"
+    },
+    {
+      "name": "肉のハナマサ",
+      "category": "groceries",
+      "match": [
+        "肉のハナマサ",
+        "ハナマサ"
+      ],
+      "nameEn": "Niku no Hanamasa"
+    },
+    {
+      "name": "ベルク",
+      "category": "groceries",
+      "match": [
+        "ベルク"
+      ],
+      "nameEn": "Belc"
+    },
+    {
+      "name": "カルディ",
+      "category": "groceries",
+      "match": [
+        "カルディ",
+        "KALDI"
+      ],
+      "nameEn": "KALDI"
+    },
+    {
+      "name": "スターバックス",
+      "category": "dining",
+      "match": [
+        "スターバックス",
+        "STARBUCKS"
+      ],
+      "nameEn": "Starbucks"
+    },
+    {
+      "name": "ドトール",
+      "category": "dining",
+      "match": [
+        "ドトール",
+        "DOUTOR"
+      ],
+      "nameEn": "Doutor"
+    },
+    {
+      "name": "マクドナルド",
+      "category": "dining",
+      "match": [
+        "マクドナルド",
+        "MCDONALD"
+      ],
+      "nameEn": "McDonald's"
+    },
+    {
+      "name": "吉野家",
+      "category": "dining",
+      "match": [
+        "吉野家"
+      ],
+      "nameEn": "Yoshinoya"
+    },
+    {
+      "name": "すき家",
+      "category": "dining",
+      "match": [
+        "すき家"
+      ],
+      "nameEn": "Sukiya"
+    },
+    {
+      "name": "松屋",
+      "category": "dining",
+      "match": [
+        "松屋"
+      ],
+      "nameEn": "Matsuya"
+    },
+    {
+      "name": "ガスト",
+      "category": "dining",
+      "match": [
+        "ガスト"
+      ],
+      "nameEn": "Gusto"
+    },
+    {
+      "name": "サイゼリヤ",
+      "category": "dining",
+      "match": [
+        "サイゼリヤ"
+      ],
+      "nameEn": "Saizeriya"
+    },
+    {
+      "name": "タリーズ",
+      "category": "dining",
+      "match": [
+        "タリーズ",
+        "TULLY'S"
+      ],
+      "nameEn": "Tully's"
+    },
+    {
+      "name": "コメダ珈琲店",
+      "category": "dining",
+      "match": [
+        "コメダ珈琲店",
+        "コメダ"
+      ],
+      "nameEn": "Komeda's Coffee"
+    },
+    {
+      "name": "モスバーガー",
+      "category": "dining",
+      "match": [
+        "モスバーガー"
+      ],
+      "nameEn": "MOS Burger"
+    },
+    {
+      "name": "ケンタッキーフライドチキン",
+      "category": "dining",
+      "match": [
+        "ケンタッキーフライドチキン",
+        "ケンタッキー"
+      ],
+      "nameEn": "KFC"
+    },
+    {
+      "name": "丸亀製麺",
+      "category": "dining",
+      "match": [
+        "丸亀製麺"
+      ],
+      "nameEn": "Marugame Seimen"
+    },
+    {
+      "name": "日高屋",
+      "category": "dining",
+      "match": [
+        "日高屋"
+      ],
+      "nameEn": "Hidakaya"
+    },
+    {
+      "name": "CoCo壱番屋",
+      "category": "dining",
+      "match": [
+        "CoCo壱番屋",
+        "ココイチ"
+      ],
+      "nameEn": "CoCo Ichibanya"
+    },
+    {
+      "name": "スシロー",
+      "category": "dining",
+      "match": [
+        "スシロー"
+      ],
+      "nameEn": "Sushiro"
+    },
+    {
+      "name": "くら寿司",
+      "category": "dining",
+      "match": [
+        "くら寿司"
+      ],
+      "nameEn": "Kura Sushi"
+    },
+    {
+      "name": "はま寿司",
+      "category": "dining",
+      "match": [
+        "はま寿司"
+      ],
+      "nameEn": "Hama Sushi"
+    },
+    {
+      "name": "なか卯",
+      "category": "dining",
+      "match": [
+        "なか卯"
+      ],
+      "nameEn": "Nakau"
+    },
+    {
+      "name": "大戸屋",
+      "category": "dining",
+      "match": [
+        "大戸屋"
+      ],
+      "nameEn": "Ootoya"
+    },
+    {
+      "name": "ジョナサン",
+      "category": "dining",
+      "match": [
+        "ジョナサン"
+      ],
+      "nameEn": "Jonathan's"
+    },
+    {
+      "name": "バーミヤン",
+      "category": "dining",
+      "match": [
+        "バーミヤン"
+      ],
+      "nameEn": "Bamiyan"
+    },
+    {
+      "name": "デニーズ",
+      "category": "dining",
+      "match": [
+        "デニーズ",
+        "DENNY'S"
+      ],
+      "nameEn": "Denny's"
+    },
+    {
+      "name": "ミスタードーナツ",
+      "category": "dining",
+      "match": [
+        "ミスタードーナツ"
+      ],
+      "nameEn": "Mister Donut"
+    },
+    {
+      "name": "餃子の王将",
+      "category": "dining",
+      "match": [
+        "餃子の王将"
+      ],
+      "nameEn": "Gyoza no Ohsho"
+    },
+    {
+      "name": "ENEOS",
+      "category": "transport",
+      "match": [
+        "ENEOS"
+      ],
+      "nameEn": "ENEOS"
+    },
+    {
+      "name": "出光",
+      "category": "transport",
+      "match": [
+        "出光",
+        "IDEMITSU"
+      ],
+      "nameEn": "Idemitsu"
+    },
+    {
+      "name": "コスモ石油",
+      "category": "transport",
+      "match": [
+        "コスモ石油"
+      ],
+      "nameEn": "Cosmo Oil"
+    },
+    {
+      "name": "東京メトロ",
+      "category": "transport",
+      "match": [
+        "東京メトロ"
+      ],
+      "nameEn": "Tokyo Metro"
+    },
+    {
+      "name": "タイムズ",
+      "category": "transport",
+      "match": [
+        "タイムズ"
+      ],
+      "nameEn": "Times Parking"
+    },
+    {
+      "name": "マツモトキヨシ",
+      "category": "household",
+      "match": [
+        "マツモトキヨシ"
+      ],
+      "nameEn": "Matsumoto Kiyoshi"
+    },
+    {
+      "name": "ウエルシア",
+      "category": "household",
+      "match": [
+        "ウエルシア"
+      ],
+      "nameEn": "Welcia"
+    },
+    {
+      "name": "ダイソー",
+      "category": "household",
+      "match": [
+        "ダイソー",
+        "DAISO"
+      ],
+      "nameEn": "Daiso"
+    },
+    {
+      "name": "ニトリ",
+      "category": "household",
+      "match": [
+        "ニトリ"
+      ],
+      "nameEn": "Nitori"
+    },
+    {
+      "name": "無印良品",
+      "category": "household",
+      "match": [
+        "無印良品",
+        "MUJI"
+      ],
+      "nameEn": "MUJI"
+    },
+    {
+      "name": "スギ薬局",
+      "category": "household",
+      "match": [
+        "スギ薬局"
+      ],
+      "nameEn": "Sugi Pharmacy"
+    },
+    {
+      "name": "ツルハドラッグ",
+      "category": "household",
+      "match": [
+        "ツルハドラッグ",
+        "ツルハ"
+      ],
+      "nameEn": "Tsuruha Drug"
+    },
+    {
+      "name": "ココカラファイン",
+      "category": "household",
+      "match": [
+        "ココカラファイン"
+      ],
+      "nameEn": "Cocokara Fine"
+    },
+    {
+      "name": "サンドラッグ",
+      "category": "household",
+      "match": [
+        "サンドラッグ"
+      ],
+      "nameEn": "Sundrug"
+    },
+    {
+      "name": "セリア",
+      "category": "household",
+      "match": [
+        "セリア"
+      ],
+      "nameEn": "Seria"
+    },
+    {
+      "name": "キャンドゥ",
+      "category": "household",
+      "match": [
+        "キャンドゥ"
+      ],
+      "nameEn": "Can Do"
+    },
+    {
+      "name": "カインズ",
+      "category": "household",
+      "match": [
+        "カインズ"
+      ],
+      "nameEn": "Cainz"
+    },
+    {
+      "name": "コーナン",
+      "category": "household",
+      "match": [
+        "コーナン"
+      ],
+      "nameEn": "Kohnan"
+    },
+    {
+      "name": "西松屋",
+      "category": "kids",
+      "match": [
+        "西松屋"
+      ],
+      "nameEn": "Nishimatsuya"
+    },
+    {
+      "name": "アカチャンホンポ",
+      "category": "kids",
+      "match": [
+        "アカチャンホンポ"
+      ],
+      "nameEn": "Akachan Honpo"
+    },
+    {
+      "name": "トイザらス",
+      "category": "kids",
+      "match": [
+        "トイザらス",
+        "トイザラス"
+      ],
+      "nameEn": "Toys\"R\"Us"
+    },
+    {
+      "name": "ベビーザらス",
+      "category": "kids",
+      "match": [
+        "ベビーザらス",
+        "ベビーザラス"
+      ],
+      "nameEn": "Babies\"R\"Us"
+    },
+    {
+      "name": "ユニクロ",
+      "category": "shopping",
+      "match": [
+        "ユニクロ",
+        "UNIQLO"
+      ],
+      "nameEn": "UNIQLO"
+    },
+    {
+      "name": "ビックカメラ",
+      "category": "shopping",
+      "match": [
+        "ビックカメラ",
+        "BIC CAMERA"
+      ],
+      "nameEn": "Bic Camera"
+    },
+    {
+      "name": "ヨドバシカメラ",
+      "category": "shopping",
+      "match": [
+        "ヨドバシカメラ",
+        "ヨドバシ"
+      ],
+      "nameEn": "Yodobashi Camera"
+    },
+    {
+      "name": "ドン・キホーテ",
+      "category": "shopping",
+      "match": [
+        "ドン・キホーテ",
+        "ドンキホーテ"
+      ],
+      "nameEn": "Don Quijote"
+    },
+    {
+      "name": "ヤマダ電機",
+      "category": "shopping",
+      "match": [
+        "ヤマダ電機",
+        "ヤマダデンキ"
+      ],
+      "nameEn": "Yamada Denki"
+    },
+    {
+      "name": "しまむら",
+      "category": "shopping",
+      "match": [
+        "しまむら"
+      ],
+      "nameEn": "Shimamura"
+    },
+    {
+      "name": "ロフト",
+      "category": "shopping",
+      "match": [
+        "ロフト"
+      ],
+      "nameEn": "LOFT"
+    },
+    {
+      "name": "東京電力",
+      "category": "utilities",
+      "match": [
+        "東京電力"
+      ],
+      "nameEn": "TEPCO"
+    },
+    {
+      "name": "東京ガス",
+      "category": "utilities",
+      "match": [
+        "東京ガス"
+      ],
+      "nameEn": "Tokyo Gas"
+    },
+    {
+      "name": "ドコモ",
+      "category": "utilities",
+      "match": [
+        "ドコモ",
+        "DOCOMO"
+      ],
+      "nameEn": "docomo"
+    },
+    {
+      "name": "ソフトバンク",
+      "category": "utilities",
+      "match": [
+        "ソフトバンク",
+        "SOFTBANK"
+      ],
+      "nameEn": "SoftBank"
+    },
+    {
+      "category": "transport",
+      "match": [
+        "JR"
+      ],
+      "generic": true
+    },
+    {
+      "category": "transport",
+      "match": [
+        "タクシー",
+        "TAXI",
+        "日本交通"
+      ],
+      "generic": true
+    },
+    {
+      "category": "health",
+      "match": [
+        "調剤薬局"
+      ],
+      "generic": true
+    },
+    {
+      "category": "health",
+      "match": [
+        "クリニック",
+        "CLINIC"
+      ],
+      "generic": true
+    },
+    {
+      "category": "health",
+      "match": [
+        "病院",
+        "医院",
+        "歯科"
+      ],
+      "generic": true
+    }
+  ]
+}

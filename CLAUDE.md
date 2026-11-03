@@ -29,6 +29,8 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - The category enum is `ExpenseCategory`, not `Category`: Objective-C's `Category` type makes the short name ambiguous wherever SwiftUI or UIKit is imported.
 - Raw values of `ExpenseCategory`, `PaymentMethod`, `Confidence` and `ReceiptField` are stored on disk. Never rename them.
 - Field parsers take lines that have already been through `TextNormalizer`. Do not repeat full-width, ¥ or spacing clean-up in a parser; add the rule to `TextNormalizer` with a test.
+- Store chains live in `Packages/KakeiboCore/Sources/KakeiboCore/Resources/chains.json`. To add one, append `{"name", "nameEn", "category", "match": [...]}` (`name` must also be in `match`; add OCR variants such as no-hyphen or Latin spellings). Use `"generic": true` with no `name` for words that only set a category (タクシー, クリニック). Add a test in `StoreClassifierTests`.
+- When testing normalized Japanese text, compare `unicodeScalars`, not `==`: Swift's `==` treats `フ` + `゙` and `ブ` as equal, but `NSRegularExpression` does not.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

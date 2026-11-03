@@ -19,6 +19,12 @@ import KakeiboCore
         #expect(n(input) == expected)
     }
 
+    /// Compares code points, because Swift's == treats フ + ゙ and ブ as equal.
+    @Test(arguments: [("ﾎﾟｲﾝﾄ", "ポイント"), ("ｾﾌﾞﾝ", "セブン"), ("ｶﾞｽ", "ガス"), ("ﾊﾟﾝ", "パン")])
+    func composesHalfWidthVoicedMarks(input: String, expected: String) {
+        #expect(Array(n(input).unicodeScalars) == Array(expected.unicodeScalars))
+    }
+
     // MARK: Yen sign
 
     @Test(arguments: [

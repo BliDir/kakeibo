@@ -1,0 +1,50 @@
+{
+  "configurations" : [
+    {
+      "id" : "6C1D2B7E-4F3A-4E8B-9A51-2D7C0B9E1A01",
+      "name" : "Default",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Kakeibo.xcodeproj",
+      "identifier" : "0A0000000000000000000010",
+      "name" : "Kakeibo"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Packages\/KakeiboCore",
+        "identifier" : "KakeiboCoreTests",
+        "name" : "KakeiboCoreTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages\/KakeiboScan",
+        "identifier" : "KakeiboScanTests",
+        "name" : "KakeiboScanTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:Packages\/KakeiboStore",
+        "identifier" : "KakeiboStoreTests",
+        "name" : "KakeiboStoreTests"
+      }
+    },
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:Kakeibo.xcodeproj",
+        "identifier" : "0A0000000000000000000011",
+        "name" : "KakeiboUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

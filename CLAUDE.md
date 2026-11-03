@@ -67,7 +67,33 @@ Receipt fixtures live in `Packages/KakeiboCore/Tests/Fixtures/receipts/`:
 - `<name>.txt`: OCR text, one line per receipt row
 - `<name>.expected.json`: expected fields; fields left out are not scored
 
-The accuracy test prints per-field accuracy and fails if total-amount accuracy drops below 90%. Never lower the threshold to make a change pass; fix the parser or ask. Remove personal details (card digits, member numbers, names) from fixtures before committing.
+The accuracy test (`ReceiptAccuracyTests`) prints per-field accuracy and fails if total-amount accuracy drops below 90% (`minimumTotalAccuracy`). Never lower the threshold to make a change pass; fix the parser or ask. Remove personal details (card digits, member numbers, names) from fixtures before committing.
+
+### Adding a fixture
+
+1. Name it `<source>-<store or type>-<detail>`, e.g. `real-lawson-suica`. `hw-` marks hand-written fixtures; real receipts from T-16 use `real-`.
+2. Save the OCR text as `<name>.txt`, one receipt row per line, exactly as OCR produced it. Do not clean it up: the normalizer is part of what is tested.
+3. Write `<name>.expected.json` with what a careful person would enter:
+
+   ```json
+   {
+     "storeName": "ローソン",
+     "dayKey": "2026-11-03",
+     "time": "07:52",
+     "totalYen": 378,
+     "tax10Yen": null,
+     "tax8Yen": 28,
+     "payment": "icCard",
+     "category": "groceries",
+     "invoiceNumber": "T1234567890123"
+   }
+   ```
+
+   - Leave a field out to skip scoring it. Set it to `null` to require that nothing is found (for example `tax8Yen` on a receipt with no 8% items).
+   - `storeName` is the canonical chain name when the store is in `chains.json`, otherwise the first store line as normalized.
+   - `payment` and `category` use the raw values of `PaymentMethod` and `ExpenseCategory`.
+   - Optional `scannedOn` (`yyyy-MM-dd`) sets the scan date. It defaults to `dayKey`. Set it for receipts without a year (`11月2日`).
+4. Run `swift test --package-path Packages/KakeiboCore --filter ReceiptAccuracyTests` and read the table and the "Misses" list. If a miss is a parser bug, fix the parser and add a unit test for the case.
 
 ## Design
 

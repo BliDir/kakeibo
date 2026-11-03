@@ -5,7 +5,8 @@ import Foundation
 /// Dates:
 /// - Western: `2026/11/03`, `2026-11-03`, `2026.11.03`, `2026年11月3日`
 /// - Era: `令和8年11月3日`, `令和元年…`, `R8.11.3`, `R08/11/03` (令和N = 2018 + N), and 平成/H for old receipts
-/// - Short year: `26/11/03` (2026); a 1-digit year such as `8.10.28` is a 令和 year
+/// - Short year: `26/11/03` (2026); a 1-digit year such as `8.10.28` is a 令和 year.
+///   Short years need `/` or `.`: `1-2-3` is an address. A 4-digit or era date beats a short year.
 /// - Month and day only: `11月3日`, year taken from `today`
 ///
 /// The first valid date wins, except that dates on expiry lines (有効期限, まで)
@@ -41,7 +42,7 @@ public enum DateTimeParser {
         let todayParts = tokyoCalendar.dateComponents([.year, .month, .day], from: today)
         let todayYMD = YMD(year: todayParts.year!, month: todayParts.month!, day: todayParts.day!)
 
-        var candidates: [(ymd: YMD, confidence: Confidence, line: Int, rank: Int)] = []
+        var candidates: [(ymd: YMD, confidence: Confidence, line: Int, rank: Int, specificity: Int)] = []
         for (index, line) in lines.enumerated() {
             let isExpiry = expiryWords.contains { line.contains($0) }
             for found in dates(in: line, today: todayYMD) {
@@ -49,21 +50,22 @@ public enum DateTimeParser {
                 let confidence: Confidence = isFuture ? .low : found.confidence
                 // Lower rank wins: plain dates, then expiry-line dates, then future dates.
                 let rank = (isFuture ? 2 : 0) + (isExpiry ? 1 : 0)
-                candidates.append((found.ymd, confidence, index, rank))
+                candidates.append((found.ymd, confidence, index, rank, found.kind.specificity))
             }
         }
-        // Prefer full dates over month-day, then the rank, then the first on the receipt.
+        // Prefer the rank, then 4-digit and era dates over short years over month-day,
+        // then the first on the receipt.
         guard let best = candidates.enumerated().min(by: { a, b in
-            let ka = (a.element.rank, a.element.confidence == .medium ? 1 : 0, a.offset)
-            let kb = (b.element.rank, b.element.confidence == .medium ? 1 : 0, b.offset)
+            let ka = (a.element.rank, a.element.specificity, a.offset)
+            let kb = (b.element.rank, b.element.specificity, b.offset)
             return ka < kb
         })?.element else { return nil }
         return DateResult(dayKey: best.ymd.dayKey, confidence: best.confidence, lineIndex: best.line)
     }
 
     /// Every valid date on a line, left to right.
-    static func dates(in line: String, today: YMD) -> [(ymd: YMD, confidence: Confidence, range: NSRange)] {
-        var found: [(YMD, Confidence, NSRange)] = []
+    static func dates(in line: String, today: YMD) -> [(ymd: YMD, confidence: Confidence, range: NSRange, kind: DateKind)] {
+        var found: [(YMD, Confidence, NSRange, DateKind)] = []
         var taken: [NSRange] = []
 
         func overlapsTaken(_ r: NSRange) -> Bool { taken.contains { NSIntersectionRange($0, r).length > 0 } }
@@ -75,15 +77,24 @@ public enum DateTimeParser {
                     Range(match.range(at: i), in: line).map { String(line[$0]) }
                 }
                 guard let ymd = kind.resolve(g, today: today), ymd.isValid else { continue }
-                found.append((ymd, kind == .monthDay ? .medium : .high, match.range))
+                found.append((ymd, kind == .monthDay ? .medium : .high, match.range, kind))
                 taken.append(match.range)
             }
         }
         return found.sorted { $0.2.location < $1.2.location }
     }
 
-    private enum DateKind: Equatable {
+    enum DateKind: Equatable {
         case western, era, shortYear, monthDay
+
+        /// Lower is more trustworthy when several dates compete.
+        var specificity: Int {
+            switch self {
+            case .western, .era: 0
+            case .shortYear: 1
+            case .monthDay: 2
+            }
+        }
 
         func resolve(_ g: (Int) -> String?, today: YMD) -> YMD? {
             switch self {
@@ -96,7 +107,8 @@ public enum DateTimeParser {
                 let base = (era == "令和" || era.uppercased() == "R") ? 2018 : 1988
                 return YMD(year: base + n, month: m, day: d)
             case .shortYear:
-                guard let yText = g(1), let y = Int(yText), let m = g(2).flatMap(Int.init), let d = g(3).flatMap(Int.init) else { return nil }
+                // Group 2 is the separator, which must repeat.
+                guard let yText = g(1), let y = Int(yText), let m = g(3).flatMap(Int.init), let d = g(4).flatMap(Int.init) else { return nil }
                 if yText.count == 1 {
                     return YMD(year: 2018 + y, month: m, day: d)
                 }
@@ -117,7 +129,8 @@ public enum DateTimeParser {
     private static let datePatterns: [(NSRegularExpression, DateKind)] = ([
         (#"(令和|平成|(?<![A-Za-z])[RH])\s*(元|\d{1,2})\s*[/\-.年]\s*(\d{1,2})\s*[/\-.月]\s*(\d{1,2})\s*日?"#, .era),
         (#"(?<!\d)((?:19|20)\d{2})\s*[/\-.年]\s*(\d{1,2})\s*[/\-.月]\s*(\d{1,2})(?!\d)\s*日?"#, .western),
-        (#"(?<![\d.:/\-])(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{1,2})(?![\d.:/\-])"#, .shortYear),
+        // Short years use / or . only: `1-2-3` is an address (番地), not a date.
+        (#"(?<![\d.:/\-])(\d{1,2})([/.])(\d{1,2})\2(\d{1,2})(?![\d.:/\-])"#, .shortYear),
         (#"(?<![\d年])(\d{1,2})\s*月\s*(\d{1,2})\s*日"#, .monthDay),
     ] as [(String, DateKind)]).map { (try! NSRegularExpression(pattern: $0.0, options: .caseInsensitive), $0.1) }
 

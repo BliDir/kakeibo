@@ -1,0 +1,11 @@
+{
+  "storeName": "ローソン",
+  "dayKey": "2026-11-03",
+  "time": "07:52",
+  "totalYen": 378,
+  "tax10Yen": null,
+  "tax8Yen": 28,
+  "payment": "icCard",
+  "category": "groceries",
+  "invoiceNumber": "T6666666666666"
+}

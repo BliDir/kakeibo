@@ -1,0 +1,11 @@
+{
+  "storeName": "スターバックス",
+  "dayKey": "2026-11-03",
+  "time": "15:20",
+  "totalYen": 815,
+  "tax10Yen": 74,
+  "tax8Yen": null,
+  "payment": "credit",
+  "category": "dining",
+  "invoiceNumber": "T7777777777777"
+}

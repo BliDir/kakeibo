@@ -115,3 +115,11 @@ import KakeiboCore
         #expect(try JSONDecoder().decode([T].self, from: data) == values)
     }
 }
+
+@Suite struct ExpenseSourceTests {
+    @Test func rawValuesAreStable() throws {
+        #expect(ExpenseSource.allCases.map(\.rawValue) == ["scan", "manual"])
+        let data = try JSONEncoder().encode(ExpenseSource.allCases)
+        #expect(try JSONDecoder().decode([ExpenseSource].self, from: data) == ExpenseSource.allCases)
+    }
+}

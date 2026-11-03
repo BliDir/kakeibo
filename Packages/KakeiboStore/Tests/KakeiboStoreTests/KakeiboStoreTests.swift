@@ -208,6 +208,16 @@ import Testing
     }
 }
 
+@MainActor
+@Suite struct RepositoryLifetimeTests {
+    @Test func repositoryKeepsItsContainerAlive() throws {
+        // No other reference to the container: the repository must hold it.
+        let repo = ExpenseRepository(container: try KakeiboStore.makeContainer(inMemory: true))
+        try repo.create(from: ReceiptDraft(dayKey: "2026-11-03", totalYen: 500), source: .manual)
+        #expect(try repo.expenses(inMonth: "2026-11").count == 1)
+    }
+}
+
 @Suite struct SchemaTests {
     @Test func schemaVersionAndModels() {
         #expect(KakeiboSchemaV1.versionIdentifier == Schema.Version(1, 0, 0))

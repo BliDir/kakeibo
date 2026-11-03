@@ -18,13 +18,24 @@ public final class ExpenseRepository {
     }
 
     public let context: ModelContext
+    /// Where receipt photos live. When set, deleting an expense also deletes its photo.
+    public let photoStore: PhotoStore?
 
-    public init(context: ModelContext) {
+    /// Held so the container outlives its context: SwiftData traps if a context's container is freed.
+    private let container: ModelContainer?
+
+    /// - Parameter context: a context whose container the caller keeps alive.
+    public init(context: ModelContext, photoStore: PhotoStore? = nil) {
         self.context = context
+        self.photoStore = photoStore
+        self.container = nil
     }
 
-    public convenience init(container: ModelContainer) {
-        self.init(context: container.mainContext)
+    /// Uses the container's main context and keeps the container alive.
+    public init(container: ModelContainer, photoStore: PhotoStore? = nil) {
+        self.context = container.mainContext
+        self.photoStore = photoStore
+        self.container = container
     }
 
     // MARK: - Create
@@ -104,10 +115,28 @@ public final class ExpenseRepository {
 
     // MARK: - Delete
 
-    /// Deletes an expense and its items. The photo file is removed separately by `PhotoStore`.
+    /// Deletes an expense, its items and its photo file.
+    ///
+    /// The record is deleted first: if removing the file then fails, the file is an orphan
+    /// that `removeOrphanPhotos()` cleans up, rather than an expense pointing at a missing photo.
     public func delete(_ expense: Expense) throws {
+        let photo = expense.photoFileName
         context.delete(expense)
         try context.save()
+        if let photo, let photoStore {
+            try photoStore.delete(photo)
+        }
+    }
+
+    /// Deletes photo files that no expense refers to, and returns how many were deleted.
+    /// Run at launch or from Settings.
+    @discardableResult
+    public func removeOrphanPhotos() throws -> Int {
+        guard let photoStore else { return 0 }
+        var descriptor = FetchDescriptor<Expense>(predicate: #Predicate { $0.photoFileName != nil })
+        descriptor.propertiesToFetch = [\.photoFileName]
+        let names = Set(try context.fetch(descriptor).compactMap(\.photoFileName))
+        return try photoStore.removeOrphans(keeping: names)
     }
 
     // MARK: - Fetch

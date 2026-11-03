@@ -31,6 +31,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Field parsers take lines that have already been through `TextNormalizer`. Do not repeat full-width, ¥ or spacing clean-up in a parser; add the rule to `TextNormalizer` with a test.
 - Store chains live in `Packages/KakeiboCore/Sources/KakeiboCore/Resources/chains.json`. To add one, append `{"name", "nameEn", "category", "match": [...]}` (`name` must also be in `match`; add OCR variants such as no-hyphen or Latin spellings). Use `"generic": true` with no `name` for words that only set a category (タクシー, クリニック). Add a test in `StoreClassifierTests`.
 - When testing normalized Japanese text, compare `unicodeScalars`, not `==`: Swift's `==` treats `フ` + `゙` and `ブ` as equal, but `NSRegularExpression` does not.
+- Storage: never edit `KakeiboSchemaV1` models once shipped. Copy them into `KakeiboSchemaV2`, add a stage to `KakeiboMigrationPlan`, and repoint the `Expense`/`LineItem` typealiases. Enums are stored as `…Raw` strings; use the typed properties (`expense.payment`) in code and the raw fields only in `#Predicate`. Read items with `orderedItems`, since SwiftData does not keep relationship order. Use `ExpenseRepository` (main actor) rather than inserting models directly; tests use `KakeiboStore.makeContainer(inMemory: true)`.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

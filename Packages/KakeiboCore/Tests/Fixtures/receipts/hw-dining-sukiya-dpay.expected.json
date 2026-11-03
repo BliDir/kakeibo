@@ -1,0 +1,11 @@
+{
+  "storeName": "すき家",
+  "dayKey": "2026-10-29",
+  "time": "21:40",
+  "totalYen": 530,
+  "tax10Yen": 48,
+  "tax8Yen": null,
+  "payment": "qrPay",
+  "category": "dining",
+  "invoiceNumber": null
+}

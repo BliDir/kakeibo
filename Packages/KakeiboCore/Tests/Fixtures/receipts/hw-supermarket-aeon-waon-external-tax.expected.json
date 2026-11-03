@@ -1,0 +1,11 @@
+{
+  "storeName": "イオン",
+  "dayKey": "2026-10-25",
+  "time": "18:10",
+  "totalYen": 1003,
+  "tax10Yen": 32,
+  "tax8Yen": 47,
+  "payment": "icCard",
+  "category": "groceries",
+  "invoiceNumber": "T8888888888888"
+}

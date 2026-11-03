@@ -108,6 +108,15 @@ import Testing
         #expect(try #require(date("11月1日 セール\n2026/11/03")).dayKey == "2026-11-03")
     }
 
+    @Test(arguments: ["東京都中野区本町1-1-1", "道玄坂2-10-7", "中野5-1-1", "26-11-03", "8/10.28"])
+    func addressesAndMixedSeparatorsAreNotDates(text: String) {
+        #expect(date(text) == nil)
+    }
+
+    @Test func fullDateBeatsShortYearAbove() throws {
+        #expect(try #require(date("8.10.28\n2026/11/03")).dayKey == "2026-11-03")
+    }
+
     @Test func noDate() {
         #expect(date("合計 ¥1,000\nTEL 03-1234-5678") == nil)
     }

@@ -1,0 +1,11 @@
+{
+  "storeName": "日本交通株式会社",
+  "dayKey": "2026-10-30",
+  "time": "23:05",
+  "totalYen": 3280,
+  "tax10Yen": 298,
+  "tax8Yen": null,
+  "payment": "credit",
+  "category": "transport",
+  "invoiceNumber": "T5555555555555"
+}

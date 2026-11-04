@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var editor: EditorItem?
     @State private var banner: Banner?
     @State private var tab: AppTab = .ledger
+    @State private var settingsModel: SettingsModel
     /// A saved expense to open once the current full-screen cover has gone
     /// (from the duplicate warning). Two covers cannot be presented at the same time.
     @State private var openAfterDismiss: Expense?
@@ -23,6 +24,9 @@ struct ContentView: View {
         self.services = services
         _session = State(initialValue: ScanSession(pipeline: services.pipeline))
         _ledger = State(initialValue: LedgerModel(repository: services.repository))
+        _settingsModel = State(initialValue: SettingsModel(
+            settings: services.settings, photoStore: services.photoStore, info: Bundle.main.infoDictionary ?? [:]
+        ))
     }
 
     var body: some View {
@@ -35,6 +39,10 @@ struct ContentView: View {
                 SummaryView(model: ledger)
             }
             .accessibilityIdentifier("tab.summary")
+            Tab("tab.settings", systemImage: "gearshape", value: AppTab.settings) {
+                SettingsView(model: settingsModel)
+            }
+            .accessibilityIdentifier("tab.settings")
         }
         .tint(Theme.accent)
         #if DEBUG
@@ -82,7 +90,7 @@ struct ContentView: View {
             HStack(spacing: 10) {
                 ScanEntryButtons(session: session)
                 Button {
-                    editor = EditorItem(form: ReviewForm(manualOn: .now))
+                    editor = EditorItem(form: ReviewForm(manualOn: .now, payment: services.settings.defaultPayment))
                 } label: {
                     Image(systemName: "plus")
                         .font(.system(size: 20, weight: .semibold))
@@ -135,6 +143,7 @@ struct ContentView: View {
 enum AppTab: Hashable {
     case ledger
     case summary
+    case settings
 }
 
 /// A form presented for manual add or edit.

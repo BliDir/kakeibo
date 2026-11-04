@@ -11,11 +11,14 @@ final class AppServices {
     let photoStore: PhotoStore?
     let repository: ExpenseRepository
     let pipeline: ExtractionPipeline
+    let settings: AppSettings
 
-    init(container: ModelContainer, photoStore: PhotoStore?, pipeline: ExtractionPipeline) {
+    init(container: ModelContainer, photoStore: PhotoStore?, pipeline: ExtractionPipeline,
+         settings: AppSettings = AppSettings()) {
         self.container = container
         self.photoStore = photoStore
         self.pipeline = pipeline
+        self.settings = settings
         repository = ExpenseRepository(container: container, photoStore: photoStore)
     }
 
@@ -28,7 +31,8 @@ final class AppServices {
             let services = AppServices(
                 container: try! KakeiboStore.makeContainer(inMemory: true),
                 photoStore: try? PhotoStore(directory: photos),
-                pipeline: makePipeline(environment)
+                pipeline: makePipeline(environment),
+                settings: AppSettings(defaults: uiTestDefaults())
             )
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
             return services
@@ -47,6 +51,14 @@ final class AppServices {
     }
 
     #if DEBUG
+    /// Settings that start empty on every UI test launch, so one test's choices never reach another.
+    private static func uiTestDefaults() -> UserDefaults {
+        let name = "KakeiboUITests"
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        return defaults
+    }
+
     /// Made-up expenses for UI tests and screenshots: four this month, one last month.
     private func seedSample() {
         let thisMonth = LedgerMonth(containing: .now)

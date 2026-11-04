@@ -41,6 +41,34 @@ private struct Item: LedgerItem {
     }
 }
 
+@Suite struct EraDateTests {
+    @Test(arguments: [
+        ("2026-11-03", "令和8年11月3日"),
+        ("2019-05-01", "令和元年5月1日"),
+        ("2019-04-30", "平成31年4月30日"),
+    ])
+    func dateLabel(dayKey: String, expected: String) {
+        #expect(JapaneseEra.dateLabel(dayKey: dayKey) == expected)
+    }
+
+    @Test func badDayKey() {
+        #expect(JapaneseEra.dateLabel(dayKey: "2026-13-01") == nil)
+    }
+}
+
+@Suite struct PaymentNameTests {
+    @Test func namesInBothLanguages() {
+        #expect(PaymentMethod.icCard.japaneseName == "交通系IC・電子マネー")
+        #expect(PaymentMethod.icCard.displayName(for: .ja) == "交通系IC")
+        #expect(PaymentMethod.icCard.displayName(for: .en) == "IC card")
+        #expect(PaymentMethod.cash.pairedName(for: .en) == "Cash · 現金")
+        #expect(PaymentMethod.cash.pairedName(for: .ja) == "現金 · Cash")
+        for method in PaymentMethod.allCases {
+            #expect(!method.japaneseName.isEmpty && !method.englishName.isEmpty)
+        }
+    }
+}
+
 @Suite struct MonthSummaryTests {
     @Test func totalsCountTaxAndCategories() {
         let items = [

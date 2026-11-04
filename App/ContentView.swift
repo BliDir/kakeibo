@@ -164,7 +164,7 @@ private struct BannerView: View {
     var body: some View {
         Label {
             switch banner {
-            case .saved(let total): Text("toast.saved \(Yen.format(total))")
+            case .saved(let total): Text("toast.saved \(LedgerFormat.yen(total))")
             case .deleted: Text("toast.deleted")
             }
         } icon: {

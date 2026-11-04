@@ -285,7 +285,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "既に保存済みかもしれません"
+            "value": "すでに保存済みかもしれません"
           }
         }
       }
@@ -387,7 +387,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Excel・Numbers・税理士向けのUTF-8形式のCSVです。共有するまでこのiPhoneの外には出ません。"
+            "value": "ExcelやNumbersで開けるUTF-8形式のCSVです。税理士さんへの提出にも使えます。共有するまでこのiPhoneの外には出ません。"
           }
         }
       }
@@ -438,7 +438,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@年の全期間"
+            "value": "%@年の1年分"
           }
         }
       }
@@ -472,7 +472,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "下のボタンでレシートを撮影するか写真を選んでください。手入力は＋をタップします。"
+            "value": "下のボタンでレシートを撮影するか、写真を選んでください。手入力するときは＋をタップします。"
           }
         }
       }
@@ -483,13 +483,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No receipts this month"
+            "value": "No receipts for this month"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今月の記録はまだありません"
+            "value": "この月の記録はまだありません"
           }
         }
       }
@@ -671,176 +671,6 @@
         }
       }
     },
-    "payment.cash": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cash · 現金"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現金 · Cash"
-          }
-        }
-      }
-    },
-    "payment.credit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Credit card · クレジット"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "クレジット · Credit card"
-          }
-        }
-      }
-    },
-    "payment.icCard": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IC card · 交通系IC"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "交通系IC・電子マネー · IC card"
-          }
-        }
-      }
-    },
-    "payment.other": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Other · その他"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "その他 · Other"
-          }
-        }
-      }
-    },
-    "payment.qrPay": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QR pay · PayPay"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QR決済 · PayPay"
-          }
-        }
-      }
-    },
-    "payment.short.cash": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cash"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現金"
-          }
-        }
-      }
-    },
-    "payment.short.credit": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Credit card"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "クレジット"
-          }
-        }
-      }
-    },
-    "payment.short.icCard": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "IC card"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "交通系IC"
-          }
-        }
-      }
-    },
-    "payment.short.other": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Other"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "その他"
-          }
-        }
-      }
-    },
-    "payment.short.qrPay": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QR pay"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "QR決済"
-          }
-        }
-      }
-    },
     "photo.close": {
       "extractionState": "manual",
       "localizations": {
@@ -938,7 +768,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "確認する項目：%lld"
+            "value": "要確認：%lld項目"
           }
         }
       }
@@ -1108,7 +938,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "英語は端末上のAIによる"
+            "value": "英語はiPhone上のAIで翻訳"
           }
         }
       }
@@ -1153,7 +983,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Optional, e.g. for the weekend BBQ"
+            "value": "Optional, e.g. weekend BBQ"
           }
         },
         "ja": {
@@ -1278,7 +1108,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "端末上のAIで精度を上げています…"
+            "value": "iPhone上のAIで読み取りを改善中…"
           }
         }
       }
@@ -1295,7 +1125,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@を保存"
+            "value": "保存（%@）"
           }
         }
       }
@@ -1737,7 +1567,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "端を検出して平らにしました"
+            "value": "四隅を検出して歪みを補正しました"
           }
         }
       }
@@ -1805,7 +1635,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "日本語と英語を、このiPhone上で"
+            "value": "日本語と英語をこのiPhone上で読み取ります"
           }
         }
       }
@@ -2021,7 +1851,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "すべてこのiPhoneの中だけ"
+            "value": "データはすべてこのiPhoneの中に"
           }
         }
       }
@@ -2117,13 +1947,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By category 費目別"
+            "value": "By category カテゴリ別"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "費目別"
+            "value": "カテゴリ別"
           }
         }
       }
@@ -2310,7 +2140,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@を保存しました"
+            "value": "%@の支出を保存しました"
           }
         }
       }

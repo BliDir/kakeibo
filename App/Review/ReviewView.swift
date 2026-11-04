@@ -191,14 +191,18 @@ struct ReviewView: View {
                     .font(.caption).tracking(0.6)
                     .foregroundStyle(Theme.secondaryText)
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(verbatim: "¥").font(.amountHero)
+                    // "¥ 1234" in English, "1234 円" in Japanese.
+                    let symbol = Yen.fieldSymbol(for: LedgerFormat.language)
+                    if symbol.isPrefix { Text(verbatim: symbol.symbol).font(.amountHero) }
                     TextField(text: $form.amountText, prompt: Text(verbatim: "0")) {
                         Text("review.amount.label")
                     }
                     .font(.amountHero)
                     .keyboardType(.numberPad)
                     .focused($amountFocused)
+                    .fixedSize(horizontal: !symbol.isPrefix, vertical: false)
                     .accessibilityIdentifier("review.amount")
+                    if !symbol.isPrefix { Text(verbatim: symbol.symbol).font(.title.weight(.semibold)) }
                 }
                 .foregroundStyle(Theme.text)
                 if form.needsCheck(.totalYen) {
@@ -249,6 +253,14 @@ struct ReviewView: View {
                             .inputStyle(highlight: true)
                             .accessibilityIdentifier("review.date.add")
                     }
+                    // Receipts often print the era year, so show it beside the picker in Japanese.
+                    if LedgerFormat.language == .ja, let dayKey = form.draft.dayKey,
+                       let era = JapaneseEra.dateLabel(dayKey: dayKey) {
+                        Text(verbatim: era)
+                            .font(.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                            .accessibilityIdentifier("review.date.era")
+                    }
                     if form.needsCheck(.dayKey) { Hint("review.hint.date") }
                 }
                 if let time = form.draft.time {
@@ -274,7 +286,7 @@ struct ReviewView: View {
                     set: { form.draft.payment = $0 }
                 )) {
                     ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(method.label).tag(method)
+                        Text(verbatim: method.label).tag(method)
                     }
                 } label: { Text("review.payment") }
                     .pickerStyle(.menu)
@@ -392,7 +404,7 @@ struct ReviewView: View {
             Button(action: save) {
                 Group {
                     if let total = form.draft.totalYen, total > 0 {
-                        Text("review.save \(Yen.format(total))")
+                        Text("review.save \(LedgerFormat.yen(total))")
                     } else {
                         Text("review.save.plain")
                     }
@@ -478,19 +490,6 @@ struct ReviewView: View {
                 },
                 onCancel: { confirm = nil }
             )
-        }
-    }
-}
-
-extension PaymentMethod {
-    /// Picker label, Japanese term paired with English as in the design.
-    var label: LocalizedStringKey {
-        switch self {
-        case .cash: "payment.cash"
-        case .credit: "payment.credit"
-        case .icCard: "payment.icCard"
-        case .qrPay: "payment.qrPay"
-        case .other: "payment.other"
         }
     }
 }

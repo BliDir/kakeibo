@@ -95,7 +95,7 @@ struct LedgerView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("ledger.total.label").font(.overline).tracking(1).foregroundStyle(Theme.secondaryText)
                 Spacer()
-                Text(verbatim: Yen.format(model.summary.totalYen))
+                Text(verbatim: LedgerFormat.yen(model.summary.totalYen))
                     .font(.amountHero)
                     .foregroundStyle(Theme.text)
                     .minimumScaleFactor(0.6)
@@ -106,7 +106,7 @@ struct LedgerView: View {
                 Text("ledger.receipts \(model.summary.count)")
                     .accessibilityIdentifier("ledger.count")
                 Spacer()
-                Text("ledger.tax \(Yen.format(model.summary.taxYen))")
+                Text("ledger.tax \(LedgerFormat.yen(model.summary.taxYen))")
             }
             .font(.footnoteText)
             .foregroundStyle(Theme.secondaryText)
@@ -209,7 +209,7 @@ private struct DaySection: View {
             HStack {
                 Text(verbatim: LedgerFormat.dayTitle(day.dayKey))
                 Spacer()
-                Text(verbatim: Yen.format(day.subtotalYen)).font(.amountSmall)
+                Text(verbatim: LedgerFormat.yen(day.subtotalYen)).font(.amountSmall)
             }
             .font(.caption.weight(.medium))
             .foregroundStyle(Theme.secondaryText)
@@ -248,14 +248,14 @@ private struct LedgerRow: View {
                     }
                 }
                 .font(.bodyEmphasis)
-                .lineLimit(1)
+                .lineLimit(2)
                 if let english = expense.storeNameEn {
                     Text(verbatim: english).font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(1)
                 }
-                details.font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(1)
+                details.font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(verbatim: Yen.format(expense.totalYen))
+            Text(verbatim: LedgerFormat.yen(expense.totalYen))
                 .font(.amount)
                 .foregroundStyle(Theme.text)
         }

@@ -30,4 +30,26 @@ import KakeiboCore
         #expect(Yen.format(Int.max) == "¥9,223,372,036,854,775,807")
         #expect(Yen.format(Int.min) == "-¥9,223,372,036,854,775,808")
     }
+
+    @Test(arguments: [
+        (1_234, "1,234円"),
+        (0, "0円"),
+        (5, "5円"),
+        (-120, "-120円"),
+        (1_234_567, "1,234,567円"),
+    ])
+    func formatsJapaneseWithEnSuffix(amount: Int, expected: String) {
+        #expect(Yen.format(amount, for: .ja) == expected)
+    }
+
+    @Test func englishMatchesTheFixedFormat() {
+        for amount in [0, 754, -120, 186_420] {
+            #expect(Yen.format(amount, for: .en) == Yen.format(amount))
+        }
+    }
+
+    @Test func fieldSymbolSide() {
+        #expect(Yen.fieldSymbol(for: .en) == ("¥", true))
+        #expect(Yen.fieldSymbol(for: .ja) == ("円", false))
+    }
 }

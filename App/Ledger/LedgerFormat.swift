@@ -9,6 +9,11 @@ enum LedgerFormat {
         Bundle.main.preferredLocalizations.first?.hasPrefix("ja") == true ? .ja : .en
     }
 
+    /// "¥1,234" in English, "1,234円" in Japanese.
+    static func yen(_ amount: Int) -> String {
+        Yen.format(amount, for: language)
+    }
+
     /// "November 2026" or "2026年11月".
     static func monthTitle(_ month: LedgerMonth) -> String {
         formatter(template: "yMMMM").string(from: month.firstDay)
@@ -52,14 +57,9 @@ enum LedgerFormat {
 }
 
 extension PaymentMethod {
-    /// Short label for ledger rows.
-    var shortLabel: String {
-        switch self {
-        case .cash: String(localized: "payment.short.cash")
-        case .credit: String(localized: "payment.short.credit")
-        case .icCard: String(localized: "payment.short.icCard")
-        case .qrPay: String(localized: "payment.short.qrPay")
-        case .other: String(localized: "payment.short.other")
-        }
-    }
+    /// Short name for ledger rows, from Core: `交通系IC` / `IC card`.
+    var shortLabel: String { displayName(for: LedgerFormat.language) }
+
+    /// Both languages for pickers, from Core: `現金 · Cash` / `Cash · 現金`.
+    var label: String { pairedName(for: LedgerFormat.language) }
 }

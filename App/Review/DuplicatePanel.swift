@@ -24,6 +24,7 @@ struct DuplicatePanel: View {
                 Text("duplicate.title").font(.headline).foregroundStyle(Theme.text).multilineTextAlignment(.center)
                 Text(match.strength == .strong ? "duplicate.message.strong" : "duplicate.message.likely")
                     .font(.subheadline).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 savedEntry
                 Button(action: onView) {
                     Text("duplicate.view").font(.headline).frame(maxWidth: .infinity, minHeight: 50)
@@ -62,13 +63,14 @@ struct DuplicatePanel: View {
                 Text(verbatim: expense.storeName.isEmpty ? "—" : expense.storeName)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.text)
-                    .lineLimit(1)
+                    .lineLimit(2)
                 Text(verbatim: [LedgerFormat.dayTitle(expense.dayKey), expense.time].compactMap { $0 }.joined(separator: "  "))
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
             }
+            .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
-            Text(verbatim: Yen.format(expense.totalYen))
+            Text(verbatim: LedgerFormat.yen(expense.totalYen))
                 .font(.amount)
                 .foregroundStyle(Theme.text)
         }

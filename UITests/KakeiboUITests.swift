@@ -352,7 +352,7 @@ final class KakeiboUITests: XCTestCase {
     func testEmptyLedgerExplainsHowToStart() {
         let app = launch()
         XCTAssertTrue(app.otherElements["ledger.empty"].waitForExistence(timeout: 5)
-                      || app.staticTexts["No receipts this month"].waitForExistence(timeout: 1))
+                      || app.staticTexts["No receipts for this month"].waitForExistence(timeout: 1))
         XCTAssertEqual(app.staticTexts["ledger.total"].label, "¥0")
         XCTAssertFalse(app.buttons["ledger.next"].isEnabled, "no future months")
     }

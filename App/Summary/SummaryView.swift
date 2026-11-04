@@ -84,7 +84,7 @@ struct SummaryView: View {
                 .font(.overline).tracking(1)
                 .foregroundStyle(Theme.secondaryText)
                 Spacer()
-                Text(verbatim: Yen.format(summary.totalYen))
+                Text(verbatim: LedgerFormat.yen(summary.totalYen))
                     .font(.amountHero)
                     .foregroundStyle(Theme.text)
                     .minimumScaleFactor(0.6)
@@ -93,12 +93,22 @@ struct SummaryView: View {
             }
             if model.previousSummary.count > 0 { comparisonRow }
             Divider().overlay(Theme.divider)
-            HStack(spacing: 8) {
-                taxItem(Text("summary.tax"), summary.taxYen)
-                Spacer(minLength: 4)
-                taxItem(Text(verbatim: "8%"), summary.tax8Yen)
-                Spacer(minLength: 4)
-                taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+            // One line when it fits; stacked at large text sizes instead of breaking words.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                    taxItem(Text("summary.tax"), summary.taxYen)
+                    Spacer(minLength: 4)
+                    taxItem(Text(verbatim: "8%"), summary.tax8Yen)
+                    Spacer(minLength: 4)
+                    taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    taxItem(Text("summary.tax"), summary.taxYen)
+                    HStack(spacing: 16) {
+                        taxItem(Text(verbatim: "8%"), summary.tax8Yen)
+                        taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+                    }
+                }
             }
             .font(.caption)
             .foregroundStyle(Theme.secondaryText)
@@ -113,9 +123,9 @@ struct SummaryView: View {
     private var comparisonRow: some View {
         let comparison = model.comparison
         let previousName = LedgerFormat.monthName(model.month.previous)
-        let difference = Yen.format(abs(comparison.differenceYen))
+        let difference = LedgerFormat.yen(abs(comparison.differenceYen))
         return HStack {
-            Text(verbatim: "\(previousName) \(Yen.format(comparison.previousYen))")
+            Text(verbatim: "\(previousName) \(LedgerFormat.yen(comparison.previousYen))")
                 .foregroundStyle(Theme.secondaryText)
             Spacer()
             HStack(spacing: 4) {
@@ -134,7 +144,7 @@ struct SummaryView: View {
 
     private func changeText(_ comparison: MonthComparison) -> String {
         let sign = comparison.differenceYen > 0 ? "+" : ""
-        let amount = sign + Yen.format(comparison.differenceYen)
+        let amount = sign + LedgerFormat.yen(comparison.differenceYen)
         guard let change = comparison.change else { return amount }
         return "\(amount) (\(abs(change).formatted(.percent.precision(.fractionLength(1)))))"
     }
@@ -150,8 +160,11 @@ struct SummaryView: View {
     private func taxItem(_ label: Text, _ yen: Int) -> some View {
         HStack(spacing: 4) {
             label
-            Text(verbatim: Yen.format(yen)).font(.amountSmall).foregroundStyle(Theme.text)
+            Text(verbatim: LedgerFormat.yen(yen)).font(.amountSmall).foregroundStyle(Theme.text)
         }
+        // Never break inside a label or an amount; ViewThatFits picks the stacked layout instead.
+        .lineLimit(1)
+        .fixedSize()
         .accessibilityElement(children: .combine)
     }
 
@@ -192,7 +205,7 @@ private struct CategoryRow: View {
         let primary = entry.category.displayName(for: language)
         let secondary = entry.category.displayName(for: language == .ja ? .en : .ja)
         let share = entry.share.formatted(.percent.precision(.fractionLength(1)))
-        let amount = Yen.format(entry.totalYen)
+        let amount = LedgerFormat.yen(entry.totalYen)
 
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 0) {

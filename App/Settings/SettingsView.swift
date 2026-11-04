@@ -55,7 +55,7 @@ struct SettingsView: View {
                     set: { model.settings.defaultPayment = $0 }
                 )) {
                     ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(method.label).tag(method)
+                        Text(verbatim: method.label).tag(method)
                     }
                 } label: { Text("settings.payment") }
                     .pickerStyle(.menu)

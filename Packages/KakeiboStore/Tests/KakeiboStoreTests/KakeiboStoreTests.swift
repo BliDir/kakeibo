@@ -224,8 +224,10 @@ import Testing
         #expect(KakeiboSchemaV1.models.count == 2)
         #expect(KakeiboSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
         #expect(KakeiboSchemaV2.models.count == 2)
-        #expect(KakeiboMigrationPlan.schemas.count == 2)
-        #expect(KakeiboMigrationPlan.stages.count == 1)
+        #expect(KakeiboSchemaV3.versionIdentifier == Schema.Version(3, 0, 0))
+        #expect(KakeiboSchemaV3.models.count == 5)
+        #expect(KakeiboMigrationPlan.schemas.count == 3)
+        #expect(KakeiboMigrationPlan.stages.count == 2)
     }
 
     @Test func dayKeyIsIndexed() {

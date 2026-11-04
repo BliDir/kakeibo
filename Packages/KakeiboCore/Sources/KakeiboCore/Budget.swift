@@ -90,6 +90,17 @@ public enum MonthlyBudget: Sendable, Equatable {
     }
 }
 
+// MARK: - Alert thresholds
+
+/// The budget alert thresholds: spend at 80% and 100% of the budget.
+/// Raw values are stored on disk (KakeiboStore); never change them.
+public enum BudgetThreshold: Int, CaseIterable, Sendable, Codable, Comparable {
+    case eighty = 80
+    case hundred = 100
+
+    public static func < (a: BudgetThreshold, b: BudgetThreshold) -> Bool { a.rawValue < b.rawValue }
+}
+
 // MARK: - Spend
 
 public enum MonthSpend {

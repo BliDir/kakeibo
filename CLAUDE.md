@@ -105,6 +105,7 @@ The accuracy test (`ReceiptAccuracyTests`) prints per-field accuracy and fails i
    - `storeName` is the canonical chain name when the store is in `chains.json`, otherwise the first store line as normalized.
    - `payment` and `category` use the raw values of `PaymentMethod` and `ExpenseCategory`.
    - Optional `scannedOn` (`yyyy-MM-dd`) sets the scan date. It defaults to `dayKey`. Set it for receipts without a year (`11月2日`).
+   - Optional `items`: `[{"name": "牛乳", "priceYen": 198, "isReducedRate": true}, …]` in receipt order, discounts negative right after their item. Scored as item count and as item prices with their rate (names are not scored). Leave it out for receipts without item lines (fuel, parking).
 4. Run `swift test --package-path Packages/KakeiboCore --filter ReceiptAccuracyTests` and read the table and the "Misses" list. If a miss is a parser bug, fix the parser and add a unit test for the case.
 
 ## Design

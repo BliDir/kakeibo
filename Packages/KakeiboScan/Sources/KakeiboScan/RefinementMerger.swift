@@ -80,9 +80,12 @@ public enum RefinementMerger {
                 result.confidences[.items] = .medium
             }
         } else {
+            // Match on price and on the name without rate marks or spaces: the parser drops ※
+            // from names (牛乳), the model often keeps it (牛乳※).
+            func key(_ name: String) -> String { name.filter { !"※★ 　".contains($0) } }
             result.items = draft.items.map { item in
                 guard item.nameEn == nil,
-                      let match = modelItems.first(where: { $0.name == item.name && $0.priceYen == item.priceYen })
+                      let match = modelItems.first(where: { key($0.name) == key(item.name) && $0.priceYen == item.priceYen })
                 else { return item }
                 var filled = item
                 filled.nameEn = match.nameEn

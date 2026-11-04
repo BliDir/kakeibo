@@ -1,0 +1,33 @@
+{
+  "storeName": "ライフ",
+  "dayKey": "2026-11-02",
+  "time": "17:30",
+  "totalYen": 1038,
+  "tax10Yen": 31,
+  "tax8Yen": 51,
+  "payment": "cash",
+  "category": "groceries",
+  "invoiceNumber": "T3434343434343",
+  "items": [
+    {
+      "name": "牛乳",
+      "priceYen": 396,
+      "isReducedRate": true
+    },
+    {
+      "name": "バナナ",
+      "priceYen": 294,
+      "isReducedRate": true
+    },
+    {
+      "name": "洗剤",
+      "priceYen": 398,
+      "isReducedRate": false
+    },
+    {
+      "name": "クーポン",
+      "priceYen": -50,
+      "isReducedRate": false
+    }
+  ]
+}

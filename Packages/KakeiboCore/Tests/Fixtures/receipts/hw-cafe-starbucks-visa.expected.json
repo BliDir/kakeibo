@@ -7,5 +7,17 @@
   "tax8Yen": null,
   "payment": "credit",
   "category": "dining",
-  "invoiceNumber": "T7777777777777"
+  "invoiceNumber": "T7777777777777",
+  "items": [
+    {
+      "name": "スターバックスラテ T",
+      "priceYen": 495,
+      "isReducedRate": false
+    },
+    {
+      "name": "チョコレートチャンクスコーン",
+      "priceYen": 320,
+      "isReducedRate": false
+    }
+  ]
 }

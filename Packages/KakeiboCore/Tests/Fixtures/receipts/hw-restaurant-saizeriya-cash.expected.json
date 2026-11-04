@@ -7,5 +7,22 @@
   "tax8Yen": null,
   "payment": "cash",
   "category": "dining",
-  "invoiceNumber": "T4444444444444"
+  "invoiceNumber": "T4444444444444",
+  "items": [
+    {
+      "name": "ミラノ風ドリア",
+      "priceYen": 300,
+      "isReducedRate": false
+    },
+    {
+      "name": "ミラノ風ドリア",
+      "priceYen": 300,
+      "isReducedRate": false
+    },
+    {
+      "name": "ドリンクバー",
+      "priceYen": 200,
+      "isReducedRate": false
+    }
+  ]
 }

@@ -7,5 +7,22 @@
   "tax8Yen": 16,
   "payment": "qrPay",
   "category": "household",
-  "invoiceNumber": "T3333333333333"
+  "invoiceNumber": "T3333333333333",
+  "items": [
+    {
+      "name": "化粧水",
+      "priceYen": 1320,
+      "isReducedRate": false
+    },
+    {
+      "name": "ハンドソープ詰替",
+      "priceYen": 298,
+      "isReducedRate": false
+    },
+    {
+      "name": "のど飴",
+      "priceYen": 216,
+      "isReducedRate": true
+    }
+  ]
 }

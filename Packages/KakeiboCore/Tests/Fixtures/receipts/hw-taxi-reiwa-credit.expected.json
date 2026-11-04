@@ -7,5 +7,12 @@
   "tax8Yen": null,
   "payment": "credit",
   "category": "transport",
-  "invoiceNumber": "T5555555555555"
+  "invoiceNumber": "T5555555555555",
+  "items": [
+    {
+      "name": "運賃",
+      "priceYen": 3280,
+      "isReducedRate": false
+    }
+  ]
 }

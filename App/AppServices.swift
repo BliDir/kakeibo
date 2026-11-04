@@ -1,4 +1,5 @@
 import Foundation
+import KakeiboCore
 import KakeiboScan
 import KakeiboStore
 import SwiftData
@@ -24,11 +25,13 @@ final class AppServices {
         // UI tests start from an empty ledger and leave nothing behind.
         if environment["KAKEIBO_IN_MEMORY_STORE"] == "1" {
             let photos = FileManager.default.temporaryDirectory.appendingPathComponent("UITestReceipts-\(UUID().uuidString)")
-            return AppServices(
+            let services = AppServices(
                 container: try! KakeiboStore.makeContainer(inMemory: true),
                 photoStore: try? PhotoStore(directory: photos),
                 pipeline: makePipeline(environment)
             )
+            if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
+            return services
         }
         #endif
         do {
@@ -42,6 +45,30 @@ final class AppServices {
             fatalError("Could not open the expense store: \(error)")
         }
     }
+
+    #if DEBUG
+    /// Made-up expenses for UI tests and screenshots: four this month, one last month.
+    private func seedSample() {
+        let thisMonth = LedgerMonth(containing: .now)
+        func day(_ month: LedgerMonth, _ d: Int) -> String { month.key + String(format: "-%02d", d) }
+        let today = Int(DayKey.make(from: .now).suffix(2))!
+        let samples: [(String, String, String?, Int, Int?, Int?, PaymentMethod, ExpenseCategory, Int)] = [
+            (day(thisMonth, today), "まいばすけっと 架空町店", "My Basket", 1_310, 29, 72, .icCard, .groceries, 5),
+            (day(thisMonth, today), "スターバックス", "Starbucks", 1_078, 98, nil, .credit, .dining, 0),
+            (day(thisMonth, max(1, today - 1)), "JR東日本", nil, 2_150, nil, nil, .icCard, .transport, 0),
+            (day(thisMonth, max(1, today - 1)), "ダイソー", "Daiso", 660, 60, nil, .cash, .household, 2),
+            (day(thisMonth.previous, 28), "西松屋", "Nishimatsuya", 3_278, 298, nil, .qrPay, .kids, 4),
+        ]
+        for (dayKey, store, english, total, tax10, tax8, payment, category, items) in samples {
+            let draft = ReceiptDraft(
+                storeName: store, storeNameEn: english, dayKey: dayKey, totalYen: total, tax10Yen: tax10, tax8Yen: tax8,
+                payment: payment, category: category,
+                items: (0..<items).map { LineItemDraft(name: "品目\($0 + 1)", priceYen: total / max(items, 1)) }
+            )
+            _ = try? repository.create(from: draft, source: .manual)
+        }
+    }
+    #endif
 
     /// Deletes receipt photos no expense refers to (for example from a crash mid-save).
     func cleanUp() {

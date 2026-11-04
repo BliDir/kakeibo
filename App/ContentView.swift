@@ -1,15 +1,14 @@
 import KakeiboCore
 import KakeiboScan
 import KakeiboStore
-import SwiftData
 import SwiftUI
 
-/// Root screen: a temporary expense list (T-40 builds the real ledger), the scan entry
-/// and manual add, and the save confirmation.
+/// Root screen: the ledger, the scan entry and manual add, and the save confirmation.
 struct ContentView: View {
     let services: AppServices
 
     @State private var session: ScanSession
+    @State private var ledger: LedgerModel
     @State private var editor: EditorItem?
     @State private var banner: Banner?
     #if DEBUG
@@ -19,41 +18,38 @@ struct ContentView: View {
     init(services: AppServices) {
         self.services = services
         _session = State(initialValue: ScanSession(pipeline: services.pipeline))
+        _ledger = State(initialValue: LedgerModel(repository: services.repository))
     }
 
     var body: some View {
-        NavigationStack {
-            TemporaryExpenseList { expense in
-                editor = EditorItem(form: ReviewForm(editing: expense))
-            }
-            .navigationTitle("app.title")
-            #if DEBUG
-            .toolbar {
-                Button { showTokens = true } label: { Image(systemName: "hammer") }
-                    .accessibilityLabel(Text(verbatim: "Design tokens"))
-                    .accessibilityIdentifier("debug.tokens")
-            }
-            .sheet(isPresented: $showTokens) { DesignTokensView() }
-            #endif
-            .safeAreaInset(edge: .bottom) {
-                HStack(spacing: 10) {
-                    ScanEntryButtons(session: session)
-                    Button {
-                        editor = EditorItem(form: ReviewForm(manualOn: .now))
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 20, weight: .semibold))
-                            .frame(width: 54, height: 54)
-                            .background(Theme.surface, in: Circle())
-                            .overlay(Circle().stroke(Theme.border))
-                            .foregroundStyle(Theme.accent)
-                    }
-                    .accessibilityLabel(Text("ledger.add"))
-                    .accessibilityIdentifier("ledger.add")
+        LedgerView(
+            model: ledger,
+            photoStore: services.photoStore,
+            onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
+            onShowTokens: showTokensAction
+        )
+        .safeAreaInset(edge: .bottom) {
+            HStack(spacing: 10) {
+                ScanEntryButtons(session: session)
+                Button {
+                    editor = EditorItem(form: ReviewForm(manualOn: .now))
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(width: 54, height: 54)
+                        .background(Theme.surface, in: Circle())
+                        .overlay(Circle().stroke(Theme.border))
+                        .foregroundStyle(Theme.accent)
                 }
-                .padding(.bottom, 16)
+                .accessibilityLabel(Text("ledger.add"))
+                .accessibilityIdentifier("ledger.add")
             }
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity)
         }
+        #if DEBUG
+        .sheet(isPresented: $showTokens) { DesignTokensView() }
+        #endif
         .overlay(alignment: .top) {
             if let banner { BannerView(banner: banner).padding(.top, 8) }
         }
@@ -75,6 +71,14 @@ struct ContentView: View {
         }
         #if DEBUG
         .task { startDebugScanIfRequested() }
+        #endif
+    }
+
+    private var showTokensAction: (() -> Void)? {
+        #if DEBUG
+        { showTokens = true }
+        #else
+        nil
         #endif
     }
 
@@ -128,43 +132,6 @@ private struct BannerView: View {
         .foregroundStyle(Theme.surface)
         .transition(.move(edge: .top).combined(with: .opacity))
         .accessibilityIdentifier("banner")
-    }
-}
-
-/// Temporary list of saved expenses so they can be opened and edited. T-40 replaces it.
-private struct TemporaryExpenseList: View {
-    @Query(sort: [SortDescriptor(\Expense.dayKey, order: .reverse), SortDescriptor(\Expense.createdAt, order: .reverse)])
-    private var expenses: [Expense]
-    let onSelect: (Expense) -> Void
-
-    var body: some View {
-        if expenses.isEmpty {
-            ContentUnavailableView(
-                "ledger.empty.title",
-                systemImage: "doc.text.viewfinder",
-                description: Text("ledger.empty.message")
-            )
-        } else {
-            List(expenses) { expense in
-                Button { onSelect(expense) } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            if expense.storeName.isEmpty {
-                                Text("ledger.noStore").foregroundStyle(Theme.secondaryText)
-                            } else {
-                                Text(verbatim: expense.storeName).foregroundStyle(Theme.text)
-                            }
-                            Text(verbatim: expense.dayKey).font(.caption).foregroundStyle(Theme.secondaryText)
-                        }
-                        Spacer()
-                        Text(verbatim: Yen.format(expense.totalYen))
-                            .font(.amount)
-                            .foregroundStyle(Theme.text)
-                    }
-                }
-                .accessibilityIdentifier("ledger.row")
-            }
-        }
     }
 }
 

@@ -197,6 +197,29 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 3)
     }
 
+    // MARK: Export
+
+    @MainActor
+    func testExportOffersMonthAndYearFiles() {
+        let app = launch(seed: true)
+        app.buttons["ledger.export"].tap()
+        XCTAssertTrue(app.buttons["export.month"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["export.year"].exists)
+        // The seed data is dated relative to today, so match the file name's shape, not a date.
+        let monthFile = NSPredicate(format: "label MATCHES 'kakeibo-[0-9]{4}-[0-9]{2}\\.csv · 4 receipts'")
+        XCTAssertEqual(app.staticTexts.matching(monthFile).count, 1)
+        app.buttons["export.close"].tap()
+        XCTAssertTrue(app.buttons["ledger.export"].waitForExistence(timeout: 3))
+    }
+
+    @MainActor
+    func testExportOfAnEmptyMonthHasNothingToShare() {
+        let app = launch()
+        app.buttons["ledger.export"].tap()
+        XCTAssertTrue(app.staticTexts["Nothing to export"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["export.month"].exists)
+    }
+
     // MARK: Helpers
 
     /// Launches with an empty in-memory ledger in English, without the on-device model.

@@ -158,7 +158,8 @@ struct LedgerView: View {
     }
 }
 
-private struct MonthButton: View {
+/// Previous or next month, on the ledger and the Summary tab.
+struct MonthButton: View {
     let systemImage: String
     let label: LocalizedStringKey
     let id: String

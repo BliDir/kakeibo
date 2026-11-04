@@ -75,39 +75,62 @@ public protocol LedgerItem {
     var category: ExpenseCategory { get }
 }
 
-/// Totals for one month.
+/// Totals for one month: what the ledger card and the Summary tab show.
 public struct MonthSummary: Sendable, Equatable {
     public var totalYen: Int
+    /// Number of expenses (receipts and manual entries).
     public var count: Int
-    /// Consumption tax paid (8% + 10%), as printed on the receipts.
-    public var taxYen: Int
+    /// Consumption tax at the 8% reduced rate, as printed on the receipts.
+    public var tax8Yen: Int
+    /// Consumption tax at 10%, as printed on the receipts.
+    public var tax10Yen: Int
     /// Spending per category, largest first; categories with nothing spent are left out.
     public var categories: [CategoryTotal]
+
+    /// Consumption tax paid (8% + 10%).
+    public var taxYen: Int { tax8Yen + tax10Yen }
 
     public struct CategoryTotal: Sendable, Equatable {
         public var category: ExpenseCategory
         public var totalYen: Int
+        /// Expenses in this category.
+        public var count: Int
         /// Share of the month's total, 0–1.
         public var share: Double
+        /// Length of this category's bar, 0–1: its total over the largest category's.
+        public var barFraction: Double
     }
 
-    public static let empty = MonthSummary(totalYen: 0, count: 0, taxYen: 0, categories: [])
+    public static let empty = MonthSummary(totalYen: 0, count: 0, tax8Yen: 0, tax10Yen: 0, categories: [])
 
-    public init(totalYen: Int, count: Int, taxYen: Int, categories: [CategoryTotal]) {
+    public init(totalYen: Int, count: Int, tax8Yen: Int, tax10Yen: Int, categories: [CategoryTotal]) {
         self.totalYen = totalYen
         self.count = count
-        self.taxYen = taxYen
+        self.tax8Yen = tax8Yen
+        self.tax10Yen = tax10Yen
         self.categories = categories
     }
 
     public init(_ items: [some LedgerItem]) {
         let total = items.reduce(0) { $0 + $1.totalYen }
-        var byCategory: [ExpenseCategory: Int] = [:]
-        for item in items { byCategory[item.category, default: 0] += item.totalYen }
+        var byCategory: [ExpenseCategory: (yen: Int, count: Int)] = [:]
+        for item in items {
+            byCategory[item.category, default: (0, 0)].yen += item.totalYen
+            byCategory[item.category, default: (0, 0)].count += 1
+        }
+        let largest = byCategory.values.map(\.yen).max() ?? 0
         let categories = byCategory
-            .filter { $0.value > 0 }
-            .map { CategoryTotal(category: $0.key, totalYen: $0.value, share: total > 0 ? Double($0.value) / Double(total) : 0) }
-            // Largest first; ties in the fixed category order so the bar does not jump.
+            .filter { $0.value.yen > 0 }
+            .map { category, value in
+                CategoryTotal(
+                    category: category,
+                    totalYen: value.yen,
+                    count: value.count,
+                    share: total > 0 ? Double(value.yen) / Double(total) : 0,
+                    barFraction: largest > 0 ? Double(value.yen) / Double(largest) : 0
+                )
+            }
+            // Largest first; ties in the fixed category order so the chart does not jump.
             .sorted { a, b in
                 a.totalYen != b.totalYen
                     ? a.totalYen > b.totalYen
@@ -116,9 +139,37 @@ public struct MonthSummary: Sendable, Equatable {
         self.init(
             totalYen: total,
             count: items.count,
-            taxYen: items.reduce(0) { $0 + ($1.tax8Yen ?? 0) + ($1.tax10Yen ?? 0) },
+            tax8Yen: items.reduce(0) { $0 + ($1.tax8Yen ?? 0) },
+            tax10Yen: items.reduce(0) { $0 + ($1.tax10Yen ?? 0) },
             categories: categories
         )
+    }
+}
+
+/// This month's total against the month before.
+public struct MonthComparison: Sendable, Equatable {
+    public enum Direction: Sendable, Equatable {
+        case up, down, same
+    }
+
+    public var currentYen: Int
+    public var previousYen: Int
+
+    public init(current: MonthSummary, previous: MonthSummary) {
+        currentYen = current.totalYen
+        previousYen = previous.totalYen
+    }
+
+    /// Positive when this month is higher.
+    public var differenceYen: Int { currentYen - previousYen }
+
+    /// Change as a fraction of last month (0.046 for +4.6%); nil when last month had nothing.
+    public var change: Double? {
+        previousYen > 0 ? Double(differenceYen) / Double(previousYen) : nil
+    }
+
+    public var direction: Direction {
+        differenceYen > 0 ? .up : differenceYen < 0 ? .down : .same
     }
 }
 

@@ -76,6 +76,7 @@ struct ExportSheet: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             if let file, file.count > 0 {

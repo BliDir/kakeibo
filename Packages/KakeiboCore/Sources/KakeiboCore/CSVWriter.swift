@@ -107,15 +107,8 @@ public enum ExpenseCSV {
         items.map { "\($0.name) \($0.priceYen)\($0.isReducedRate ? " ※" : "")" }.joined(separator: "; ")
     }
 
-    static func paymentName(_ payment: PaymentMethod) -> String {
-        switch payment {
-        case .cash: "現金"
-        case .credit: "クレジット"
-        case .icCard: "交通系IC・電子マネー"
-        case .qrPay: "QR決済"
-        case .other: "その他"
-        }
-    }
+    /// Fixed Japanese names, whatever the UI language is.
+    static func paymentName(_ payment: PaymentMethod) -> String { payment.japaneseName }
 
     /// `kakeibo-2026-11.csv`
     public static func fileName(month: LedgerMonth) -> String { "kakeibo-\(month.key).csv" }

@@ -25,7 +25,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - `Kakeibo.xcodeproj` uses folder-synced groups: files added under `App/` or `UITests/` are picked up automatically, so do not edit `project.pbxproj` just to add a file. New packages are added as local package references.
 - Money is `Int` yen everywhere. Dates for grouping use `dayKey` (`yyyy-MM-dd`, Asia/Tokyo).
 - Every user-facing string goes in `Localizable.xcstrings` with `ja` and `en`.
-  Exception: `ExpenseCategory` names (`japaneseName`, `englishName`) live in Core code, because screens show both names together and CSV exports need fixed names. `swift test` cannot compile a String Catalog inside a package.
+  Exception: `ExpenseCategory` and `PaymentMethod` names (`japaneseName`, `englishName`, `displayName(for:)`, and `pairedName(for:)` for payments) live in Core code, because screens show both names together and CSV exports need fixed names. `swift test` cannot compile a String Catalog inside a package. Show the UI language first (`LedgerFormat.language`).
 - The category enum is `ExpenseCategory`, not `Category`: Objective-C's `Category` type makes the short name ambiguous wherever SwiftUI or UIKit is imported.
 - Raw values of `ExpenseCategory`, `PaymentMethod`, `Confidence` and `ReceiptField` are stored on disk. Never rename them.
 - Field parsers take lines that have already been through `TextNormalizer`. Do not repeat full-width, ¥ or spacing clean-up in a parser; add the rule to `TextNormalizer` with a test.
@@ -49,7 +49,8 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Swift Charts labels in `.value(...)` are picked up by the String Catalog when written as literals; pass a `String` constant for labels that never show (hidden charts).
 - Summary tab: `SummaryView` shares the ledger's `LedgerModel`, so both tabs show the same month. Totals, tax by rate, category shares and bar lengths come from `MonthSummary`; month-over-month from `MonthComparison` (Core). Views only lay them out.
 - CSV export: `ExpenseCSV` / `CSVWriter` (Core) define the columns and escaping; `ExpenseExport` (KakeiboStore) writes `kakeibo-yyyy-MM.csv` / `kakeibo-yyyy.csv`. Keep UTF-8 with BOM and CRLF (Excel on Windows), and write user or OCR text with `CSVWriter.textField` so it can never run as a spreadsheet formula.
-- Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
+- Format yen in views with `LedgerFormat.yen(_:)` (`¥1,234` in English, `1,234円` in Japanese, via `Yen.format(_:for:)`); amount fields put the symbol where `Yen.fieldSymbol(for:)` says. Files and anything language-independent use `Yen.format(_:)` (`¥1,234`, `-¥120`). Never `NumberFormatter` or locale currency styles.
+- Localization check: `ScreenshotTourTests` walks every screen in ja and en at the default and XXXL text size and attaches screenshots. It is skipped unless you run it with `TEST_RUNNER_KAKEIBO_SCREENSHOT_TOUR=1` (command in the file). Add new screens to the tour. Debug-only tools (design tokens, fixture capture) stay English and are not localized.
 
 ## Commands
 

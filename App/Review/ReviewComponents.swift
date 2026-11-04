@@ -67,7 +67,10 @@ struct CategoryChip: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(category.color)
                     .accessibilityHidden(true)
-                Text(verbatim: "\(category.englishName) \(category.japaneseName)")
+                // UI language first: "食料品 Groceries" / "Groceries 食料品".
+                Text(verbatim: LedgerFormat.language == .ja
+                     ? "\(category.japaneseName) \(category.englishName)"
+                     : "\(category.englishName) \(category.japaneseName)")
             }
             .font(.footnote.weight(selected ? .bold : .regular))
             .padding(.horizontal, 12)
@@ -138,12 +141,14 @@ struct YenRow: View {
             Text(label).font(.subheadline).foregroundStyle(Theme.text)
             Spacer()
             HStack(spacing: 1) {
-                Text(verbatim: "¥")
+                let symbol = Yen.fieldSymbol(for: LedgerFormat.language)
+                if symbol.isPrefix { Text(verbatim: symbol.symbol) }
                 TextField(text: $value, prompt: Text(verbatim: "–")) { Text(label) }
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: 90)
                     .accessibilityIdentifier(id)
+                if !symbol.isPrefix { Text(verbatim: symbol.symbol) }
             }
             .font(.amountSmall)
         }
@@ -169,7 +174,7 @@ struct ItemRow: View {
                 .padding(.horizontal, 6).padding(.vertical, 1)
                 .background(item.isReducedRate ? Theme.reducedRateFill : Theme.divider, in: RoundedRectangle(cornerRadius: 6))
                 .foregroundStyle(item.isReducedRate ? Theme.reducedRateText : Theme.standardRateText)
-            Text(verbatim: Yen.format(item.priceYen))
+            Text(verbatim: LedgerFormat.yen(item.priceYen))
                 .font(.amountSmall)
                 .foregroundStyle(item.priceYen < 0 ? Theme.destructive : Theme.text)
                 .frame(minWidth: 64, alignment: .trailing)

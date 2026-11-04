@@ -167,6 +167,7 @@ struct ScanProgressView: View {
             Label("scan.privacy", systemImage: "lock")
                 .font(.caption)
                 .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(20)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
@@ -194,6 +195,8 @@ private struct StepRow: View {
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
             }
+            // Wrap instead of truncating when the text size is large.
+            .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
     }

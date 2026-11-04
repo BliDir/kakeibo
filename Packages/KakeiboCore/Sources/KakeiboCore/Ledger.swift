@@ -52,6 +52,12 @@ public enum JapaneseEra {
         return "\(name)\(year == 1 ? "元" : String(year))年\(month.month)月"
     }
 
+    /// `令和8年11月3日` for a `yyyy-MM-dd` dayKey, nil when it is not valid.
+    public static func dateLabel(dayKey: String) -> String? {
+        guard let month = LedgerMonth(dayKey: dayKey), let day = Int(dayKey.suffix(2)) else { return nil }
+        return label(for: month) + "\(day)日"
+    }
+
     /// `Reiwa 8` for any month of 2026.
     public static func englishYear(for month: LedgerMonth) -> String {
         let (name, year) = era(for: month)

@@ -53,9 +53,29 @@ private struct Item: LedgerItem {
         #expect(s.totalYen == 5_228)
         #expect(s.count == 4)
         #expect(s.taxYen == 250)
+        #expect(s.tax8Yen == 123)
+        #expect(s.tax10Yen == 127)
         #expect(s.categories.map(\.category) == [.transport, .groceries, .dining])
         #expect(s.categories.map(\.totalYen) == [2_150, 2_000, 1_078])
+        #expect(s.categories.map(\.count) == [1, 2, 1])
         #expect(abs(s.categories.map(\.share).reduce(0, +) - 1) < 1e-9)
+    }
+
+    @Test func barsAreRelativeToTheLargestCategory() {
+        let s = MonthSummary([
+            Item(dayKey: "2026-11-01", totalYen: 800, category: .groceries),
+            Item(dayKey: "2026-11-01", totalYen: 200, category: .dining),
+        ])
+        #expect(s.categories.map(\.barFraction) == [1.0, 0.25])
+        #expect(s.categories.map(\.share) == [0.8, 0.2])
+    }
+
+    @Test func everyCategoryIsLabelled() {
+        // The legend shows both names, so every category needs both.
+        for category in ExpenseCategory.allCases {
+            #expect(!category.japaneseName.isEmpty)
+            #expect(!category.englishName.isEmpty)
+        }
     }
 
     @Test func emptyMonth() {
@@ -67,6 +87,38 @@ private struct Item: LedgerItem {
         let s = MonthSummary([Item(dayKey: "2026-11-01", totalYen: 500, category: .other),
                               Item(dayKey: "2026-11-01", totalYen: 500, category: .groceries)])
         #expect(s.categories.map(\.category) == [.groceries, .other])
+    }
+}
+
+@Suite struct MonthComparisonTests {
+    private func summary(_ total: Int) -> MonthSummary {
+        total == 0 ? .empty : MonthSummary([Item(dayKey: "2026-11-01", totalYen: total, category: .other)])
+    }
+
+    @Test func higherThanLastMonth() {
+        let c = MonthComparison(current: summary(186_420), previous: summary(178_180))
+        #expect(c.differenceYen == 8_240)
+        #expect(c.direction == .up)
+        #expect(abs(c.change! - 0.04624) < 0.0001)
+    }
+
+    @Test func lowerThanLastMonth() {
+        let c = MonthComparison(current: summary(900), previous: summary(1_200))
+        #expect(c.differenceYen == -300)
+        #expect(c.direction == .down)
+        #expect(c.change == -0.25)
+    }
+
+    @Test func sameAsLastMonth() {
+        let c = MonthComparison(current: summary(500), previous: summary(500))
+        #expect(c.direction == .same)
+        #expect(c.change == 0)
+    }
+
+    @Test func noChangeWhenLastMonthWasEmpty() {
+        let c = MonthComparison(current: summary(500), previous: summary(0))
+        #expect(c.differenceYen == 500)
+        #expect(c.change == nil)
     }
 }
 

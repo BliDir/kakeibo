@@ -14,6 +14,11 @@ enum LedgerFormat {
         formatter(template: "yMMMM").string(from: month.firstDay)
     }
 
+    /// "October" or "10月", for "October ¥178,180".
+    static func monthName(_ month: LedgerMonth) -> String {
+        formatter(template: "MMMM").string(from: month.firstDay)
+    }
+
     /// "令和8年11月 · Reiwa 8" in English, "令和8年11月" in Japanese.
     static func eraSubtitle(_ month: LedgerMonth) -> String {
         let era = JapaneseEra.label(for: month)

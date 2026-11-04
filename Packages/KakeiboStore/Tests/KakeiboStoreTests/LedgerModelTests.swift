@@ -41,6 +41,32 @@ import Testing
         #expect(model.days.map(\.subtotalYen) == [1_970, 2_150])
     }
 
+    @Test func comparesWithThePreviousMonth() throws {
+        try add("2026-11-02", 1_500)
+        try add("2026-10-31", 1_000)
+        try add("2026-09-15", 4_000)
+        let model = LedgerModel(repository: repo, today: { Self.today })
+        #expect(model.previousSummary.totalYen == 1_000)
+        #expect(model.comparison.differenceYen == 500)
+        #expect(model.comparison.change == 0.5)
+
+        // Switching month moves both.
+        model.showPrevious()
+        #expect(model.summary.totalYen == 1_000)
+        #expect(model.previousSummary.totalYen == 4_000)
+        #expect(model.comparison.direction == .down)
+    }
+
+    @Test func summaryHasCategoriesAndTaxByRate() throws {
+        try add("2026-11-03", 1_310, tax8: 72)
+        try repo.create(from: ReceiptDraft(dayKey: "2026-11-02", totalYen: 1_078, tax10Yen: 98, category: .dining),
+                        source: .manual, now: Self.today)
+        let model = LedgerModel(repository: repo, today: { Self.today })
+        #expect(model.summary.tax8Yen == 72)
+        #expect(model.summary.tax10Yen == 98)
+        #expect(model.summary.categories.map(\.category) == [.groceries, .dining])
+    }
+
     @Test func monthNavigationStopsAtTheCurrentMonth() throws {
         try add("2026-10-31", 999)
         let model = LedgerModel(repository: repo, today: { Self.today })
@@ -67,6 +93,11 @@ import Testing
         try repo.update(expense) { $0.totalYen = 800 }
         await Task.yield()
         #expect(model.summary.totalYen == 800)
+
+        // A change to last month updates the comparison too.
+        try add("2026-10-20", 400)
+        await Task.yield()
+        #expect(model.previousSummary.totalYen == 400)
 
         try repo.delete(expense)
         await Task.yield()

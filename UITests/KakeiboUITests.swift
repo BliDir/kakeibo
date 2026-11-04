@@ -141,6 +141,65 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertFalse(app.buttons["ledger.row"].exists)
     }
 
+    // MARK: Summary
+
+    /// The Summary tab shows the month by category, largest first, and follows the ledger's month.
+    @MainActor
+    func testSummaryShowsCategoriesAndFollowsTheMonth() {
+        let app = launch(seed: true)
+        app.tabBars.buttons["Summary"].tap()
+        let total = app.staticTexts["summary.total"]
+        XCTAssertTrue(total.waitForExistence(timeout: 5))
+        XCTAssertEqual(total.label, "¥5,198")
+        XCTAssertEqual(app.staticTexts["summary.count"].label, "4 receipts")
+
+        let rows = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'summary.category.'"))
+        XCTAssertEqual(rows.count, 4)
+        XCTAssertEqual(rows.element(boundBy: 0).identifier, "summary.category.transport", "largest first")
+        XCTAssertEqual(rows.element(boundBy: 3).identifier, "summary.category.household")
+        // VoiceOver: both names, the amount and the share.
+        let transport = app.descendants(matching: .any)["summary.category.transport"]
+        XCTAssertEqual(transport.label, "Transport, 交通")
+        XCTAssertEqual(transport.value as? String, "¥2,150, 41.4%")
+
+        let comparison = app.descendants(matching: .any)["summary.comparison"]
+        XCTAssertTrue(comparison.exists)
+        XCTAssertTrue(comparison.label.hasPrefix("¥1,920 more than"), comparison.label)
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "summary"
+        shot.lifetime = .keepAlways
+        add(shot)
+
+        // Last month: one category.
+        app.buttons["summary.previous"].tap()
+        XCTAssertEqual(total.label, "¥3,278")
+        XCTAssertEqual(rows.count, 1)
+        XCTAssertTrue(app.descendants(matching: .any)["summary.category.kids"].exists)
+
+        // The ledger shows the same month.
+        app.tabBars.buttons["Ledger"].tap()
+        XCTAssertEqual(app.staticTexts["ledger.total"].label, "¥3,278")
+    }
+
+    /// A saved entry shows up in the summary straight away.
+    @MainActor
+    func testSummaryUpdatesAfterSaving() {
+        let app = launch()
+        app.tabBars.buttons["Summary"].tap()
+        XCTAssertTrue(app.staticTexts["summary.empty"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["summary.total"].label, "¥0")
+
+        app.tabBars.buttons["Ledger"].tap()
+        addManualExpense(app, amount: "880", store: "Cafe Poem")
+        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+
+        app.tabBars.buttons["Summary"].tap()
+        XCTAssertEqual(app.staticTexts["summary.total"].label, "¥880")
+        XCTAssertFalse(app.staticTexts["summary.empty"].exists)
+        XCTAssertTrue(app.descendants(matching: .any)["summary.category.other"].exists)
+    }
+
     // MARK: Duplicates
 
     /// Saving the same entry twice warns first; Cancel keeps the form, Save anyway saves.

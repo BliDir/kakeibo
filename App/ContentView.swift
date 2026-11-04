@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var ledger: LedgerModel
     @State private var editor: EditorItem?
     @State private var banner: Banner?
+    @State private var tab: AppTab = .ledger
     /// A saved expense to open once the current full-screen cover has gone
     /// (from the duplicate warning). Two covers cannot be presented at the same time.
     @State private var openAfterDismiss: Expense?
@@ -25,31 +26,17 @@ struct ContentView: View {
     }
 
     var body: some View {
-        LedgerView(
-            model: ledger,
-            photoStore: services.photoStore,
-            onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
-            onShowTokens: showTokensAction
-        )
-        .safeAreaInset(edge: .bottom) {
-            HStack(spacing: 10) {
-                ScanEntryButtons(session: session)
-                Button {
-                    editor = EditorItem(form: ReviewForm(manualOn: .now))
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: 54, height: 54)
-                        .background(Theme.surface, in: Circle())
-                        .overlay(Circle().stroke(Theme.border))
-                        .foregroundStyle(Theme.accent)
-                }
-                .accessibilityLabel(Text("ledger.add"))
-                .accessibilityIdentifier("ledger.add")
+        TabView(selection: $tab) {
+            Tab("tab.ledger", systemImage: "list.bullet.rectangle", value: AppTab.ledger) {
+                ledgerTab
             }
-            .padding(.bottom, 12)
-            .frame(maxWidth: .infinity)
+            .accessibilityIdentifier("tab.ledger")
+            Tab("tab.summary", systemImage: "chart.bar.xaxis", value: AppTab.summary) {
+                SummaryView(model: ledger)
+            }
+            .accessibilityIdentifier("tab.summary")
         }
+        .tint(Theme.accent)
         #if DEBUG
         .sheet(isPresented: $showTokens) { DesignTokensView() }
         #endif
@@ -83,6 +70,35 @@ struct ContentView: View {
         #endif
     }
 
+    /// The ledger with the scan and manual-add buttons.
+    private var ledgerTab: some View {
+        LedgerView(
+            model: ledger,
+            photoStore: services.photoStore,
+            onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
+            onShowTokens: showTokensAction
+        )
+        .safeAreaInset(edge: .bottom) {
+            HStack(spacing: 10) {
+                ScanEntryButtons(session: session)
+                Button {
+                    editor = EditorItem(form: ReviewForm(manualOn: .now))
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20, weight: .semibold))
+                        .frame(width: 54, height: 54)
+                        .background(Theme.surface, in: Circle())
+                        .overlay(Circle().stroke(Theme.border))
+                        .foregroundStyle(Theme.accent)
+                }
+                .accessibilityLabel(Text("ledger.add"))
+                .accessibilityIdentifier("ledger.add")
+            }
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
     private var showTokensAction: (() -> Void)? {
         #if DEBUG
         { showTokens = true }
@@ -114,6 +130,11 @@ struct ContentView: View {
         session.start(imageData: data)
     }
     #endif
+}
+
+enum AppTab: Hashable {
+    case ledger
+    case summary
 }
 
 /// A form presented for manual add or edit.

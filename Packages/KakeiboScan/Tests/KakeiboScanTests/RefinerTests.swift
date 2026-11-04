@@ -116,6 +116,20 @@ private let today = Date(timeIntervalSince1970: 1_793_674_800)
         #expect(merged.confidence(for: .items) == .medium)
     }
 
+    /// Seen with the real model: it listed 小計 as an item and returned 0 for a missing tax rate.
+    @Test func dropsSummaryLinesAndZeroTax() {
+        let items = [LineItemDraft(name: "牛乳※", nameEn: "Milk", priceYen: 198, isReducedRate: true),
+                     LineItemDraft(name: "小計", nameEn: "Subtotal", priceYen: 754),
+                     LineItemDraft(name: "(内消費税等", priceYen: 67),
+                     LineItemDraft(name: "お釣り", nameEn: "Change", priceYen: 246),
+                     LineItemDraft(name: "値引", nameEn: "Discount", priceYen: -20)]
+        let d = ReceiptDraft(totalYen: 754, confidences: [.totalYen: .high])
+        let merged = RefinementMerger.merge(draft: d, model: ModelReceipt(tax10Yen: 67, tax8Yen: 0, items: items))
+        #expect(merged.items.map(\.name) == ["牛乳※", "値引"])
+        #expect(merged.tax10Yen == 67)
+        #expect(merged.tax8Yen == nil)
+    }
+
     @Test func parserItemsKeptAndEnglishNamesAdded() {
         var d = draft(total: 356, totalConfidence: .high)
         d.items = [LineItemDraft(name: "牛乳", priceYen: 198), LineItemDraft(name: "食パン", priceYen: 158)]

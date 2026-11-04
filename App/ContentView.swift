@@ -1,43 +1,78 @@
 import KakeiboCore
 import KakeiboScan
+import KakeiboStore
+import SwiftData
 import SwiftUI
 
-/// Placeholder ledger with the scan entry. T-40 replaces the ledger part.
+/// Root screen: a temporary expense list (T-40 builds the real ledger), the scan entry
+/// and manual add, and the save confirmation.
 struct ContentView: View {
-    @State private var session = ScanSession(pipeline: Self.makePipeline())
+    let services: AppServices
+
+    @State private var session: ScanSession
+    @State private var editor: EditorItem?
+    @State private var banner: Banner?
+
+    init(services: AppServices) {
+        self.services = services
+        _session = State(initialValue: ScanSession(pipeline: services.pipeline))
+    }
 
     var body: some View {
         NavigationStack {
-            ContentUnavailableView(
-                "ledger.empty.title",
-                systemImage: "doc.text.viewfinder",
-                description: Text("ledger.empty.message")
-            )
+            TemporaryExpenseList { expense in
+                editor = EditorItem(form: ReviewForm(editing: expense))
+            }
             .navigationTitle("app.title")
             .safeAreaInset(edge: .bottom) {
-                ScanEntryButtons(session: session)
-                    .padding(.bottom, 16)
+                HStack(spacing: 10) {
+                    ScanEntryButtons(session: session)
+                    Button {
+                        editor = EditorItem(form: ReviewForm(manualOn: .now))
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20, weight: .semibold))
+                            .frame(width: 54, height: 54)
+                            .background(Theme.surface, in: Circle())
+                            .overlay(Circle().stroke(Theme.border))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .accessibilityLabel(Text("ledger.add"))
+                    .accessibilityIdentifier("ledger.add")
+                }
+                .padding(.bottom, 16)
             }
+        }
+        .overlay(alignment: .top) {
+            if let banner { BannerView(banner: banner).padding(.top, 8) }
         }
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
             set: { if !$0 { session.cancel() } }
         )) {
-            ScanFlowView(session: session)
+            ScanFlowView(session: session, services: services) { total in show(.saved(total)) }
+        }
+        .fullScreenCover(item: $editor) { item in
+            ReviewView(form: item.form, services: services) { outcome in
+                editor = nil
+                switch outcome {
+                case .saved(let total): show(.saved(total))
+                case .deleted: show(.deleted)
+                case .discarded: break
+                }
+            }
         }
         #if DEBUG
         .task { startDebugScanIfRequested() }
         #endif
     }
 
-    private static func makePipeline() -> ExtractionPipeline {
-        #if DEBUG
-        // UI tests slow OCR down so the progress screen stays up long enough to check and cancel.
-        if let text = ProcessInfo.processInfo.environment["KAKEIBO_SCAN_OCR_DELAY"], let seconds = Double(text) {
-            return ExtractionPipeline(ocr: DelayedOCR(base: VisionOCRService(), delay: .seconds(seconds)))
+    private func show(_ banner: Banner) {
+        withAnimation { self.banner = banner }
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            withAnimation { if self.banner == banner { self.banner = nil } }
         }
-        #endif
-        return ExtractionPipeline()
     }
 
     #if DEBUG
@@ -51,19 +86,77 @@ struct ContentView: View {
     #endif
 }
 
-#Preview {
-    ContentView()
+/// A form presented for manual add or edit.
+private struct EditorItem: Identifiable {
+    let id = UUID()
+    let form: ReviewForm
 }
 
-#if DEBUG
-/// Waits before reading, for UI tests only.
-private struct DelayedOCR: OCRService {
-    let base: any OCRService
-    let delay: Duration
+enum Banner: Equatable {
+    case saved(Int)
+    case deleted
+}
 
-    func recognize(_ image: CGImage) async throws -> [TextObservation] {
-        try await Task.sleep(for: delay)
-        return try await base.recognize(image)
+/// The confirmation shown after returning to the ledger.
+private struct BannerView: View {
+    let banner: Banner
+
+    var body: some View {
+        Label {
+            switch banner {
+            case .saved(let total): Text("toast.saved \(Yen.format(total))")
+            case .deleted: Text("toast.deleted")
+            }
+        } icon: {
+            Image(systemName: "checkmark.circle.fill")
+        }
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Theme.text, in: Capsule())
+        .foregroundStyle(.white)
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .accessibilityIdentifier("banner")
     }
 }
-#endif
+
+/// Temporary list of saved expenses so they can be opened and edited. T-40 replaces it.
+private struct TemporaryExpenseList: View {
+    @Query(sort: [SortDescriptor(\Expense.dayKey, order: .reverse), SortDescriptor(\Expense.createdAt, order: .reverse)])
+    private var expenses: [Expense]
+    let onSelect: (Expense) -> Void
+
+    var body: some View {
+        if expenses.isEmpty {
+            ContentUnavailableView(
+                "ledger.empty.title",
+                systemImage: "doc.text.viewfinder",
+                description: Text("ledger.empty.message")
+            )
+        } else {
+            List(expenses) { expense in
+                Button { onSelect(expense) } label: {
+                    HStack {
+                        VStack(alignment: .leading) {
+                            if expense.storeName.isEmpty {
+                                Text("ledger.noStore").foregroundStyle(Theme.secondaryText)
+                            } else {
+                                Text(verbatim: expense.storeName).foregroundStyle(Theme.text)
+                            }
+                            Text(verbatim: expense.dayKey).font(.caption).foregroundStyle(Theme.secondaryText)
+                        }
+                        Spacer()
+                        Text(verbatim: Yen.format(expense.totalYen))
+                            .font(.body.monospacedDigit().weight(.semibold))
+                            .foregroundStyle(Theme.text)
+                    }
+                }
+                .accessibilityIdentifier("ledger.row")
+            }
+        }
+    }
+}
+
+#Preview {
+    ContentView(services: AppServices.make())
+}

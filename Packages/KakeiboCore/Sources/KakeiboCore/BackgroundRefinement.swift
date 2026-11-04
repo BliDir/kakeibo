@@ -1,5 +1,4 @@
 import Foundation
-import KakeiboCore
 
 /// Applies a refinement that finished while the user was already editing the review form.
 ///

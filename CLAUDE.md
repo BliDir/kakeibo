@@ -40,6 +40,9 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Scan UI state lives in `ScanSession` (KakeiboScan, main actor, tested with `swift test`); views only observe it. Decode library photos with `ImageDecoding.uprightImage` (applies EXIF orientation), never `CGImageSourceCreateImageAtIndex`.
 - UI tests: give a SwiftUI container `.accessibilityElement(children: .contain)` before `.accessibilityIdentifier`, or the identifier replaces every child's. Debug builds read `KAKEIBO_SCAN_IMAGE_PATH` (start a scan with that image) and `KAKEIBO_SCAN_OCR_DELAY` (seconds) so UI tests can drive the scan flow without the photo picker.
 - App colors come from `Theme` (temporary until T-04's color assets); never write literal colors in views.
+- Review screen logic lives in `ReviewForm` (KakeiboStore): fields to check, validation, unsaved changes, save (photo first, removed again if the expense fails to save) and delete. `ReviewView` only binds to it. Confirmations (discard, delete) use the in-app `ConfirmPanel`, never `.alert` or `.confirmationDialog`.
+- `BackgroundRefinement` is in Core (it only uses Core types).
+- UI tests launch with `KAKEIBO_IN_MEMORY_STORE=1` (empty ledger, temporary photo folder) and `KAKEIBO_NO_REFINER=1` (no on-device model, so results do not depend on the machine).
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

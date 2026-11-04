@@ -115,6 +115,20 @@ struct SettingsView: View {
 
     private var about: some View {
         SettingsSection("settings.section.about") {
+            // The wordmark is dark ink green, so it sits on an ivory plate in light and dark mode.
+            Image("KakeiboLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: 180, maxHeight: 60)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .background(Theme.logoPlate, in: RoundedRectangle(cornerRadius: 10))
+                .padding(.vertical, 12)
+                .accessibilityLabel(Text(verbatim: "Kakeibo"))
+                .accessibilityAddTraits(.isImage)
+                .accessibilityIdentifier("settings.logo")
+            Divider().overlay(Theme.divider)
             SettingsRow("settings.version") {
                 Text(verbatim: model.versionText)
                     .font(.amountSmall)

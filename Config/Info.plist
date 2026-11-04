@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Merged with the Info.plist Xcode generates from build settings (INFOPLIST_KEY_*).
+	     Only keys that have no build setting live here. -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<!-- The ledger's background (light and dark), so launch looks like the first screen. -->
+		<key>UIColorName</key>
+		<string>Ground</string>
+	</dict>
+</dict>
+</plist>

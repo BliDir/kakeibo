@@ -35,6 +35,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Photos: save and read them only through `PhotoStore` (`<UUID>.jpg` in Application Support/Receipts; GPS is stripped on save). Create `ExpenseRepository` with the photo store so deleting an expense deletes its photo, and call `removeOrphanPhotos()` at launch. Do not set file protection or backup-exclusion options on photo files.
 - OCR results are `TextObservation` (Core) with a top-left, 0–1 `BoundingBox`. In files that import Vision, write `OCRTextObservation`: Vision has its own `TextObservation`, and `KakeiboCore.TextObservation` does not compile because the `KakeiboCore` enum hides the module name.
 - Do not name a package resource folder `Resources` in a test target that uses `.copy`: iOS code signing rejects the bundle ("bundle format unrecognized"). Use a descriptive name such as `SampleImages` or `Fixtures`.
+- Refiner: get one with `ReceiptRefiners.automatic()` (on-device model when Apple Intelligence is available, otherwise `NoopRefiner`). Merge rules live in `RefinementMerger` and are tested with `MockModel`; keep model-specific code in `FoundationModelsRefiner.swift`. The live model test runs only where Apple Intelligence is available and takes about 15 s.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

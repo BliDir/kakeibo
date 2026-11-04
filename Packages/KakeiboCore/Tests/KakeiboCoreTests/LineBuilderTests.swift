@@ -134,5 +134,7 @@ private func obs(_ text: String, x: Double, y: Double, w: Double = 0.2, h: Doubl
         #expect(draft.time == "18:42")
         #expect(draft.tax10Yen == 67)
         #expect(draft.payment == .cash)
+        // Vision dropped the T from 登録番号 (T-18).
+        #expect(draft.invoiceNumber == "T1234567890123")
     }
 }

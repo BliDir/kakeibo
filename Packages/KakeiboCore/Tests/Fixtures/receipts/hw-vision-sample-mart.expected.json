@@ -1,0 +1,28 @@
+{
+  "storeName": "サンプルマート中野店",
+  "dayKey": "2026-11-03",
+  "time": "18:42",
+  "totalYen": 754,
+  "tax10Yen": 67,
+  "tax8Yen": null,
+  "payment": "cash",
+  "category": "other",
+  "invoiceNumber": "T1234567890123",
+  "items": [
+    {
+      "name": "牛乳",
+      "priceYen": 198,
+      "isReducedRate": true
+    },
+    {
+      "name": "食パン",
+      "priceYen": 158,
+      "isReducedRate": true
+    },
+    {
+      "name": "洗剤",
+      "priceYen": 398,
+      "isReducedRate": false
+    }
+  ]
+}

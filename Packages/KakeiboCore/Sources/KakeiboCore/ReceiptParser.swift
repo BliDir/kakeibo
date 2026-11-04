@@ -4,7 +4,7 @@ import Foundation
 ///
 /// Steps: `TextNormalizer`, then `StoreClassifier`, `DateTimeParser`, `ItemParser`,
 /// `TotalExtractor` (given the item prices, for the item-sum check), `TaxExtractor` (given the
-/// total), `InvoiceNumberParser` and `PaymentMethodDetector`.
+/// total), `InvoiceNumberParser`, `ReceiptNumberParser` and `PaymentMethodDetector`.
 /// Each field gets the confidence its parser reported.
 public enum ReceiptParser {
     /// - Parameters:
@@ -57,6 +57,11 @@ public enum ReceiptParser {
         if let invoice = InvoiceNumberParser.parse(lines: lines) {
             draft.invoiceNumber = invoice.invoiceNumber
             confidences[.invoiceNumber] = invoice.confidence
+        }
+
+        if let receipt = ReceiptNumberParser.parse(lines: lines) {
+            draft.receiptNumber = receipt.receiptNumber
+            confidences[.receiptNumber] = receipt.confidence
         }
 
         let payment = PaymentMethodDetector.detect(lines: lines)

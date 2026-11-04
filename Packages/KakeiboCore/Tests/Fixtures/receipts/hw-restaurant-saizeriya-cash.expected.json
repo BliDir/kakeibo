@@ -8,6 +8,7 @@
   "payment": "cash",
   "category": "dining",
   "invoiceNumber": "T4444444444444",
+  "receiptNumber": null,
   "items": [
     {
       "name": "ミラノ風ドリア",

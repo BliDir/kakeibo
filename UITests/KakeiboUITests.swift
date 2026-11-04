@@ -141,6 +141,80 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertFalse(app.buttons["ledger.row"].exists)
     }
 
+    // MARK: Duplicates
+
+    /// Saving the same entry twice warns first; Cancel keeps the form, Save anyway saves.
+    @MainActor
+    func testSavingTheSameEntryTwiceWarns() {
+        let app = launch()
+        addManualExpense(app, amount: "880", store: "Cafe Poem")
+        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Already saved?"].exists, "first save has nothing to match")
+
+        addManualExpense(app, amount: "880", store: "Cafe Poem")
+        XCTAssertTrue(app.staticTexts["Already saved?"].waitForExistence(timeout: 3))
+        let entry = app.descendants(matching: .any)["duplicate.entry"].firstMatch
+        XCTAssertTrue(entry.exists)
+        XCTAssertTrue(entry.label.contains("Cafe Poem"), entry.label)
+        XCTAssertTrue(entry.label.contains("¥880"), entry.label)
+        XCTAssertTrue(app.buttons["duplicate.view"].exists)
+
+        app.buttons["duplicate.cancel"].tap()
+        XCTAssertFalse(app.staticTexts["Already saved?"].exists)
+        XCTAssertTrue(app.staticTexts["Add expense"].exists, "Cancel stays on the form")
+
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(app.buttons["duplicate.saveAnyway"].waitForExistence(timeout: 3))
+        app.buttons["duplicate.saveAnyway"].tap()
+        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 2)
+    }
+
+    /// "View saved entry" drops the new entry and opens the saved one.
+    @MainActor
+    func testDuplicateWarningOpensTheSavedEntry() {
+        let app = launch()
+        addManualExpense(app, amount: "1200", store: "Bento Ya")
+        XCTAssertTrue(app.staticTexts["Saved ¥1,200"].waitForExistence(timeout: 5))
+
+        addManualExpense(app, amount: "1200", store: "Bento Ya")
+        XCTAssertTrue(app.buttons["duplicate.view"].waitForExistence(timeout: 3))
+        app.buttons["duplicate.view"].tap()
+        XCTAssertTrue(app.staticTexts["Edit expense"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "1200")
+
+        // Saving the saved entry unchanged does not warn about itself.
+        app.buttons["review.cancel"].tap()
+        XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 1, "the second entry was not saved")
+    }
+
+    /// A different amount at the same store is a second purchase, not a duplicate.
+    @MainActor
+    func testSameStoreDifferentAmountDoesNotWarn() {
+        let app = launch()
+        addManualExpense(app, amount: "880", store: "Cafe Poem")
+        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        addManualExpense(app, amount: "450", store: "Cafe Poem")
+        XCTAssertTrue(app.staticTexts["Saved ¥450"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Already saved?"].exists)
+    }
+
+    @MainActor
+    private func addManualExpense(_ app: XCUIApplication, amount: String, store: String) {
+        let add = app.buttons["ledger.add"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        add.tap()
+        let amountField = app.textFields["review.amount"]
+        XCTAssertTrue(amountField.waitForExistence(timeout: 3))
+        amountField.tap()
+        amountField.typeText(amount)
+        let storeField = app.textFields["review.store"]
+        storeField.tap()
+        storeField.typeText(store)
+        app.buttons["review.save"].tap()
+    }
+
     @MainActor
     func testCancellingUnchangedManualEntryDoesNotAsk() {
         let app = launch()

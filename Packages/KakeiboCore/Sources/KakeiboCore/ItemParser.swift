@@ -81,6 +81,7 @@ public enum ItemParser {
     private static let headerWords = [
         "TEL", "電話", "FAX", "〒", "登録番号", "NO.", "NO ", "担当", "責", "領収", "人数", "テーブル",
         "単価", "対象", "消費税", "内税", "外税", "ポイント", "会員", "伝票",
+        "取引番号", "取引NO", "レシート番号", "レシートNO",
     ]
 
     private static let headerPatterns: [NSRegularExpression] = [

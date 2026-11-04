@@ -8,6 +8,8 @@ struct ReviewView: View {
         case saved(totalYen: Int)
         case deleted
         case discarded
+        /// The user chose "View saved entry" on the duplicate warning; nothing was saved.
+        case viewSaved(Expense)
     }
 
     @Bindable var form: ReviewForm
@@ -17,6 +19,7 @@ struct ReviewView: View {
     @State private var confirm: ConfirmKind?
     @State private var showPhoto = false
     @State private var saveFailed = false
+    @State private var duplicate: ExpenseRepository.PossibleDuplicate?
     #if DEBUG
     @State private var fixtureFiles: FixtureFiles?
     struct FixtureFiles: Identifiable { let id = UUID(); let urls: [URL] }
@@ -48,6 +51,7 @@ struct ReviewView: View {
         .background(Theme.groundLight.ignoresSafeArea())
         .overlay {
             if let confirm { confirmPanel(confirm) }
+            if let duplicate { duplicatePanel(duplicate) }
         }
         .fullScreenCover(isPresented: $showPhoto) {
             PhotoZoomView(image: photoImage)
@@ -417,7 +421,19 @@ struct ReviewView: View {
         }
     }
 
+    /// Save button: warns first when the ledger already has an expense that looks like this one.
     private func save() {
+        guard form.canSave else { return }
+        // A failed check must not stop the save; the warning is only a help.
+        if let match = try? form.possibleDuplicates(repository: services.repository).first {
+            duplicate = match
+            return
+        }
+        saveNow()
+    }
+
+    private func saveNow() {
+        duplicate = nil
         guard form.canSave, let total = form.draft.totalYen else { return }
         do {
             try form.save(repository: services.repository, photoStore: services.photoStore)
@@ -425,6 +441,15 @@ struct ReviewView: View {
         } catch {
             saveFailed = true
         }
+    }
+
+    private func duplicatePanel(_ match: ExpenseRepository.PossibleDuplicate) -> some View {
+        DuplicatePanel(
+            match: match,
+            onView: { onFinish(.viewSaved(match.expense)) },
+            onSaveAnyway: saveNow,
+            onCancel: { duplicate = nil }
+        )
     }
 
     private func confirmPanel(_ kind: ConfirmKind) -> some View {

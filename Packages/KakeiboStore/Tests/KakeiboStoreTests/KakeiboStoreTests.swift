@@ -222,12 +222,14 @@ import Testing
     @Test func schemaVersionAndModels() {
         #expect(KakeiboSchemaV1.versionIdentifier == Schema.Version(1, 0, 0))
         #expect(KakeiboSchemaV1.models.count == 2)
-        #expect(KakeiboMigrationPlan.schemas.count == 1)
-        #expect(KakeiboMigrationPlan.stages.isEmpty)
+        #expect(KakeiboSchemaV2.versionIdentifier == Schema.Version(2, 0, 0))
+        #expect(KakeiboSchemaV2.models.count == 2)
+        #expect(KakeiboMigrationPlan.schemas.count == 2)
+        #expect(KakeiboMigrationPlan.stages.count == 1)
     }
 
     @Test func dayKeyIsIndexed() {
-        let schema = Schema(versionedSchema: KakeiboSchemaV1.self)
+        let schema = Schema(versionedSchema: KakeiboStore.CurrentSchema.self)
         let entity = schema.entities.first { $0.name == "Expense" }
         #expect(entity?.indices.contains { $0.contains("dayKey") } == true)
     }

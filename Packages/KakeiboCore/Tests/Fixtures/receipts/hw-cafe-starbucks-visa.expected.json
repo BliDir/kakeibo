@@ -8,6 +8,7 @@
   "payment": "credit",
   "category": "dining",
   "invoiceNumber": "T7777777777777",
+  "receiptNumber": null,
   "items": [
     {
       "name": "スターバックスラテ T",

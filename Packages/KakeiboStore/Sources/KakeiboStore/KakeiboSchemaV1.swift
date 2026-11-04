@@ -139,31 +139,3 @@ public enum KakeiboSchemaV1: VersionedSchema {
         }
     }
 }
-
-/// The current schema's models.
-public typealias Expense = KakeiboSchemaV1.Expense
-public typealias LineItem = KakeiboSchemaV1.LineItem
-
-/// Migrations between schema versions. v1.0 has only one version, so no stages yet.
-public enum KakeiboMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] {
-        [KakeiboSchemaV1.self]
-    }
-
-    public static var stages: [MigrationStage] {
-        []
-    }
-}
-
-public enum KakeiboStore {
-    /// Folder name for receipt photos inside Application Support.
-    public static let photosDirectoryName = "Receipts"
-
-    /// The app's model container, using the current schema and migration plan.
-    /// - Parameter inMemory: true for tests and previews; nothing is written to disk.
-    public static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
-        let schema = Schema(versionedSchema: KakeiboSchemaV1.self)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: inMemory)
-        return try ModelContainer(for: schema, migrationPlan: KakeiboMigrationPlan.self, configurations: configuration)
-    }
-}

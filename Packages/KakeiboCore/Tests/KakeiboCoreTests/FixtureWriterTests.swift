@@ -38,10 +38,29 @@ import Testing
     @Test func expectedJSONWritesNullForMissingFields() throws {
         let data = try FixtureWriter.expectedJSON(from: ReceiptDraft(totalYen: 500), scannedOn: Self.now)
         let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        for key in ["storeName", "dayKey", "time", "payment", "category", "invoiceNumber"] {
+        for key in ["storeName", "dayKey", "time", "payment", "category", "invoiceNumber", "receiptNumber"] {
             #expect(object[key] is NSNull, "\(key)")
         }
         #expect((object["items"] as? [Any])?.isEmpty == true)
+    }
+
+    @Test func receiptNumberOnAMaskedLineIsExpectedMasked() throws {
+        let lines = ["取引番号 001234", "合計 ¥500"]
+        let draft = ReceiptDraft(totalYen: 500, receiptNumber: "001234")
+        let data = try FixtureWriter.expectedJSON(from: draft, scannedOn: Self.now, lines: lines)
+        let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["receiptNumber"] as? String == "000000")
+        // And the parser reads the same from the masked text.
+        let parsed = ReceiptParser.parse(text: FixtureWriter.text(lines: lines), today: Self.now)
+        #expect(parsed.receiptNumber == "000000")
+    }
+
+    @Test func receiptNumberOnAnUnmaskedLineIsKept() throws {
+        let lines = ["レジ02 No.0012", "合計 ¥500"]
+        let draft = ReceiptDraft(totalYen: 500, receiptNumber: "02/0012")
+        let data = try FixtureWriter.expectedJSON(from: draft, scannedOn: Self.now, lines: lines)
+        let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(object["receiptNumber"] as? String == "02/0012")
     }
 
     // MARK: Redaction

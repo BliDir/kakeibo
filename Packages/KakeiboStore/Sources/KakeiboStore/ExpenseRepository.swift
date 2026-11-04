@@ -65,6 +65,7 @@ public final class ExpenseRepository {
             payment: draft.payment ?? .cash,
             category: draft.category ?? .other,
             invoiceNumber: draft.invoiceNumber,
+            receiptNumber: draft.receiptNumber,
             note: note,
             photoFileName: photoFileName,
             ocrText: ocrText,
@@ -95,6 +96,7 @@ public final class ExpenseRepository {
         expense.payment = draft.payment ?? .cash
         expense.category = draft.category ?? .other
         expense.invoiceNumber = draft.invoiceNumber
+        expense.receiptNumber = draft.receiptNumber
         if let note { expense.note = note }
 
         for item in expense.items { context.delete(item) }
@@ -164,6 +166,70 @@ public final class ExpenseRepository {
             sortBy: [SortDescriptor(\.dayKey, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
         )
         return try context.fetch(descriptor)
+    }
+
+    // MARK: - Duplicates
+
+    /// A saved expense that looks like the draft being saved.
+    public struct PossibleDuplicate {
+        public enum Strength: Comparable, Sendable {
+            /// Same store, day, total and time (or a time missing on one side).
+            case likely
+            /// Same receipt number, store and day: almost certainly the same receipt.
+            case strong
+        }
+
+        public let expense: Expense
+        public let strength: Strength
+    }
+
+    /// Saved expenses the draft may duplicate, strong matches first, then newest first.
+    ///
+    /// - **Strong:** same receipt number (leading zeros ignored), same store, same day.
+    /// - **Likely:** same store, same day, same total, and the same time or a time missing on one side.
+    ///
+    /// "Same store" compares invoice numbers when both sides have one, otherwise the normalized
+    /// store names (exact, no fuzzy matching; an empty name matches nothing). The invoice number
+    /// alone is never enough: it is the same on every receipt from a shop.
+    ///
+    /// - Parameter id: an expense to leave out, so editing an expense never matches itself.
+    public func possibleDuplicates(of draft: ReceiptDraft, excluding id: UUID? = nil) throws -> [PossibleDuplicate] {
+        guard let dayKey = draft.dayKey else { return [] }
+        let descriptor = FetchDescriptor<Expense>(
+            predicate: #Predicate { $0.dayKey == dayKey },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try context.fetch(descriptor)
+            .filter { $0.id != id }
+            .compactMap { expense in
+                Self.duplicateStrength(of: draft, against: expense).map { PossibleDuplicate(expense: expense, strength: $0) }
+            }
+            .sorted { $0.strength > $1.strength }   // stable: keeps newest first within a strength
+    }
+
+    static func duplicateStrength(of draft: ReceiptDraft, against expense: Expense) -> PossibleDuplicate.Strength? {
+        guard draft.dayKey == expense.dayKey,
+              isSameStore(draft.invoiceNumber, draft.storeName, expense.invoiceNumber, expense.storeName)
+        else { return nil }
+
+        if let a = draft.receiptNumber.flatMap(ReceiptNumberParser.comparisonKey),
+           let b = expense.receiptNumber.flatMap(ReceiptNumberParser.comparisonKey), a == b {
+            return .strong
+        }
+        let sameTime = draft.time == nil || expense.time == nil || draft.time == expense.time
+        if draft.totalYen == expense.totalYen, sameTime {
+            return .likely
+        }
+        return nil
+    }
+
+    private static func isSameStore(_ invoiceA: String?, _ nameA: String?, _ invoiceB: String?, _ nameB: String?) -> Bool {
+        if let invoiceA, let invoiceB, !invoiceA.isEmpty, !invoiceB.isEmpty {
+            return invoiceA == invoiceB
+        }
+        let a = TextNormalizer.normalizeLine(nameA ?? "")
+        let b = TextNormalizer.normalizeLine(nameB ?? "")
+        return !a.isEmpty && a.unicodeScalars.elementsEqual(b.unicodeScalars)
     }
 
     // MARK: - Helpers

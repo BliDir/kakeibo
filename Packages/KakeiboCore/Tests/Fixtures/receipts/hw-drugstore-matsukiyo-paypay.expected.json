@@ -8,6 +8,7 @@
   "payment": "qrPay",
   "category": "household",
   "invoiceNumber": "T3333333333333",
+  "receiptNumber": null,
   "items": [
     {
       "name": "化粧水",

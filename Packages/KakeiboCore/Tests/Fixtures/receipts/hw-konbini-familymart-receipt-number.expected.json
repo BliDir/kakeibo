@@ -1,0 +1,24 @@
+{
+  "storeName": "ファミリーマート",
+  "dayKey": "2026-11-02",
+  "time": "19:41",
+  "totalYen": 360,
+  "tax10Yen": null,
+  "tax8Yen": 26,
+  "payment": "cash",
+  "category": "groceries",
+  "invoiceNumber": "T2468024680246",
+  "receiptNumber": "02/0381",
+  "items": [
+    {
+      "name": "ファミチキ",
+      "priceYen": 230,
+      "isReducedRate": true
+    },
+    {
+      "name": "お茶",
+      "priceYen": 130,
+      "isReducedRate": true
+    }
+  ]
+}

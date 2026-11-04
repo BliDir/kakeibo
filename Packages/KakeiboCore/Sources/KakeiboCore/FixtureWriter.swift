@@ -25,7 +25,8 @@ public enum FixtureWriter {
     }
 
     /// The `.expected.json` file, pretty-printed with sorted keys.
-    public static func expectedJSON(from draft: ReceiptDraft, scannedOn: Date) throws -> Data {
+    /// - Parameter lines: the OCR lines, so a receipt number the `.txt` masks is masked here too.
+    public static func expectedJSON(from draft: ReceiptDraft, scannedOn: Date, lines: [String] = []) throws -> Data {
         func value(_ v: Any?) -> Any { v ?? NSNull() }
         let object: [String: Any] = [
             "scannedOn": DayKey.make(from: scannedOn),
@@ -38,6 +39,7 @@ public enum FixtureWriter {
             "payment": value(draft.payment?.rawValue),
             "category": value(draft.category?.rawValue),
             "invoiceNumber": value(draft.invoiceNumber),
+            "receiptNumber": value(draft.receiptNumber.map { maskedReceiptNumber($0, lines: lines) }),
             "items": draft.items.map {
                 ["name": $0.name, "priceYen": $0.priceYen, "isReducedRate": $0.isReducedRate] as [String: Any]
             },
@@ -75,6 +77,16 @@ public enum FixtureWriter {
             if storeContactWords.contains(where: upper.contains) || line.contains("登録番号") { return line }
             return maskLongNumbers(line)
         }
+    }
+
+    /// The receipt number as the redacted `.txt` shows it. Lines with 取引 or 伝票 are masked,
+    /// so a number read from one is expected as zeros.
+    static func maskedReceiptNumber(_ number: String, lines: [String]) -> String {
+        let original = TextNormalizer.normalize(lines: lines)
+        let redacted = TextNormalizer.normalize(lines: redact(lines))
+        let printed = number.split(separator: "/").last.map(String.init) ?? number
+        let wasMasked = zip(original, redacted).contains { $0.contains(printed) && !$1.contains(printed) }
+        return wasMasked ? String(number.map { $0.isASCII && $0.isNumber ? "0" : $0 }) : number
     }
 
     private static let longNumber = try! NSRegularExpression(

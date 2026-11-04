@@ -2,9 +2,10 @@ import Foundation
 
 /// Turns OCR lines into a `ReceiptDraft`. Rule-based, works on every iPhone, no network.
 ///
-/// Steps: `TextNormalizer`, then `StoreClassifier`, `DateTimeParser`, `TotalExtractor`,
-/// `TaxExtractor` (given the total), `InvoiceNumberParser` and `PaymentMethodDetector`.
-/// Each field gets the confidence its parser reported. Item lines arrive in T-17.
+/// Steps: `TextNormalizer`, then `StoreClassifier`, `DateTimeParser`, `ItemParser`,
+/// `TotalExtractor` (given the item prices, for the item-sum check), `TaxExtractor` (given the
+/// total), `InvoiceNumberParser` and `PaymentMethodDetector`.
+/// Each field gets the confidence its parser reported.
 public enum ReceiptParser {
     /// - Parameters:
     ///   - lines: raw OCR lines, one per receipt row, top to bottom.
@@ -32,10 +33,18 @@ public enum ReceiptParser {
             confidences[.time] = .medium
         }
 
-        let total = TotalExtractor.extract(lines: lines)
+        let items = ItemParser.parse(lines: lines)
+        let total = TotalExtractor.extract(lines: lines, itemPrices: items.map(\.priceYen))
         if let total {
             draft.totalYen = total.totalYen
             confidences[.totalYen] = total.confidence
+        }
+        if !items.isEmpty {
+            draft.items = items
+            // Items that add up to the total or the subtotal were read completely.
+            let sum = items.reduce(0) { $0 + $1.priceYen }
+            let adds = sum == total?.totalYen || sum == total?.subtotalYen
+            confidences[.items] = adds ? .high : .medium
         }
 
         if let tax = TaxExtractor.extract(lines: lines, totalYen: total?.totalYen) {

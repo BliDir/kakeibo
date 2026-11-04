@@ -7,5 +7,27 @@
   "tax8Yen": 48,
   "payment": "credit",
   "category": "groceries",
-  "invoiceNumber": "T2222222222222"
+  "invoiceNumber": "T2222222222222",
+  "items": [
+    {
+      "name": "牛乳",
+      "priceYen": 198,
+      "isReducedRate": true
+    },
+    {
+      "name": "食パン",
+      "priceYen": 158,
+      "isReducedRate": true
+    },
+    {
+      "name": "たまご 10個",
+      "priceYen": 248,
+      "isReducedRate": true
+    },
+    {
+      "name": "洗剤",
+      "priceYen": 398,
+      "isReducedRate": false
+    }
+  ]
 }

@@ -7,5 +7,17 @@
   "tax8Yen": null,
   "payment": "cash",
   "category": "kids",
-  "invoiceNumber": "T1212121212121"
+  "invoiceNumber": "T1212121212121",
+  "items": [
+    {
+      "name": "ベビー肌着",
+      "priceYen": 799,
+      "isReducedRate": false
+    },
+    {
+      "name": "おしりふき",
+      "priceYen": 398,
+      "isReducedRate": false
+    }
+  ]
 }

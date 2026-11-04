@@ -8,5 +8,17 @@
   "tax8Yen": null,
   "payment": "cash",
   "category": "other",
-  "invoiceNumber": null
+  "invoiceNumber": null,
+  "items": [
+    {
+      "name": "ブレンドコーヒー",
+      "priceYen": 550,
+      "isReducedRate": false
+    },
+    {
+      "name": "チーズケーキ",
+      "priceYen": 500,
+      "isReducedRate": false
+    }
+  ]
 }

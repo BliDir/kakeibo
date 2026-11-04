@@ -7,5 +7,17 @@
   "tax8Yen": null,
   "payment": "qrPay",
   "category": "dining",
-  "invoiceNumber": null
+  "invoiceNumber": null,
+  "items": [
+    {
+      "name": "牛丼並盛",
+      "priceYen": 450,
+      "isReducedRate": false
+    },
+    {
+      "name": "みそ汁",
+      "priceYen": 80,
+      "isReducedRate": false
+    }
+  ]
 }

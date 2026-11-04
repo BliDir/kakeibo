@@ -7,7 +7,8 @@ import Testing
 /// Fixture format:
 /// - `<name>.txt`: OCR text, one receipt row per line.
 /// - `<name>.expected.json`: expected fields. A field left out is not scored;
-///   a field set to `null` is scored and expects nothing to be found.
+///   a field set to `null` is scored and expects nothing to be found. `items` (name, priceYen,
+///   isReducedRate) is scored as item count and as item prices with their tax rate, in order.
 ///   Optional `scannedOn` (`yyyy-MM-dd`) is the scan date; it defaults to `dayKey`.
 @Suite struct ReceiptAccuracyTests {
     /// The M1 gate. Never lower this to make a change pass; fix the parser instead.
@@ -24,6 +25,8 @@ import Testing
         ("payment", "payment"),
         ("invoiceNumber", "invoice"),
         ("category", "category"),
+        ("itemCount", "item count"),
+        ("itemPrices", "item prices"),
     ]
 
     @Test func fixtureAccuracy() throws {
@@ -37,8 +40,15 @@ import Testing
         for fixture in fixtures {
             let draft = ReceiptParser.parse(text: fixture.text, today: fixture.scannedOn)
             let actual = Self.values(of: draft)
+            var expectedValues = fixture.expected
+            if let items = fixture.expected["items"] as? [[String: Any]] {
+                expectedValues["itemCount"] = NSNumber(value: items.count)
+                expectedValues["itemPrices"] = Self.itemKey(items.map {
+                    (($0["priceYen"] as? NSNumber)?.intValue ?? 0, ($0["isReducedRate"] as? Bool) ?? false)
+                })
+            }
             for (key, label) in Self.fields {
-                guard let expected = fixture.expected[key] else { continue }
+                guard let expected = expectedValues[key] else { continue }
                 scored[key, default: 0] += 1
                 let got = actual[key] ?? nil
                 if Self.matches(expected, got) {
@@ -83,7 +93,14 @@ import Testing
             "payment": draft.payment?.rawValue,
             "invoiceNumber": draft.invoiceNumber,
             "category": draft.category?.rawValue,
+            "itemCount": draft.items.count,
+            "itemPrices": itemKey(draft.items.map { ($0.priceYen, $0.isReducedRate) }),
         ]
+    }
+
+    /// Item prices and tax rates in order, as one comparable string: "160※ 298※ 200".
+    static func itemKey(_ items: [(Int, Bool)]) -> String {
+        items.map { "\($0.0)\($0.1 ? "※" : "")" }.joined(separator: " ")
     }
 
     static func matches(_ expected: Any, _ actual: Any?) -> Bool {

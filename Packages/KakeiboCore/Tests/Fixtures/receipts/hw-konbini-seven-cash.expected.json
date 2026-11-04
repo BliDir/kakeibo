@@ -7,5 +7,22 @@
   "tax8Yen": 33,
   "payment": "cash",
   "category": "groceries",
-  "invoiceNumber": "T1111111111111"
+  "invoiceNumber": "T1111111111111",
+  "items": [
+    {
+      "name": "おにぎり鮭",
+      "priceYen": 160,
+      "isReducedRate": true
+    },
+    {
+      "name": "サンドイッチ",
+      "priceYen": 298,
+      "isReducedRate": true
+    },
+    {
+      "name": "ホットコーヒー L",
+      "priceYen": 200,
+      "isReducedRate": false
+    }
+  ]
 }

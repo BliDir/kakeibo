@@ -141,6 +141,15 @@ private let today = Date(timeIntervalSince1970: 1_793_674_800)
         #expect(merged.items.map(\.nameEn) == ["Milk", nil])   // price differs, so no match
     }
 
+    @Test func englishNamesMatchDespiteRateMarks() {
+        var d = draft(total: 554, totalConfidence: .high)
+        d.items = [LineItemDraft(name: "牛乳", priceYen: 198, isReducedRate: true),
+                   LineItemDraft(name: "ホットコーヒー L", priceYen: 356)]
+        let model = ModelReceipt(items: [LineItemDraft(name: "牛乳※", nameEn: "Milk", priceYen: 198),
+                                         LineItemDraft(name: "ホットコーヒーL", nameEn: "Hot coffee (L)", priceYen: 356)])
+        #expect(RefinementMerger.merge(draft: d, model: model).items.map(\.nameEn) == ["Milk", "Hot coffee (L)"])
+    }
+
     @Test func emptyModelAnswerChangesNothing() {
         let d = draft(total: 754, totalConfidence: .medium)
         #expect(RefinementMerger.merge(draft: d, model: ModelReceipt()) == d)

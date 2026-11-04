@@ -7,5 +7,27 @@
   "tax8Yen": 47,
   "payment": "icCard",
   "category": "groceries",
-  "invoiceNumber": "T8888888888888"
+  "invoiceNumber": "T8888888888888",
+  "items": [
+    {
+      "name": "豚こま切落し",
+      "priceYen": 498,
+      "isReducedRate": true
+    },
+    {
+      "name": "値引",
+      "priceYen": -100,
+      "isReducedRate": true
+    },
+    {
+      "name": "キャベツ",
+      "priceYen": 198,
+      "isReducedRate": true
+    },
+    {
+      "name": "ティッシュ 5箱",
+      "priceYen": 328,
+      "isReducedRate": false
+    }
+  ]
 }

@@ -7,5 +7,17 @@
   "tax8Yen": 28,
   "payment": "icCard",
   "category": "groceries",
-  "invoiceNumber": "T6666666666666"
+  "invoiceNumber": "T6666666666666",
+  "items": [
+    {
+      "name": "からあげクン",
+      "priceYen": 238,
+      "isReducedRate": true
+    },
+    {
+      "name": "緑茶 500ml",
+      "priceYen": 140,
+      "isReducedRate": true
+    }
+  ]
 }

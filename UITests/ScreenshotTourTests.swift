@@ -11,6 +11,8 @@ import XCTest
 ///       -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
 ///       -only-testing:KakeiboUITests/ScreenshotTourTests -resultBundlePath tour.xcresult
 ///     xcrun xcresulttool export attachments --path tour.xcresult --output-path tour
+///
+/// For dark mode, add `TEST_RUNNER_KAKEIBO_TOUR_DARK=1`: every screen is then taken in dark mode.
 final class ScreenshotTourTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = true
@@ -129,6 +131,9 @@ final class ScreenshotTourTests: XCTestCase {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
+        if ProcessInfo.processInfo.environment["KAKEIBO_TOUR_DARK"] == "1" {
+            app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = "dark"
+        }
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
         if scan {
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] =

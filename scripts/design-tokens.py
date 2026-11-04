@@ -42,6 +42,8 @@ COLORS = {
     "ReducedRateFill": ("E2EFE6", "1E3A2A"),
     "ReducedRateText": ("2D6A45", "92D6AC"),
     "StandardRateText": ("4A505C", "B9BFCB"),
+    # Brand: the wordmark is dark ink green on ivory, so it keeps a light plate in dark mode too.
+    "LogoPlate": ("F7F4E9", "F7F4E9"),
     # Overlays
     "Scrim": ("00000059", "0000008C"),       # behind confirm panels
     "Shadow": ("141C2D2E", "00000080"),

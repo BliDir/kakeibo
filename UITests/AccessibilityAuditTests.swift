@@ -1,7 +1,10 @@
 import XCTest
 
 /// Runs Xcode's accessibility audit (the same checks as Accessibility Inspector) on the main
-/// screens, in light and dark mode. Any issue fails the test, with the element and what is wrong.
+/// screens. Any issue fails the test, with the element and what is wrong.
+///
+/// Each screen is audited in light and in dark mode: the app is launched once per mode with
+/// `KAKEIBO_COLOR_SCHEME` (switching the simulator's appearance does not reach the app in tests).
 ///
 /// Two checks are handled differently, on purpose:
 /// - Contrast is not audited here. The audit samples screen pixels over each element's whole
@@ -15,78 +18,80 @@ import XCTest
 final class AccessibilityAuditTests: XCTestCase {
     override func setUp() {
         continueAfterFailure = true
-        XCUIDevice.shared.appearance = .light
     }
 
     @MainActor func testLedger() throws {
-        let app = launch(seed: true)
-        XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
-        try audit(app, "ledger")
+        try auditInBothModes("ledger", seed: true) { app in
+            XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
+        }
     }
 
     @MainActor func testEmptyLedger() throws {
-        let app = launch()
-        XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
-        try audit(app, "empty ledger")
+        try auditInBothModes("empty ledger") { app in
+            XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
+        }
     }
 
     @MainActor func testSummary() throws {
-        let app = launch(seed: true)
-        app.tabBars.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.staticTexts["summary.total"].waitForExistence(timeout: 5))
-        try audit(app, "summary")
+        try auditInBothModes("summary", seed: true) { app in
+            app.tabBars.buttons.element(boundBy: 1).tap()
+            XCTAssertTrue(app.staticTexts["summary.total"].waitForExistence(timeout: 5))
+        }
     }
 
     @MainActor func testSettings() throws {
-        let app = launch()
-        app.tabBars.buttons.element(boundBy: 2).tap()
-        XCTAssertTrue(app.buttons["settings.language"].waitForExistence(timeout: 5))
-        try audit(app, "settings")
+        try auditInBothModes("settings") { app in
+            app.tabBars.buttons.element(boundBy: 2).tap()
+            XCTAssertTrue(app.buttons["settings.language"].waitForExistence(timeout: 5))
+        }
     }
 
     @MainActor func testEditExpense() throws {
-        let app = launch(seed: true)
-        let row = app.buttons["ledger.row"].firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 5))
-        row.tap()
-        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
-        try audit(app, "edit")
+        try auditInBothModes("edit", seed: true) { app in
+            let row = app.buttons["ledger.row"].firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 5))
+            row.tap()
+            XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
+        }
     }
 
     @MainActor func testManualEntry() throws {
-        let app = launch()
-        app.buttons["ledger.add"].tap()
-        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
-        try audit(app, "manual entry")
+        try auditInBothModes("manual entry") { app in
+            app.buttons["ledger.add"].tap()
+            XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
+        }
     }
 
     @MainActor func testScanReview() throws {
-        let app = launch(scan: true)
-        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
-        try audit(app, "scan review")
+        try auditInBothModes("scan review", scan: true) { app in
+            XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        }
     }
 
     // MARK: Helpers
 
+    /// Launches in light, opens the screen, audits; then the same in dark.
+    @MainActor
+    private func auditInBothModes(_ screen: String, seed: Bool = false, scan: Bool = false,
+                                  open: (XCUIApplication) -> Void) throws {
+        for scheme in ["light", "dark"] {
+            let app = launch(seed: seed, scan: scan, colorScheme: scheme)
+            open(app)
+            try audit(app, "\(screen), \(scheme)")
+            app.terminate()
+        }
+    }
+
     /// Audits the current screen. `KAKEIBO_AUDIT_LOG_ONLY=1` (as `TEST_RUNNER_…`) logs issues without failing.
     @MainActor
     private func audit(_ app: XCUIApplication, _ screen: String) throws {
-        try audit(app, screen, mode: "light")
-        XCUIDevice.shared.appearance = .dark
-        defer { XCUIDevice.shared.appearance = .light }
-        sleep(1)   // let the app redraw in dark mode
-        try audit(app, screen, mode: "dark")
-    }
-
-    @MainActor
-    private func audit(_ app: XCUIApplication, _ screen: String, mode: String) throws {
         let logOnly = ProcessInfo.processInfo.environment["KAKEIBO_AUDIT_LOG_ONLY"] == "1"
         try app.performAccessibilityAudit(for: Self.auditTypes) { issue in
             if issue.auditType == .textClipped, issue.element.map({ Self.isSpokenAmount($0.label) }) ?? true {
                 return true
             }
             let element = issue.element.map { "\($0.elementType.rawValue) '\($0.identifier)' '\($0.label)'" } ?? "none"
-            let line = "AUDIT [\(screen), \(mode)] \(issue.auditType): \(issue.compactDescription) — \(element)"
+            let line = "AUDIT [\(screen)] \(issue.auditType): \(issue.compactDescription) — \(element)"
             print(line)
             if !logOnly { XCTFail(line) }
             return true   // handled: keep auditing so every issue is reported
@@ -101,8 +106,9 @@ final class AccessibilityAuditTests: XCTestCase {
     }
 
     @MainActor
-    private func launch(seed: Bool = false, scan: Bool = false) -> XCUIApplication {
+    private func launch(seed: Bool = false, scan: Bool = false, colorScheme: String) -> XCUIApplication {
         let app = XCUIApplication()
+        app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = colorScheme
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }

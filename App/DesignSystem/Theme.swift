@@ -45,6 +45,8 @@ enum Theme {
 
     // Overlays
     /// Dims the screen behind a confirm panel.
+    /// Ivory behind the Kakeibo wordmark, in light and dark (the logo's lettering is dark).
+    static let logoPlate = Color(.logoPlate)
     static let scrim = Color(.scrim)
     static let shadow = Color(.shadow)
     /// Behind a full-screen photo, in both modes.

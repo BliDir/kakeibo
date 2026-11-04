@@ -1,23 +1,64 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "NSCameraUsageDescription": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kakeibo uses the camera to scan receipts. Photos stay on this iPhone."
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Bundle display name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kakeibo Scanner"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kakeibo"
+          }
+        }
+      }
+    },
+    "NSCameraUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kakeibo uses the camera to scan receipts. Receipts are read on this iPhone, and the photos stay on it."
           }
         },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "レシートを撮影するためにカメラを使います。写真はこのiPhoneの中にだけ保存されます。"
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レシートを撮影するためにカメラを使います。レシートはこのiPhone上で読み取り、写真もこのiPhoneの中にだけ保存されます。"
+          }
+        }
+      }
+    },
+    "NSPhotoLibraryUsageDescription" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a photo of a receipt to read it. Receipts are read on this iPhone, and nothing is uploaded."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "レシートの写真を選んで読み取ります。読み取りはこのiPhone上で行い、何もアップロードしません。"
           }
         }
       }
     }
   },
-  "version": "1.0"
+  "version" : "1.0"
 }

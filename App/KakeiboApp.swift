@@ -1,13 +1,14 @@
 import SwiftUI
-import KakeiboCore
-import KakeiboScan
-import KakeiboStore
 
 @main
 struct KakeiboApp: App {
+    @State private var services = AppServices.make()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ContentView(services: services)
+                .modelContainer(services.container)
+                .task { services.cleanUp() }
         }
     }
 }

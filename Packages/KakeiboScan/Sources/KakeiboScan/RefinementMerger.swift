@@ -12,8 +12,9 @@ import KakeiboCore
 ///   the model's store name is run through the chain dictionary.
 /// - Items: the model's items are used when the parser has none; otherwise the parser's
 ///   items are kept and the model only adds missing English names.
-/// - Model values that make no sense (bad dates, non-positive totals, tax at or above the
-///   total) are ignored.
+/// - Model values that make no sense (bad dates, non-positive totals, zero tax, tax at or above
+///   the total) are ignored, and so are "items" that are really summary lines (小計, 合計, お預り,
+///   お釣り, tax, points): the model sometimes lists them.
 public enum RefinementMerger {
     public static func merge(draft: ReceiptDraft, model: ModelReceipt) -> ReceiptDraft {
         var result = draft
@@ -49,7 +50,8 @@ public enum RefinementMerger {
             result.confidences[.dayKey] = .medium
         }
         func validTax(_ value: Int?) -> Int? {
-            guard let value, value >= 0 else { return nil }
+            // A tax of 0 means the receipt has no such rate; leave the field empty.
+            guard let value, value > 0 else { return nil }
             if let total, value >= total { return nil }
             return value
         }
@@ -68,7 +70,10 @@ public enum RefinementMerger {
         }
 
         // Items.
-        let modelItems = model.items.filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
+        let modelItems = model.items.filter { item in
+            let name = item.name.trimmingCharacters(in: .whitespaces)
+            return !name.isEmpty && !summaryWords.contains { name.contains($0) }
+        }
         if draft.items.isEmpty {
             if !modelItems.isEmpty {
                 result.items = modelItems
@@ -86,4 +91,8 @@ public enum RefinementMerger {
         }
         return result
     }
+
+    /// Words that mark a summary line, never an item. Discounts (値引, 割引) are items.
+    static let summaryWords = ["小計", "合計", "お預", "預り", "預かり", "お釣", "釣銭", "おつり",
+                               "消費税", "内税", "外税", "税等", "対象", "ポイント", "残高"]
 }

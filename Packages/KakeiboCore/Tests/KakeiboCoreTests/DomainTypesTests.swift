@@ -123,3 +123,22 @@ import KakeiboCore
         #expect(try JSONDecoder().decode([ExpenseSource].self, from: data) == ExpenseSource.allCases)
     }
 }
+
+@Suite struct DayKeyTests {
+    @Test func validation() {
+        #expect(DayKey.isValid("2026-11-03"))
+        #expect(DayKey.isValid("2028-02-29"))
+        for bad in ["2026-13-01", "2026-02-30", "2026/11/03", "2026-1-3", ""] {
+            #expect(!DayKey.isValid(bad))
+        }
+    }
+
+    @Test func roundTripsThroughDateInTokyo() throws {
+        let date = try #require(DayKey.date(from: "2026-11-03"))
+        #expect(DayKey.make(from: date) == "2026-11-03")
+        // 23:30 UTC on Nov 2 is 08:30 on Nov 3 in Tokyo.
+        #expect(DayKey.make(from: Date(timeIntervalSince1970: 1_793_662_200)) == "2026-11-03")
+        #expect(DayKey.date(from: "bad") == nil)
+        #expect(DayKey.month(of: "2026-11-03") == "2026-11")
+    }
+}

@@ -1,10 +1,13 @@
 import KakeiboCore
 import KakeiboScan
+import KakeiboStore
 import SwiftUI
 
-/// Full-screen scan flow: progress, then an error or the result.
+/// Full-screen scan flow: progress, then an error or the review screen.
 struct ScanFlowView: View {
     let session: ScanSession
+    let services: AppServices
+    let onSaved: (Int) -> Void
 
     var body: some View {
         ZStack {
@@ -18,7 +21,7 @@ struct ScanFlowView: View {
                 ScanErrorView(error: error, retry: retry, close: session.cancel)
             case .finished:
                 if let result = session.result {
-                    ScanResultPreview(result: result, done: session.reset)
+                    ScanReviewHost(session: session, result: result, services: services, onSaved: onSaved)
                 }
             }
         }
@@ -31,6 +34,50 @@ struct ScanFlowView: View {
             session.start(image: image, source: source)
         } else {
             session.cancel()
+        }
+    }
+}
+
+/// The review screen for a finished scan. Refines the draft in the background while the
+/// user checks it; leaving the screen cancels the refinement.
+private struct ScanReviewHost: View {
+    let session: ScanSession
+    let result: ExtractionResult
+    let services: AppServices
+    let onSaved: (Int) -> Void
+
+    @State private var form: ReviewForm
+
+    init(session: ScanSession, result: ExtractionResult, services: AppServices, onSaved: @escaping (Int) -> Void) {
+        self.session = session
+        self.result = result
+        self.services = services
+        self.onSaved = onSaved
+        let photo: ReviewForm.PendingPhoto? = session.imageData.map { .data($0) } ?? session.image.map { .image($0) }
+        _form = State(initialValue: ReviewForm(
+            scan: result.draft, ocrText: result.ocrText, photo: photo, refining: services.pipeline.canRefine
+        ))
+    }
+
+    var body: some View {
+        ReviewView(form: form, services: services) { outcome in
+            switch outcome {
+            case .saved(let total):
+                session.reset()
+                onSaved(total)
+            case .deleted, .discarded:
+                session.cancel()
+            }
+        }
+        .task {
+            guard form.isRefining else { return }
+            let refined = await services.pipeline.refine(result)
+            guard !Task.isCancelled else { return }
+            if refined != result.draft {
+                form.applyRefinement(refined)
+            } else {
+                form.endRefinement()
+            }
         }
     }
 }
@@ -191,43 +238,5 @@ struct ScanErrorView: View {
 
     private var message: LocalizedStringKey {
         error == .noTextFound ? "scan.error.noText.message" : "scan.error.unreadable.message"
-    }
-}
-
-/// Temporary result screen. T-42 replaces it with the review and edit screen.
-struct ScanResultPreview: View {
-    let result: ExtractionResult
-    let done: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("scan.result.title").font(.title2.bold()).foregroundStyle(Theme.text)
-            VStack(alignment: .leading, spacing: 12) {
-                row("scan.result.store", result.draft.storeName)
-                row("scan.result.date", result.draft.dayKey)
-                row("scan.result.total", result.draft.totalYen.map(Yen.format), id: "scan.result.total")
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
-            Spacer()
-            Button(action: done) { Text("scan.result.done").frame(maxWidth: .infinity) }
-                .buttonStyle(PillButtonStyle())
-                .accessibilityIdentifier("scan.result.done")
-        }
-        .padding(24)
-    }
-
-    private func row(_ label: LocalizedStringKey, _ value: String?, id: String? = nil) -> some View {
-        HStack {
-            Text(label).foregroundStyle(Theme.secondaryText)
-            Spacer()
-            Group {
-                if let value { Text(verbatim: value) } else { Text("scan.result.notFound") }
-            }
-            .font(.body.monospacedDigit().weight(.semibold))
-            .foregroundStyle(Theme.text)
-            .accessibilityIdentifier(id ?? "")
-        }
     }
 }

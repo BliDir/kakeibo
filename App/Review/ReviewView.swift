@@ -17,6 +17,10 @@ struct ReviewView: View {
     @State private var confirm: ConfirmKind?
     @State private var showPhoto = false
     @State private var saveFailed = false
+    #if DEBUG
+    @State private var fixtureFiles: FixtureFiles?
+    struct FixtureFiles: Identifiable { let id = UUID(); let urls: [URL] }
+    #endif
     @FocusState private var amountFocused: Bool
 
     enum ConfirmKind { case discard, delete }
@@ -48,6 +52,11 @@ struct ReviewView: View {
         .fullScreenCover(isPresented: $showPhoto) {
             PhotoZoomView(image: photoImage)
         }
+        #if DEBUG
+        .sheet(item: $fixtureFiles) { files in
+            FixtureShareSheet(urls: files.urls).presentationDetents([.medium])
+        }
+        #endif
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("review")
     }
@@ -64,6 +73,18 @@ struct ReviewView: View {
                     .foregroundStyle(Theme.accent)
                     .accessibilityIdentifier("review.cancel")
                 Spacer()
+                #if DEBUG
+                if form.ocrText?.isEmpty == false {
+                    Button {
+                        if let urls = try? FixtureCapture.makeFiles(from: form) { fixtureFiles = FixtureFiles(urls: urls) }
+                    } label: {
+                        Image(systemName: "ladybug").frame(minWidth: 44, minHeight: 44)
+                    }
+                    .foregroundStyle(Theme.secondaryText)
+                    .accessibilityLabel(Text(verbatim: "Save as fixture"))
+                    .accessibilityIdentifier("review.fixture")
+                }
+                #endif
             }
         }
         .padding(.horizontal, 12)

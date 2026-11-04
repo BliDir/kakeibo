@@ -220,6 +220,28 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertFalse(app.buttons["export.month"].exists)
     }
 
+    // MARK: Debug fixture capture
+
+    @MainActor
+    func testSaveAsFixtureOffersTextJSONAndImage() {
+        let app = launch(scan: true)
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        app.buttons["review.fixture"].tap()
+        XCTAssertTrue(app.buttons["fixture.share"].waitForExistence(timeout: 5))
+        let names = app.staticTexts.allElementsBoundByIndex.map(\.label)
+        XCTAssertTrue(names.contains { $0.hasPrefix("real-") && $0.hasSuffix(".txt") })
+        XCTAssertTrue(names.contains { $0.hasPrefix("real-") && $0.hasSuffix(".expected.json") })
+        XCTAssertTrue(names.contains { $0.hasPrefix("real-") && $0.hasSuffix(".jpg") })
+    }
+
+    @MainActor
+    func testManualEntryHasNoFixtureButton() {
+        let app = launch()
+        app.buttons["ledger.add"].tap()
+        XCTAssertTrue(app.buttons["review.cancel"].waitForExistence(timeout: 3))
+        XCTAssertFalse(app.buttons["review.fixture"].exists)
+    }
+
     // MARK: Helpers
 
     /// Launches with an empty in-memory ledger in English, without the on-device model.

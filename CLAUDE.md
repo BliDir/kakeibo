@@ -110,6 +110,15 @@ The accuracy test (`ReceiptAccuracyTests`) prints per-field accuracy and fails i
    - Optional `items`: `[{"name": "牛乳", "priceYen": 198, "isReducedRate": true}, …]` in receipt order, discounts negative right after their item. Scored as item count and as item prices with their rate (names are not scored). Leave it out for receipts without item lines (fuel, parking).
 4. Run `swift test --package-path Packages/KakeiboCore --filter ReceiptAccuracyTests` and read the table and the "Misses" list. If a miss is a parser bug, fix the parser and add a unit test for the case.
 
+### Capturing a real receipt (Debug builds)
+
+1. Scan or choose the receipt in a Debug build on the iPhone.
+2. On "Check and save", **correct every field** against the paper receipt. The JSON is written from the form, so it is the expected answer; an uncorrected mistake becomes a wrong test. Items cannot be edited in the form yet: fix them in the JSON.
+3. Tap the ladybug (Save as fixture), then Share fixture files → AirDrop to the Mac. You get `real-<timestamp>.txt`, `.expected.json` and `.jpg`.
+4. Move the `.txt` and `.expected.json` into `Packages/KakeiboCore/Tests/Fixtures/receipts/`. Keep the `.jpg` outside the repo (`*.jpg` under `Tests/Fixtures/` is git-ignored); it is only for re-running OCR later.
+5. Open the `.txt` and check for personal details. Card, member, approval, slip and terminal numbers and other 8+ digit runs are masked automatically; names or anything else are not.
+6. Run the accuracy test (step 4 above), then commit the two files in one commit per batch.
+
 ## Design
 
 Screen designs: the "Kakeibo iOS App Screens" canvas on claude.ai (Ledger, Reading receipt, Check and save, Monthly summary, Settings). Visual language: cool grey ground, white surfaces, indigo accent (藍), vermilion (朱) for destructive actions, monospaced digits for yen amounts, every Japanese label paired with English.

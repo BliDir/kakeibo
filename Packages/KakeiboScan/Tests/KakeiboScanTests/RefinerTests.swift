@@ -169,8 +169,8 @@ private let today = Date(timeIntervalSince1970: 1_793_674_800)
         #expect(await ModelRefiner(model: MockModel(nil)).refine(lines: Self.lines, draft: draft) == draft)
     }
 
-    @Test func defaultTimeLimitIsTenSeconds() {
-        #expect(ModelRefiner.defaultTimeLimit == .seconds(10))
+    @Test func defaultTimeLimitAllowsBackgroundRefinement() {
+        #expect(ModelRefiner.defaultTimeLimit == .seconds(60))
     }
 
     @Test func noopReturnsDraft() async {

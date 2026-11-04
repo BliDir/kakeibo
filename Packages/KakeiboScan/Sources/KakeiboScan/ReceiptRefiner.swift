@@ -48,8 +48,12 @@ public struct ModelRefiner: ReceiptRefiner {
     public let model: any ReceiptModel
     public let timeLimit: Duration
 
-    /// The design doc's limit: after this, the parser draft is used unchanged.
-    public static let defaultTimeLimit: Duration = .seconds(10)
+    /// After this, the refinement is abandoned and the parser draft is used unchanged.
+    ///
+    /// Refinement runs in the background while the user reviews the parser draft, so this is a
+    /// cancel, not a wait. The on-device model took 13–15 s for a 3-item receipt and 43 s for
+    /// 40 items when measured (2026-11-04), so the design doc's original 10 s was too short.
+    public static let defaultTimeLimit: Duration = .seconds(60)
 
     public init(model: any ReceiptModel, timeLimit: Duration = ModelRefiner.defaultTimeLimit) {
         self.model = model

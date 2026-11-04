@@ -2,9 +2,34 @@
   "configurations" : [
     {
       "id" : "6C1D2B7E-4F3A-4E8B-9A51-2D7C0B9E1A01",
-      "name" : "Default",
+      "name" : "English",
       "options" : {
-
+        "language" : "en",
+        "region" : "JP",
+        "environmentVariableEntries" : [
+          {
+            "key" : "KAKEIBO_TEST_LANGUAGE",
+            "value" : "en"
+          }
+        ]
+      }
+    },
+    {
+      "id" : "6C1D2B7E-4F3A-4E8B-9A51-2D7C0B9E1A02",
+      "name" : "Japanese",
+      "options" : {
+        "language" : "ja",
+        "region" : "JP",
+        "environmentVariableEntries" : [
+          {
+            "key" : "KAKEIBO_TEST_LANGUAGE",
+            "value" : "ja"
+          },
+          {
+            "key" : "KAKEIBO_SMOKE_ONLY",
+            "value" : "1"
+          }
+        ]
       }
     }
   ],

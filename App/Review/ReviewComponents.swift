@@ -63,7 +63,10 @@ struct CategoryChip: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Circle().fill(category.color).frame(width: 8, height: 8)
+                Image(systemName: category.symbolName)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(category.color)
+                    .accessibilityHidden(true)
                 Text(verbatim: "\(category.englishName) \(category.japaneseName)")
             }
             .font(.footnote.weight(selected ? .bold : .regular))
@@ -142,7 +145,7 @@ struct YenRow: View {
                     .frame(maxWidth: 90)
                     .accessibilityIdentifier(id)
             }
-            .font(.system(.subheadline, design: .monospaced))
+            .font(.amountSmall)
         }
         .padding(.vertical, 10)
     }
@@ -167,7 +170,7 @@ struct ItemRow: View {
                 .background(item.isReducedRate ? Theme.reducedRateFill : Theme.divider, in: RoundedRectangle(cornerRadius: 6))
                 .foregroundStyle(item.isReducedRate ? Theme.reducedRateText : Theme.standardRateText)
             Text(verbatim: Yen.format(item.priceYen))
-                .font(.system(.subheadline, design: .monospaced))
+                .font(.amountSmall)
                 .foregroundStyle(item.priceYen < 0 ? Theme.destructive : Theme.text)
                 .frame(minWidth: 64, alignment: .trailing)
         }
@@ -187,7 +190,7 @@ struct ConfirmPanel: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color.black.opacity(0.35)
+            Theme.scrim
                 .ignoresSafeArea()
                 .onTapGesture(perform: onCancel)
                 .accessibilityHidden(true)
@@ -198,7 +201,7 @@ struct ConfirmPanel: View {
                     Text(confirmTitle).font(.headline).frame(maxWidth: .infinity, minHeight: 50)
                 }
                 .background(Theme.destructive, in: RoundedRectangle(cornerRadius: 14))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.onDestructive)
                 .accessibilityIdentifier("confirm.action")
                 Button(action: onCancel) {
                     Text("confirm.keepEditing").font(.headline).frame(maxWidth: .infinity, minHeight: 44)
@@ -225,7 +228,7 @@ struct PhotoZoomView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Color.black.ignoresSafeArea()
+            Theme.photoBackdrop.ignoresSafeArea()
             if let image {
                 GeometryReader { proxy in
                     ScrollView([.horizontal, .vertical], showsIndicators: false) {
@@ -248,7 +251,7 @@ struct PhotoZoomView: View {
                     .frame(width: 44, height: 44)
                     .background(.ultraThinMaterial, in: Circle())
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.onPhoto)
             .accessibilityLabel(Text("photo.close"))
             .accessibilityIdentifier("photo.close")
             .padding()

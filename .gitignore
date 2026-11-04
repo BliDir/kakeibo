@@ -19,3 +19,6 @@ Package.resolved
 *.p8
 *.p12
 *.mobileprovision
+
+# Python
+__pycache__/

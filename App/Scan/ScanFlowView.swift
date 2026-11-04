@@ -114,7 +114,7 @@ struct ScanProgressView: View {
                     .scaledToFit()
                     .padding(12)
                     .background(Theme.surface)
-                    .shadow(color: .black.opacity(0.18), radius: 15, y: 10)
+                    .shadow(color: Theme.shadow, radius: 15, y: 10)
                     .rotationEffect(.degrees(-1.2))
                     .padding(.horizontal, 60)
                     .padding(.top, 22)
@@ -161,7 +161,7 @@ struct ScanProgressView: View {
         }
         .padding(20)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
-        .shadow(color: .black.opacity(0.08), radius: 10, y: -2)
+        .shadow(color: Theme.shadow.opacity(0.45), radius: 10, y: -2)
     }
 }
 
@@ -194,7 +194,7 @@ private struct StepRow: View {
         case .done:
             Image(systemName: "checkmark")
                 .font(.system(size: 12, weight: .heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(Theme.onAccent)
                 .frame(width: 24, height: 24)
                 .background(Theme.success, in: Circle())
         case .active:

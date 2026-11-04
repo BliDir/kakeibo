@@ -12,6 +12,9 @@ struct ContentView: View {
     @State private var session: ScanSession
     @State private var editor: EditorItem?
     @State private var banner: Banner?
+    #if DEBUG
+    @State private var showTokens = ProcessInfo.processInfo.environment["KAKEIBO_SHOW_TOKENS"] == "1"
+    #endif
 
     init(services: AppServices) {
         self.services = services
@@ -24,6 +27,14 @@ struct ContentView: View {
                 editor = EditorItem(form: ReviewForm(editing: expense))
             }
             .navigationTitle("app.title")
+            #if DEBUG
+            .toolbar {
+                Button { showTokens = true } label: { Image(systemName: "hammer") }
+                    .accessibilityLabel(Text(verbatim: "Design tokens"))
+                    .accessibilityIdentifier("debug.tokens")
+            }
+            .sheet(isPresented: $showTokens) { DesignTokensView() }
+            #endif
             .safeAreaInset(edge: .bottom) {
                 HStack(spacing: 10) {
                     ScanEntryButtons(session: session)
@@ -114,7 +125,7 @@ private struct BannerView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(Theme.text, in: Capsule())
-        .foregroundStyle(.white)
+        .foregroundStyle(Theme.surface)
         .transition(.move(edge: .top).combined(with: .opacity))
         .accessibilityIdentifier("banner")
     }
@@ -147,7 +158,7 @@ private struct TemporaryExpenseList: View {
                         }
                         Spacer()
                         Text(verbatim: Yen.format(expense.totalYen))
-                            .font(.body.monospacedDigit().weight(.semibold))
+                            .font(.amount)
                             .foregroundStyle(Theme.text)
                     }
                 }

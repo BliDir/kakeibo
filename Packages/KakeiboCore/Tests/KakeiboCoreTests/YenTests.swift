@@ -52,4 +52,15 @@ import KakeiboCore
         #expect(Yen.fieldSymbol(for: .en) == ("¥", true))
         #expect(Yen.fieldSymbol(for: .ja) == ("円", false))
     }
+
+    @Test(arguments: [
+        (1_234, AppLanguage.en, "1,234 yen"),
+        (-120, AppLanguage.en, "minus 120 yen"),
+        (0, AppLanguage.en, "0 yen"),
+        (1_234, AppLanguage.ja, "1,234円"),
+        (-120, AppLanguage.ja, "マイナス120円"),
+    ])
+    func spokenAmounts(amount: Int, language: AppLanguage, expected: String) {
+        #expect(Yen.spoken(amount, for: language) == expected)
+    }
 }

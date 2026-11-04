@@ -25,6 +25,7 @@ struct ReviewView: View {
     struct FixtureFiles: Identifiable { let id = UUID(); let urls: [URL] }
     #endif
     @FocusState private var amountFocused: Bool
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     enum ConfirmKind { case discard, delete }
 
@@ -68,8 +69,32 @@ struct ReviewView: View {
     // MARK: Header
 
     private var header: some View {
-        ZStack {
-            Text(title).font(.screenTitle).foregroundStyle(Theme.text)
+        Group {
+            if isAccessibilityTextSize {
+                // Huge text: the title gets its own line under the buttons instead of drawing over them.
+                VStack(alignment: .leading, spacing: 4) {
+                    headerButtons
+                    headerTitle.frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                ZStack {
+                    headerTitle.padding(.horizontal, 88)
+                    headerButtons
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+    }
+
+    private var headerTitle: some View {
+        Text(title).font(.screenTitle).foregroundStyle(Theme.text)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var headerButtons: some View {
             HStack {
                 Button("review.cancel", action: cancel)
                     .font(.body.weight(.medium))
@@ -90,9 +115,6 @@ struct ReviewView: View {
                 }
                 #endif
             }
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 8)
     }
 
     private var title: LocalizedStringKey {
@@ -126,7 +148,7 @@ struct ReviewView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     if !form.fieldsToCheck.isEmpty {
                         Text("review.check.count \(form.fieldsToCheck.count)")
-                            .font(.caption2.weight(.bold))
+                            .font(.caption.weight(.bold))
                             .padding(.horizontal, 8).padding(.vertical, 3)
                             .background(Theme.warningFill, in: Capsule())
                             .foregroundStyle(Theme.warningText)
@@ -201,12 +223,13 @@ struct ReviewView: View {
                     .keyboardType(.numberPad)
                     .focused($amountFocused)
                     .fixedSize(horizontal: !symbol.isPrefix, vertical: false)
+                    .checkHint(form.needsCheck(.totalYen), "review.hint.amount")
                     .accessibilityIdentifier("review.amount")
                     if !symbol.isPrefix { Text(verbatim: symbol.symbol).font(.title.weight(.semibold)) }
                 }
                 .foregroundStyle(Theme.text)
                 if form.needsCheck(.totalYen) {
-                    Hint("review.hint.amount")
+                    Hint("review.hint.amount", announced: false)
                 } else if form.isTotalVerified {
                     Label("review.amount.verified", systemImage: "checkmark")
                         .font(.caption)
@@ -222,13 +245,18 @@ struct ReviewView: View {
         Card {
             VStack(alignment: .leading, spacing: 6) {
                 FieldLabel("review.store")
+                // Single line normally; at the accessibility sizes it wraps so a long name stays readable.
+                // (A multi-line field's placeholder is invisible to VoiceOver, so only there.)
                 TextField(text: Binding(
                     get: { form.draft.storeName ?? "" },
                     set: { form.draft.storeName = $0.isEmpty ? nil : $0 }
-                ), prompt: Text("review.store.placeholder")) { Text("review.store") }
+                ), prompt: Text("review.store.placeholder"),
+                   axis: isAccessibilityTextSize ? .vertical : .horizontal) { Text("review.store") }
+                    .lineLimit(1...4)
                     .inputStyle(highlight: form.needsCheck(.storeName))
+                    .checkHint(form.needsCheck(.storeName), "review.hint.store")
                     .accessibilityIdentifier("review.store")
-                if form.needsCheck(.storeName) { Hint("review.hint.store") }
+                if form.needsCheck(.storeName) { Hint("review.hint.store", announced: false) }
                 if let english = form.draft.storeNameEn {
                     Text("review.store.english \(english)").font(.caption).foregroundStyle(Theme.secondaryText)
                 }
@@ -237,7 +265,7 @@ struct ReviewView: View {
 
             Divider().overlay(Theme.divider)
 
-            HStack(alignment: .top, spacing: 12) {
+            AdaptiveStack(verticalAlignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     FieldLabel("review.date")
                     if let date = form.date {
@@ -247,6 +275,7 @@ struct ReviewView: View {
                         ) { Text("review.date") }
                             .labelsHidden()
                             .environment(\.timeZone, KakeiboCore.timeZone)
+                            .checkHint(form.needsCheck(.dayKey), "review.hint.date")
                             .accessibilityIdentifier("review.date")
                     } else {
                         Button { form.date = .now } label: { Text("review.date.add") }
@@ -261,7 +290,7 @@ struct ReviewView: View {
                             .foregroundStyle(Theme.secondaryText)
                             .accessibilityIdentifier("review.date.era")
                     }
-                    if form.needsCheck(.dayKey) { Hint("review.hint.date") }
+                    if form.needsCheck(.dayKey) { Hint("review.hint.date", announced: false) }
                 }
                 if let time = form.draft.time {
                     VStack(alignment: .leading, spacing: 6) {
@@ -281,20 +310,14 @@ struct ReviewView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 FieldLabel("review.payment")
-                Picker(selection: Binding(
-                    get: { form.draft.payment ?? .cash },
-                    set: { form.draft.payment = $0 }
-                )) {
-                    ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(verbatim: method.label).tag(method)
-                    }
-                } label: { Text("review.payment") }
-                    .pickerStyle(.menu)
-                    .tint(Theme.text)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .inputStyle(highlight: form.needsCheck(.payment))
+                PaymentMenu(
+                    title: "review.payment",
+                    selection: Binding(get: { form.draft.payment ?? .cash }, set: { form.draft.payment = $0 }),
+                    highlight: form.needsCheck(.payment)
+                )
+                    .checkHint(form.needsCheck(.payment), "review.hint.payment")
                     .accessibilityIdentifier("review.payment")
-                if form.needsCheck(.payment) { Hint("review.hint.payment") }
+                if form.needsCheck(.payment) { Hint("review.hint.payment", announced: false) }
             }
             .padding(.vertical, 4)
         }
@@ -327,9 +350,9 @@ struct ReviewView: View {
             YenRow(label: "review.tax10", value: taxBinding(\.tax10Yen), id: "review.tax10")
             if let invoice = form.draft.invoiceNumber {
                 Divider().overlay(Theme.divider)
-                HStack {
+                AdaptiveStack {
                     Text("review.invoice").font(.subheadline)
-                    Spacer()
+                    Spacer(minLength: 8)
                     Text(verbatim: invoice).font(.code)
                         .accessibilityIdentifier("review.invoice")
                 }
@@ -405,6 +428,7 @@ struct ReviewView: View {
                 Group {
                     if let total = form.draft.totalYen, total > 0 {
                         Text("review.save \(LedgerFormat.yen(total))")
+                            .accessibilityLabel(Text("review.save \(LedgerFormat.spokenYen(total))"))
                     } else {
                         Text("review.save.plain")
                     }
@@ -413,7 +437,6 @@ struct ReviewView: View {
             }
             .buttonStyle(PillButtonStyle())
             .disabled(!form.canSave)
-            .opacity(form.canSave ? 1 : 0.5)
             .accessibilityIdentifier("review.save")
         }
         .padding(.horizontal, 16)
@@ -438,6 +461,8 @@ struct ReviewView: View {
         guard form.canSave else { return }
         // A failed check must not stop the save; the warning is only a help.
         if let match = try? form.possibleDuplicates(repository: services.repository).first {
+            // Put the keyboard away so the whole warning is visible.
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             duplicate = match
             return
         }

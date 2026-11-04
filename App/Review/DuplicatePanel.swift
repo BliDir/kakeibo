@@ -16,6 +16,7 @@ struct DuplicatePanel: View {
                 .ignoresSafeArea()
                 .onTapGesture(perform: onCancel)
                 .accessibilityHidden(true)
+            ScrollIfNeeded {
             VStack(spacing: 14) {
                 Image(systemName: "doc.on.doc")
                     .font(.system(size: 22, weight: .semibold))
@@ -48,6 +49,7 @@ struct DuplicatePanel: View {
             .padding(20)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))
             .padding(16)
+            }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("duplicate")
         }
@@ -57,7 +59,7 @@ struct DuplicatePanel: View {
     /// The saved entry: store, date, time and amount.
     private var savedEntry: some View {
         let expense = match.expense
-        return HStack(spacing: 12) {
+        return AdaptiveStack(spacing: 12) {
             CategoryBadge(category: expense.category, size: 34)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: expense.storeName.isEmpty ? "—" : expense.storeName)
@@ -70,7 +72,7 @@ struct DuplicatePanel: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
-            Text(verbatim: LedgerFormat.yen(expense.totalYen))
+            YenText(expense.totalYen)
                 .font(.amount)
                 .foregroundStyle(Theme.text)
         }

@@ -23,6 +23,16 @@ public enum Yen {
         }
     }
 
+    /// How VoiceOver should say an amount: "1,234 yen" / "1,234円", "minus 120 yen" / "マイナス120円".
+    /// Written out so the reading never depends on how a voice treats ¥ or a leading minus.
+    public static func spoken(_ amount: Int, for language: AppLanguage) -> String {
+        let digits = grouped(amount)
+        switch language {
+        case .en: return (amount < 0 ? "minus " : "") + digits + " yen"
+        case .ja: return (amount < 0 ? "マイナス" : "") + digits + "円"
+        }
+    }
+
     /// The symbol an amount field shows, and on which side: `¥` before in English, `円` after in Japanese.
     public static func fieldSymbol(for language: AppLanguage) -> (symbol: String, isPrefix: Bool) {
         language == .ja ? ("円", false) : ("¥", true)

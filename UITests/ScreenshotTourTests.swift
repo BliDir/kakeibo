@@ -1,8 +1,9 @@
 import XCTest
 
-/// Walks every screen in Japanese and English, at the default and the largest standard text size
-/// (XXXL, the top of the Text Size slider), and attaches a screenshot of each, for the
-/// localization check (T-46). The larger accessibility sizes (AX1–AX5) are T-47's.
+/// Walks every screen in Japanese and English at three text sizes, and attaches a screenshot of
+/// each: the default, the largest standard size (XXXL, the top of the Text Size slider) and the
+/// largest accessibility size (AX5, with Larger Accessibility Sizes on). Used for the
+/// localization (T-46) and accessibility (T-47) checks.
 ///
 /// Skipped unless `KAKEIBO_SCREENSHOT_TOUR=1` reaches the test runner:
 ///
@@ -17,19 +18,33 @@ final class ScreenshotTourTests: XCTestCase {
                           "Set TEST_RUNNER_KAKEIBO_SCREENSHOT_TOUR=1 to take the screenshot tour")
     }
 
-    @MainActor func testJapaneseDefaultSize() { tour(language: "ja", largeText: false) }
-    @MainActor func testJapaneseLargestStandardSize() { tour(language: "ja", largeText: true) }
-    @MainActor func testEnglishDefaultSize() { tour(language: "en", largeText: false) }
-    @MainActor func testEnglishLargestStandardSize() { tour(language: "en", largeText: true) }
+    enum TextSize: String {
+        case `default`, XXXL, AX5
+
+        var category: String? {
+            switch self {
+            case .default: nil
+            case .XXXL: "UICTContentSizeCategoryXXXL"
+            case .AX5: "UICTContentSizeCategoryAccessibilityXXXL"
+            }
+        }
+    }
+
+    @MainActor func testJapaneseDefaultSize() { tour(language: "ja", size: .default) }
+    @MainActor func testJapaneseLargestStandardSize() { tour(language: "ja", size: .XXXL) }
+    @MainActor func testJapaneseLargestAccessibilitySize() { tour(language: "ja", size: .AX5) }
+    @MainActor func testEnglishDefaultSize() { tour(language: "en", size: .default) }
+    @MainActor func testEnglishLargestStandardSize() { tour(language: "en", size: .XXXL) }
+    @MainActor func testEnglishLargestAccessibilitySize() { tour(language: "en", size: .AX5) }
 
     // MARK: Tour
 
     @MainActor
-    private func tour(language: String, largeText: Bool) {
-        let tag = "\(language)-\(largeText ? "XXXL" : "default")"
+    private func tour(language: String, size: TextSize) {
+        let tag = "\(language)-\(size.rawValue)"
 
         // Ledger, Summary, Settings with sample data.
-        var app = launch(language: language, largeText: largeText, seed: true)
+        var app = launch(language: language, size: size, seed: true)
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
         shot(app, "\(tag)-01-ledger")
         app.swipeUp()
@@ -85,7 +100,7 @@ final class ScreenshotTourTests: XCTestCase {
         app.terminate()
 
         // Scan: progress, review, discard confirmation.
-        app = launch(language: language, largeText: largeText, scan: true, ocrDelay: 4)
+        app = launch(language: language, size: size, scan: true, ocrDelay: 4)
         if app.buttons["scan.cancel"].waitForExistence(timeout: 5) {
             shot(app, "\(tag)-13-scan-progress")
         }
@@ -100,7 +115,7 @@ final class ScreenshotTourTests: XCTestCase {
         app.terminate()
 
         // Empty ledger.
-        app = launch(language: language, largeText: largeText)
+        app = launch(language: language, size: size)
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
         shot(app, "\(tag)-17-ledger-empty")
         app.terminate()
@@ -109,7 +124,7 @@ final class ScreenshotTourTests: XCTestCase {
     // MARK: Helpers
 
     @MainActor
-    private func launch(language: String, largeText: Bool, seed: Bool = false, scan: Bool = false,
+    private func launch(language: String, size: TextSize, seed: Bool = false, scan: Bool = false,
                         ocrDelay: Double? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
@@ -121,8 +136,8 @@ final class ScreenshotTourTests: XCTestCase {
         }
         if let ocrDelay { app.launchEnvironment["KAKEIBO_SCAN_OCR_DELAY"] = String(ocrDelay) }
         app.launchArguments += ["-AppleLanguages", "(\(language))", "-AppleLocale", language == "ja" ? "ja_JP" : "en_JP"]
-        if largeText {
-            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"]
+        if let category = size.category {
+            app.launchArguments += ["-UIPreferredContentSizeCategoryName", category]
         }
         app.launch()
         return app

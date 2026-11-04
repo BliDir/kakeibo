@@ -18,10 +18,18 @@ enum ScanTestImages {
     }
 
     /// The bundled made-up receipt (see scripts/make-sample-receipt.swift).
-    static func sampleReceipt() throws -> CGImage {
-        let url = try #require(Bundle.module.url(forResource: "sample-receipt", withExtension: "png", subdirectory: "SampleImages"))
+    static func sampleReceipt() throws -> CGImage { try bundled("sample-receipt") }
+
+    /// A bundled image from SampleImages.
+    static func bundled(_ name: String) throws -> CGImage {
+        let url = try #require(Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "SampleImages"))
         let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
         return try #require(CGImageSourceCreateImageAtIndex(source, 0, nil))
+    }
+
+    static func bundledData(_ name: String) throws -> Data {
+        let url = try #require(Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "SampleImages"))
+        return try Data(contentsOf: url)
     }
 }
 

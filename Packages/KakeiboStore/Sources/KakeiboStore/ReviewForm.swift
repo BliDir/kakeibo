@@ -62,10 +62,10 @@ public final class ReviewForm {
         isRefining = refining
     }
 
-    /// A manual entry, dated `today`.
-    public init(manualOn today: Date) {
+    /// A manual entry, dated `today`, paid with `payment` (the default from Settings).
+    public init(manualOn today: Date, payment: PaymentMethod = .cash) {
         mode = .manual
-        let draft = ReceiptDraft(dayKey: DayKey.make(from: today), payment: .cash, category: .other)
+        let draft = ReceiptDraft(dayKey: DayKey.make(from: today), payment: payment, category: .other)
         self.draft = draft
         original = draft
         note = ""

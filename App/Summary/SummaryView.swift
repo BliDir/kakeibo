@@ -221,12 +221,18 @@ private struct CategoryRow: View {
 private struct CategoryBarChart: View {
     let entry: MonthSummary.CategoryTotal
 
+    private static let startLabel = "start"
+    private static let lengthLabel = "length"
+    private static let categoryLabel = "category"
+
     var body: some View {
         Chart {
+            // Plain strings: the chart is hidden from VoiceOver (the row reads it), so these
+            // labels are never shown and must not land in the String Catalog.
             BarMark(
-                xStart: .value("Start", 0),
-                xEnd: .value("Share of largest", max(entry.barFraction, 0.02)),
-                y: .value("Category", entry.category.rawValue),
+                xStart: .value(Self.startLabel, 0),
+                xEnd: .value(Self.lengthLabel, max(entry.barFraction, 0.02)),
+                y: .value(Self.categoryLabel, entry.category.rawValue),
                 height: .fixed(10)
             )
             .foregroundStyle(entry.category.color)

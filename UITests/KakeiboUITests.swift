@@ -200,6 +200,68 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["summary.category.other"].exists)
     }
 
+    // MARK: Settings
+
+    /// Settings shows the language, privacy note, photo storage and version, and has no account.
+    @MainActor
+    func testSettingsShowsPrivacyStorageAndVersion() {
+        let app = launch()
+        app.tabBars.buttons["Settings"].tap()
+        XCTAssertTrue(app.staticTexts["Everything stays on this iPhone"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["settings.language"].exists)
+        XCTAssertTrue(app.buttons["settings.language"].label.contains("System · English"), app.buttons["settings.language"].label)
+
+        let photos = app.descendants(matching: .any)["settings.photos"]
+        XCTAssertTrue(photos.waitForExistence(timeout: 3))
+        XCTAssertTrue(photos.label.hasPrefix("0 photos, "), photos.label)
+
+        let version = app.staticTexts["settings.version"].label
+        XCTAssertNotNil(version.range(of: #"^\d+(\.\d+)* \(\d+\)$"#, options: .regularExpression), version)
+
+        for word in ["Sign in", "Log in", "Account"] {
+            XCTAssertFalse(app.staticTexts[word].exists, "no \(word) in v1.0")
+            XCTAssertFalse(app.buttons[word].exists, "no \(word) in v1.0")
+        }
+
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "settings"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    /// The default payment from Settings is what a new manual entry starts with.
+    @MainActor
+    func testDefaultPaymentAppliesToManualEntries() {
+        let app = launch()
+        app.tabBars.buttons["Settings"].tap()
+        let picker = app.buttons["settings.payment"]
+        XCTAssertTrue(picker.waitForExistence(timeout: 5))
+        picker.tap()
+        let icCard = app.buttons["IC card · 交通系IC"]
+        XCTAssertTrue(icCard.waitForExistence(timeout: 3))
+        icCard.tap()
+
+        app.tabBars.buttons["Ledger"].tap()
+        app.buttons["ledger.add"].tap()
+        let payment = app.buttons["review.payment"]
+        XCTAssertTrue(payment.waitForExistence(timeout: 3))
+        XCTAssertTrue(payment.label.contains("IC card"), payment.label)
+    }
+
+    /// A scan's photo counts in Settings' storage.
+    @MainActor
+    func testSavedScanPhotoCountsInStorage() {
+        let app = launch(scan: true)
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(app.staticTexts["Saved ¥754"].waitForExistence(timeout: 5))
+
+        app.tabBars.buttons["Settings"].tap()
+        let photos = app.descendants(matching: .any)["settings.photos"]
+        XCTAssertTrue(photos.waitForExistence(timeout: 5))
+        XCTAssertTrue(photos.label.hasPrefix("1 photo, "), photos.label)
+    }
+
     // MARK: Duplicates
 
     /// Saving the same entry twice warns first; Cancel keeps the form, Save anyway saves.

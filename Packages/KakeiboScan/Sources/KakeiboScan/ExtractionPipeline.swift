@@ -1,6 +1,5 @@
 import CoreGraphics
 import Foundation
-import ImageIO
 import KakeiboCore
 
 /// Turns a receipt image into a `ReceiptDraft`, all on the device.
@@ -54,14 +53,12 @@ public struct ExtractionPipeline: Sendable {
         }
     }
 
-    /// Decodes image data (JPEG, HEIC, PNG from the photo library) and extracts it.
+    /// Decodes image data (JPEG, HEIC, PNG from the photo library) upright and extracts it.
     public func extract(
         imageData: Data,
         progress: @Sendable (ExtractionStage) -> Void = { _ in }
     ) async throws(ExtractionError) -> ExtractionResult {
-        let options = [kCGImageSourceShouldCacheImmediately: true] as CFDictionary
-        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let image = CGImageSourceCreateImageAtIndex(source, 0, options) else {
+        guard let image = ImageDecoding.uprightImage(from: imageData, maxPixelSize: KakeiboScan.maxOCRPixelSize) else {
             progress(.failed(.unreadableImage))
             throw .unreadableImage
         }

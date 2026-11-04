@@ -7,7 +7,6 @@ struct KakeiboApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(services: services)
-                .modelContainer(services.container)
                 .task { services.cleanUp() }
         }
     }

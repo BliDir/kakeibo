@@ -1,23 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "app.title": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kakeibo"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "家計簿"
-          }
-        }
-      }
-    },
     "camera.denied.message": {
       "extractionState": "manual",
       "localizations": {
@@ -245,13 +228,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scan a receipt to add your first expense."
+            "value": "Scan a receipt or choose a photo of one below. To type an expense in yourself, tap +."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レシートをスキャンして最初の支出を追加しましょう。"
+            "value": "下のボタンでレシートを撮影するか写真を選んでください。手入力は＋をタップします。"
           }
         }
       }
@@ -262,13 +245,93 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No expenses yet"
+            "value": "No receipts this month"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "まだ支出がありません"
+            "value": "今月の記録はまだありません"
+          }
+        }
+      }
+    },
+    "ledger.items %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld items"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld点"
+          }
+        }
+      }
+    },
+    "ledger.loadFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't load expenses."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出を読み込めませんでした。"
+          }
+        }
+      }
+    },
+    "ledger.month.next": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "次の月"
+          }
+        }
+      }
+    },
+    "ledger.month.previous": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前の月"
           }
         }
       }
@@ -286,6 +349,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "店名なし"
+          }
+        }
+      }
+    },
+    "ledger.overline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家計簿 · LEDGER"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家計簿 · LEDGER"
+          }
+        }
+      }
+    },
+    "ledger.receipts %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld receipt"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld receipts"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld件"
+          }
+        }
+      }
+    },
+    "ledger.tax %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tax 消費税 %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "消費税 %@"
+          }
+        }
+      }
+    },
+    "ledger.total.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計 TOTAL"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合計 · TOTAL"
           }
         }
       }
@@ -371,6 +514,91 @@
           "stringUnit": {
             "state": "translated",
             "value": "QR決済 · PayPay"
+          }
+        }
+      }
+    },
+    "payment.short.cash": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cash"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現金"
+          }
+        }
+      }
+    },
+    "payment.short.credit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Credit card"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "クレジット"
+          }
+        }
+      }
+    },
+    "payment.short.icCard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "IC card"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "交通系IC"
+          }
+        }
+      }
+    },
+    "payment.short.other": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "その他"
+          }
+        }
+      }
+    },
+    "payment.short.qrPay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR pay"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QR決済"
           }
         }
       }

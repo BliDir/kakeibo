@@ -8,6 +8,7 @@
   "payment": "credit",
   "category": "transport",
   "invoiceNumber": "T5555555555555",
+  "receiptNumber": null,
   "items": [
     {
       "name": "運賃",

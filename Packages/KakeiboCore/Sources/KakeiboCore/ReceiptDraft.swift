@@ -21,6 +21,9 @@ public struct ReceiptDraft: Sendable, Codable, Equatable {
     public var category: ExpenseCategory?
     /// Invoice registration number (登録番号): `T` + 13 digits.
     public var invoiceNumber: String?
+    /// The receipt's own number (レシートNo., 取引番号), with the register number when printed:
+    /// `02/0012`. Identifies one sale; see `ReceiptNumberParser`.
+    public var receiptNumber: String?
     public var items: [LineItemDraft]
     /// Confidence per field. Fields not listed count as `.low`.
     public var confidences: [ReceiptField: Confidence]
@@ -36,6 +39,7 @@ public struct ReceiptDraft: Sendable, Codable, Equatable {
         payment: PaymentMethod? = nil,
         category: ExpenseCategory? = nil,
         invoiceNumber: String? = nil,
+        receiptNumber: String? = nil,
         items: [LineItemDraft] = [],
         confidences: [ReceiptField: Confidence] = [:]
     ) {
@@ -49,6 +53,7 @@ public struct ReceiptDraft: Sendable, Codable, Equatable {
         self.payment = payment
         self.category = category
         self.invoiceNumber = invoiceNumber
+        self.receiptNumber = receiptNumber
         self.items = items
         self.confidences = confidences
     }
@@ -71,6 +76,7 @@ public enum ReceiptField: String, CaseIterable, Sendable, Codable, Equatable, Co
     case category
     case invoiceNumber
     case items
+    case receiptNumber
 }
 
 /// One item line on a receipt.

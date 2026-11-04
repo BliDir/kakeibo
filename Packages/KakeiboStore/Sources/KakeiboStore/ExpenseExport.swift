@@ -39,7 +39,7 @@ public struct ExpenseExport {
     }
 }
 
-extension KakeiboSchemaV1.Expense {
+extension Expense {
     var csvRow: CSVExpense {
         CSVExpense(
             dayKey: dayKey, storeName: storeName, category: category, payment: payment,

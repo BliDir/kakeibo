@@ -7,5 +7,6 @@
   "tax8Yen": null,
   "payment": "credit",
   "category": "transport",
-  "invoiceNumber": "T9999999999999"
+  "invoiceNumber": "T9999999999999",
+  "receiptNumber": null
 }

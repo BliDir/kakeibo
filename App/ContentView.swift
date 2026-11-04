@@ -11,6 +11,9 @@ struct ContentView: View {
     @State private var ledger: LedgerModel
     @State private var editor: EditorItem?
     @State private var banner: Banner?
+    /// A saved expense to open once the current full-screen cover has gone
+    /// (from the duplicate warning). Two covers cannot be presented at the same time.
+    @State private var openAfterDismiss: Expense?
     #if DEBUG
     @State private var showTokens = ProcessInfo.processInfo.environment["KAKEIBO_SHOW_TOKENS"] == "1"
     #endif
@@ -56,16 +59,22 @@ struct ContentView: View {
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
             set: { if !$0 { session.cancel() } }
-        )) {
-            ScanFlowView(session: session, services: services) { total in show(.saved(total)) }
+        ), onDismiss: openPendingExpense) {
+            ScanFlowView(
+                session: session,
+                services: services,
+                onSaved: { total in show(.saved(total)) },
+                onViewSaved: { expense in openAfterDismiss = expense }
+            )
         }
-        .fullScreenCover(item: $editor) { item in
+        .fullScreenCover(item: $editor, onDismiss: openPendingExpense) { item in
             ReviewView(form: item.form, services: services) { outcome in
                 editor = nil
                 switch outcome {
                 case .saved(let total): show(.saved(total))
                 case .deleted: show(.deleted)
                 case .discarded: break
+                case .viewSaved(let expense): openAfterDismiss = expense
                 }
             }
         }
@@ -80,6 +89,12 @@ struct ContentView: View {
         #else
         nil
         #endif
+    }
+
+    private func openPendingExpense() {
+        guard let expense = openAfterDismiss else { return }
+        openAfterDismiss = nil
+        editor = EditorItem(form: ReviewForm(editing: expense))
     }
 
     private func show(_ banner: Banner) {

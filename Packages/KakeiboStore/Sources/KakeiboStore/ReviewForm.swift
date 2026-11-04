@@ -88,6 +88,7 @@ public final class ReviewForm {
             payment: expense.payment,
             category: expense.category,
             invoiceNumber: expense.invoiceNumber,
+            receiptNumber: expense.receiptNumber,
             items: expense.orderedItems.map {
                 LineItemDraft(name: $0.name, nameEn: $0.nameEn, priceYen: $0.priceYen, isReducedRate: $0.isReducedRate)
             }
@@ -176,6 +177,7 @@ public final class ReviewForm {
         case .category: draft.category != original.category
         case .invoiceNumber: draft.invoiceNumber != original.invoiceNumber
         case .items: draft.items != original.items
+        case .receiptNumber: draft.receiptNumber != original.receiptNumber
         }
     }
 
@@ -194,6 +196,17 @@ public final class ReviewForm {
     /// The refinement finished without changes, failed or was cancelled.
     public func endRefinement() {
         isRefining = false
+    }
+
+    // MARK: - Duplicates
+
+    /// Saved expenses this form may duplicate; check before `save`. Scans, manual entries and
+    /// edits are all checked, and an edited expense never matches itself.
+    public func possibleDuplicates(repository: ExpenseRepository) throws -> [ExpenseRepository.PossibleDuplicate] {
+        guard canSave else { return [] }
+        var excluded: UUID?
+        if case .edit(let expense) = mode { excluded = expense.id }
+        return try repository.possibleDuplicates(of: draft, excluding: excluded)
     }
 
     // MARK: - Save and delete

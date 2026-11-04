@@ -8,6 +8,7 @@
   "payment": "cash",
   "category": "groceries",
   "invoiceNumber": "T3434343434343",
+  "receiptNumber": null,
   "items": [
     {
       "name": "牛乳",

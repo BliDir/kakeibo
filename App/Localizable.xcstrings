@@ -205,6 +205,108 @@
         }
       }
     },
+    "duplicate.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
+        }
+      }
+    },
+    "duplicate.message.likely": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An entry with the same store, date, time and amount is already in the ledger."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じお店・日付・時刻・金額の記録がすでにあります。"
+          }
+        }
+      }
+    },
+    "duplicate.message.strong": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A receipt with the same number from this store and day is already in the ledger."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じお店・同じ日・同じレシート番号の記録がすでにあります。"
+          }
+        }
+      }
+    },
+    "duplicate.saveAnyway": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save anyway"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このまま保存"
+          }
+        }
+      }
+    },
+    "duplicate.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already saved?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "既に保存済みかもしれません"
+          }
+        }
+      }
+    },
+    "duplicate.view": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View saved entry"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みの記録を見る"
+          }
+        }
+      }
+    },
     "export.button": {
       "extractionState": "manual",
       "localizations": {

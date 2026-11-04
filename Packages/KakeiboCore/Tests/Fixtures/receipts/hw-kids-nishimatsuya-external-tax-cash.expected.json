@@ -8,6 +8,7 @@
   "payment": "cash",
   "category": "kids",
   "invoiceNumber": "T1212121212121",
+  "receiptNumber": null,
   "items": [
     {
       "name": "ベビー肌着",

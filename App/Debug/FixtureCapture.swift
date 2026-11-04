@@ -26,7 +26,7 @@ enum FixtureCapture {
         try Data(FixtureWriter.text(lines: lines).utf8).write(to: text, options: .atomic)
 
         let json = folder.appendingPathComponent("\(name).expected.json")
-        try FixtureWriter.expectedJSON(from: form.draft, scannedOn: now).write(to: json, options: .atomic)
+        try FixtureWriter.expectedJSON(from: form.draft, scannedOn: now, lines: lines).write(to: json, options: .atomic)
 
         var urls = [text, json]
         if let image = uprightImage(form.pendingPhoto), let data = jpeg(image) {

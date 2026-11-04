@@ -8,6 +8,7 @@
   "payment": "qrPay",
   "category": "dining",
   "invoiceNumber": null,
+  "receiptNumber": null,
   "items": [
     {
       "name": "牛丼並盛",

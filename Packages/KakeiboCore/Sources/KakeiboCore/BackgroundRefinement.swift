@@ -29,6 +29,7 @@ public enum BackgroundRefinement {
         take(\.payment, .payment)
         take(\.category, .category)
         take(\.invoiceNumber, .invoiceNumber)
+        take(\.receiptNumber, .receiptNumber)
         take(\.items, .items)
         return result
     }

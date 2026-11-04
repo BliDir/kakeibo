@@ -3,7 +3,7 @@ import KakeiboCore
 import Observation
 import SwiftData
 
-extension KakeiboSchemaV1.Expense: LedgerItem {}
+extension Expense: LedgerItem {}
 
 /// The ledger home screen's state: one month's expenses, grouped by day, with totals.
 ///

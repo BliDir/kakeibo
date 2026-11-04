@@ -8,6 +8,8 @@ struct ScanFlowView: View {
     let session: ScanSession
     let services: AppServices
     let onSaved: (Int) -> Void
+    /// The duplicate warning's "View saved entry": the scan is dropped and the saved expense opened.
+    let onViewSaved: (Expense) -> Void
 
     var body: some View {
         ZStack {
@@ -21,7 +23,8 @@ struct ScanFlowView: View {
                 ScanErrorView(error: error, retry: retry, close: session.cancel)
             case .finished:
                 if let result = session.result {
-                    ScanReviewHost(session: session, result: result, services: services, onSaved: onSaved)
+                    ScanReviewHost(session: session, result: result, services: services,
+                                   onSaved: onSaved, onViewSaved: onViewSaved)
                 }
             }
         }
@@ -45,14 +48,17 @@ private struct ScanReviewHost: View {
     let result: ExtractionResult
     let services: AppServices
     let onSaved: (Int) -> Void
+    let onViewSaved: (Expense) -> Void
 
     @State private var form: ReviewForm
 
-    init(session: ScanSession, result: ExtractionResult, services: AppServices, onSaved: @escaping (Int) -> Void) {
+    init(session: ScanSession, result: ExtractionResult, services: AppServices,
+         onSaved: @escaping (Int) -> Void, onViewSaved: @escaping (Expense) -> Void) {
         self.session = session
         self.result = result
         self.services = services
         self.onSaved = onSaved
+        self.onViewSaved = onViewSaved
         let photo: ReviewForm.PendingPhoto? = session.imageData.map { .data($0) } ?? session.image.map { .image($0) }
         _form = State(initialValue: ReviewForm(
             scan: result.draft, ocrText: result.ocrText, photo: photo, refining: services.pipeline.canRefine
@@ -66,6 +72,9 @@ private struct ScanReviewHost: View {
                 session.reset()
                 onSaved(total)
             case .deleted, .discarded:
+                session.cancel()
+            case .viewSaved(let expense):
+                onViewSaved(expense)
                 session.cancel()
             }
         }

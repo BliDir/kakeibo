@@ -8,6 +8,7 @@
   "payment": "icCard",
   "category": "groceries",
   "invoiceNumber": "T6666666666666",
+  "receiptNumber": "1/2345",
   "items": [
     {
       "name": "からあげクン",

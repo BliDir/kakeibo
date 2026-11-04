@@ -9,6 +9,7 @@
   "payment": "cash",
   "category": "other",
   "invoiceNumber": null,
+  "receiptNumber": null,
   "items": [
     {
       "name": "ブレンドコーヒー",

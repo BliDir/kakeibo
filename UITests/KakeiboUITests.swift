@@ -151,14 +151,62 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 3))
     }
 
+    // MARK: Ledger
+
+    @MainActor
+    func testEmptyLedgerExplainsHowToStart() {
+        let app = launch()
+        XCTAssertTrue(app.otherElements["ledger.empty"].waitForExistence(timeout: 5)
+                      || app.staticTexts["No receipts this month"].waitForExistence(timeout: 1))
+        XCTAssertEqual(app.staticTexts["ledger.total"].label, "¥0")
+        XCTAssertFalse(app.buttons["ledger.next"].isEnabled, "no future months")
+    }
+
+    @MainActor
+    func testLedgerShowsMonthTotalsAndSwitchesMonths() {
+        let app = launch(seed: true)
+        let total = app.staticTexts["ledger.total"]
+        XCTAssertTrue(total.waitForExistence(timeout: 5))
+        XCTAssertEqual(total.label, "¥5,198")
+        XCTAssertEqual(app.staticTexts["ledger.count"].label, "4 receipts")
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 4)
+        XCTAssertFalse(app.buttons["ledger.next"].isEnabled)
+
+        app.buttons["ledger.previous"].tap()
+        XCTAssertEqual(total.label, "¥3,278")
+        XCTAssertEqual(app.staticTexts["ledger.count"].label, "1 receipt")
+        XCTAssertTrue(app.buttons["ledger.next"].isEnabled)
+
+        app.buttons["ledger.next"].tap()
+        XCTAssertEqual(total.label, "¥5,198")
+    }
+
+    @MainActor
+    func testLedgerUpdatesAfterEditAndDelete() {
+        let app = launch(seed: true)
+        let total = app.staticTexts["ledger.total"]
+        XCTAssertTrue(total.waitForExistence(timeout: 5))
+        let row = app.buttons.matching(identifier: "ledger.row").firstMatch
+        XCTAssertTrue(row.label.contains("¥1,078"))          // newest first: Starbucks
+        row.tap()
+        let delete = scrollTo(app.buttons["review.delete"], in: app)
+        delete.tap()
+        app.buttons["confirm.action"].tap()
+        XCTAssertTrue(app.staticTexts["Expense deleted"].waitForExistence(timeout: 5))
+        XCTAssertEqual(total.label, "¥4,120")
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 3)
+    }
+
     // MARK: Helpers
 
     /// Launches with an empty in-memory ledger in English, without the on-device model.
-    /// With `scan`, a scan of the bundled made-up receipt starts at once.
+    /// With `scan`, a scan of the bundled made-up receipt starts at once; with `seed`, the ledger
+    /// starts with four made-up expenses this month and one last month.
     @MainActor
-    private func launch(scan: Bool = false, ocrDelay: Double? = nil) -> XCUIApplication {
+    private func launch(scan: Bool = false, ocrDelay: Double? = nil, seed: Bool = false) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
+        if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
         app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_JP"]
         if scan {

@@ -9,6 +9,7 @@ struct SummaryView: View {
     let model: LedgerModel
 
     @State private var showExport = false
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         ScrollView {
@@ -27,7 +28,7 @@ struct SummaryView: View {
         .background(Theme.groundLight.ignoresSafeArea())
         .sheet(isPresented: $showExport) {
             ExportSheet(month: model.month, repository: model.repository)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("summary")
@@ -76,15 +77,16 @@ struct SummaryView: View {
     private var totalCard: some View {
         let summary = model.summary
         return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
+            AdaptiveStack(verticalAlignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ledger.total.label")
                     Text("ledger.receipts \(summary.count)").accessibilityIdentifier("summary.count")
                 }
                 .font(.overline).tracking(1)
                 .foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Text(verbatim: LedgerFormat.yen(summary.totalYen))
+                .layoutPriority(1)
+                Spacer(minLength: 8)
+                YenText(summary.totalYen)
                     .font(.amountHero)
                     .foregroundStyle(Theme.text)
                     .minimumScaleFactor(0.6)
@@ -94,19 +96,19 @@ struct SummaryView: View {
             if model.previousSummary.count > 0 { comparisonRow }
             Divider().overlay(Theme.divider)
             // One line when it fits; stacked at large text sizes instead of breaking words.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) {
-                    taxItem(Text("summary.tax"), summary.taxYen)
-                    Spacer(minLength: 4)
-                    taxItem(Text(verbatim: "8%"), summary.tax8Yen)
-                    Spacer(minLength: 4)
-                    taxItem(Text(verbatim: "10%"), summary.tax10Yen)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    taxItem(Text("summary.tax"), summary.taxYen)
-                    HStack(spacing: 16) {
-                        taxItem(Text(verbatim: "8%"), summary.tax8Yen)
-                        taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+            Group {
+                if isAccessibilityTextSize {
+                    taxColumn(summary)
+                } else {
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) {
+                            taxItem(Text("summary.tax"), summary.taxYen)
+                            Spacer(minLength: 4)
+                            taxItem(Text(verbatim: "8%"), summary.tax8Yen)
+                            Spacer(minLength: 4)
+                            taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+                        }
+                        taxColumn(summary)
                     }
                 }
             }
@@ -123,20 +125,24 @@ struct SummaryView: View {
     private var comparisonRow: some View {
         let comparison = model.comparison
         let previousName = LedgerFormat.monthName(model.month.previous)
-        let difference = LedgerFormat.yen(abs(comparison.differenceYen))
-        return HStack {
+        let difference = LedgerFormat.spokenYen(abs(comparison.differenceYen))
+        return AdaptiveStack {
             Text(verbatim: "\(previousName) \(LedgerFormat.yen(comparison.previousYen))")
                 .foregroundStyle(Theme.secondaryText)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
             HStack(spacing: 4) {
                 Image(systemName: comparison.direction == .down ? "arrow.down" : comparison.direction == .up ? "arrow.up" : "equal")
                     .font(.caption.weight(.bold))
                 Text(verbatim: changeText(comparison))
                     .font(.amountSmall)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(comparison.direction == .up ? Theme.warningText : comparison.direction == .down ? Theme.success : Theme.secondaryText)
         }
         .font(.footnoteText)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(comparisonLabel(comparison.direction, difference: difference, month: previousName))
         .accessibilityIdentifier("summary.comparison")
@@ -157,14 +163,21 @@ struct SummaryView: View {
         }
     }
 
+    private func taxColumn(_ summary: MonthSummary) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            taxItem(Text("summary.tax"), summary.taxYen)
+            AdaptiveStack(spacing: 16) {
+                taxItem(Text(verbatim: "8%"), summary.tax8Yen)
+                taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+            }
+        }
+    }
+
     private func taxItem(_ label: Text, _ yen: Int) -> some View {
         HStack(spacing: 4) {
             label
-            Text(verbatim: LedgerFormat.yen(yen)).font(.amountSmall).foregroundStyle(Theme.text)
+            YenText(yen).font(.amountSmall).foregroundStyle(Theme.text)
         }
-        // Never break inside a label or an amount; ViewThatFits picks the stacked layout instead.
-        .lineLimit(1)
-        .fixedSize()
         .accessibilityElement(children: .combine)
     }
 
@@ -199,6 +212,7 @@ struct SummaryView: View {
 /// One category: names (ja and en) and share, its bar, and the amount.
 private struct CategoryRow: View {
     let entry: MonthSummary.CategoryTotal
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         let language = LedgerFormat.language
@@ -207,25 +221,24 @@ private struct CategoryRow: View {
         let share = entry.share.formatted(.percent.precision(.fractionLength(1)))
         let amount = LedgerFormat.yen(entry.totalYen)
 
-        HStack(spacing: 10) {
+        AdaptiveStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: primary).font(.subheadline.weight(.medium)).foregroundStyle(Theme.text)
-                Text(verbatim: "\(secondary) · \(share)").font(.caption2).foregroundStyle(Theme.secondaryText)
+                Text(verbatim: "\(secondary) · \(share)").font(.caption).foregroundStyle(Theme.secondaryText)
             }
-            .frame(width: 112, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(minWidth: isAccessibilityTextSize ? nil : 112, alignment: .leading)
             CategoryBarChart(entry: entry)
             Text(verbatim: amount)
                 .font(.amountSmall)
                 .foregroundStyle(Theme.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-                .frame(minWidth: 76, alignment: .trailing)
+                .frame(minWidth: isAccessibilityTextSize ? nil : 76, alignment: .trailing)
         }
         .padding(.vertical, 8)
         // VoiceOver reads "Groceries, 食料品: ¥72,380, 38.8%".
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(primary), \(secondary)"))
-        .accessibilityValue(Text(verbatim: "\(amount), \(share)"))
+        .accessibilityValue(Text(verbatim: "\(LedgerFormat.spokenYen(entry.totalYen)), \(share)"))
         .accessibilityIdentifier("summary.category.\(entry.category.rawValue)")
     }
 }

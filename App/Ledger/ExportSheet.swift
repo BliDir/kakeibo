@@ -11,6 +11,7 @@ struct ExportSheet: View {
     @State private var monthFile: ExportFile?
     @State private var yearFile: ExportFile?
     @State private var failed = false
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     struct ExportFile {
         let url: URL
@@ -19,6 +20,7 @@ struct ExportSheet: View {
 
     var body: some View {
         NavigationStack {
+            ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 exportRow(
                     title: Text(verbatim: LedgerFormat.monthTitle(month)),
@@ -36,10 +38,12 @@ struct ExportSheet: View {
                 Label("export.note", systemImage: "lock")
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
-                Spacer()
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollBounceBehavior(.basedOnSize)
             .background(Theme.groundLight.ignoresSafeArea())
             .navigationTitle(Text("export.title"))
             .navigationBarTitleDisplayMode(.inline)
@@ -55,12 +59,8 @@ struct ExportSheet: View {
 
     private func exportRow(title: Text, file: ExportFile?, id: String) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: "tablecells")
-                .font(.title3)
-                .foregroundStyle(Theme.accent)
-                .frame(width: 38, height: 38)
-                .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 10))
-                .accessibilityHidden(true)
+            // The icon is decoration; at the accessibility text sizes the words need the room.
+            if !isAccessibilityTextSize { tableIcon }
             VStack(alignment: .leading, spacing: 2) {
                 title.font(.bodyEmphasis).foregroundStyle(Theme.text)
                 Group {
@@ -76,9 +76,9 @@ struct ExportSheet: View {
                 }
                 .font(.caption)
                 .foregroundStyle(Theme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
             }
-            Spacer()
+            .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
             if let file, file.count > 0 {
                 ShareLink(item: file.url) {
                     Image(systemName: "square.and.arrow.up")
@@ -93,6 +93,15 @@ struct ExportSheet: View {
         }
         .padding(14)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var tableIcon: some View {
+        Image(systemName: "tablecells")
+            .font(.title3)
+            .foregroundStyle(Theme.accent)
+            .frame(width: 38, height: 38)
+            .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 10))
+            .accessibilityHidden(true)
     }
 
     /// Writes both files when the sheet opens; they are small, and the user picks one.

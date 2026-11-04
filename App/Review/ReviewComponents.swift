@@ -30,13 +30,27 @@ struct FieldLabel: View {
 /// "Check the amount": a short amber hint under an uncertain field.
 struct Hint: View {
     let key: LocalizedStringKey
-    init(_ key: LocalizedStringKey) { self.key = key }
+    /// False when the field itself announces the hint (`checkHint`), so VoiceOver does not say it twice.
+    var announced = true
+    init(_ key: LocalizedStringKey, announced: Bool = true) {
+        self.key = key
+        self.announced = announced
+    }
 
     var body: some View {
         Label(key, systemImage: "exclamationmark.triangle")
             .font(.caption)
             .foregroundStyle(Theme.warningText)
+            .accessibilityHidden(!announced)
             .accessibilityIdentifier("review.hint")
+    }
+}
+
+extension View {
+    /// Says "Check the amount" (etc.) after the field's label when the scan was unsure,
+    /// so the amber highlight is not only a color.
+    func checkHint(_ needsCheck: Bool, _ key: LocalizedStringKey) -> some View {
+        accessibilityHint(needsCheck ? Text(key) : Text(verbatim: ""))
     }
 }
 
@@ -74,7 +88,7 @@ struct CategoryChip: View {
             }
             .font(.footnote.weight(selected ? .bold : .regular))
             .padding(.horizontal, 12)
-            .frame(minHeight: 36)
+            .frame(minHeight: 44)
             .background(selected ? Theme.accentTint : Theme.field, in: Capsule())
             .overlay(Capsule().stroke(selected ? Theme.accent : Theme.border, lineWidth: selected ? 2 : 1))
             .foregroundStyle(selected ? Theme.accent : Theme.text)
@@ -82,6 +96,38 @@ struct CategoryChip: View {
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("category.\(category.rawValue)")
+    }
+}
+
+/// Picks a payment method. A menu with its own label instead of a menu-style `Picker`, so the
+/// label wraps at large text sizes instead of being cut off. VoiceOver reads the visible choice
+/// ("Cash · 現金, pop-up button") after the field label above it.
+struct PaymentMenu: View {
+    let title: LocalizedStringKey
+    @Binding var selection: PaymentMethod
+    var highlight = false
+
+    var body: some View {
+        Menu {
+            Picker(selection: $selection) {
+                ForEach(PaymentMethod.allCases, id: \.self) { method in
+                    Text(verbatim: method.label).tag(method)
+                }
+            } label: { Text(title) }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 6) {
+                Text(verbatim: selection.label)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .foregroundStyle(Theme.text)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .inputStyle(highlight: highlight)
+        }
     }
 }
 
@@ -135,18 +181,20 @@ struct YenRow: View {
     let label: LocalizedStringKey
     @Binding var value: String
     let id: String
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
-        HStack {
+        AdaptiveStack {
             Text(label).font(.subheadline).foregroundStyle(Theme.text)
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
             HStack(spacing: 1) {
                 let symbol = Yen.fieldSymbol(for: LedgerFormat.language)
                 if symbol.isPrefix { Text(verbatim: symbol.symbol) }
                 TextField(text: $value, prompt: Text(verbatim: "–")) { Text(label) }
                     .keyboardType(.numberPad)
                     .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 90)
+                    .frame(maxWidth: isAccessibilityTextSize ? .infinity : 90)
                     .accessibilityIdentifier(id)
                 if !symbol.isPrefix { Text(verbatim: symbol.symbol) }
             }
@@ -161,7 +209,7 @@ struct ItemRow: View {
     let item: LineItemDraft
 
     var body: some View {
-        HStack(spacing: 10) {
+        AdaptiveStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(verbatim: item.name).foregroundStyle(Theme.text)
                 if let english = item.nameEn {
@@ -174,7 +222,7 @@ struct ItemRow: View {
                 .padding(.horizontal, 6).padding(.vertical, 1)
                 .background(item.isReducedRate ? Theme.reducedRateFill : Theme.divider, in: RoundedRectangle(cornerRadius: 6))
                 .foregroundStyle(item.isReducedRate ? Theme.reducedRateText : Theme.standardRateText)
-            Text(verbatim: LedgerFormat.yen(item.priceYen))
+            YenText(item.priceYen)
                 .font(.amountSmall)
                 .foregroundStyle(item.priceYen < 0 ? Theme.destructive : Theme.text)
                 .frame(minWidth: 64, alignment: .trailing)
@@ -199,9 +247,12 @@ struct ConfirmPanel: View {
                 .ignoresSafeArea()
                 .onTapGesture(perform: onCancel)
                 .accessibilityHidden(true)
+            ScrollIfNeeded {
             VStack(spacing: 14) {
                 Text(title).font(.headline).foregroundStyle(Theme.text).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(message).font(.subheadline).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
                 Button(action: onConfirm) {
                     Text(confirmTitle).font(.headline).frame(maxWidth: .infinity, minHeight: 50)
                 }
@@ -217,6 +268,7 @@ struct ConfirmPanel: View {
             .padding(20)
             .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))
             .padding(16)
+            }
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("confirm")
         }

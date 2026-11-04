@@ -95,6 +95,7 @@ private struct ScanReviewHost: View {
 struct ScanProgressView: View {
     let session: ScanSession
     let stage: ExtractionStage
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         VStack(spacing: 0) {
@@ -117,7 +118,14 @@ struct ScanProgressView: View {
             .padding(.horizontal, 20)
             .padding(.top, 8)
 
-            if let image = session.image {
+            if isAccessibilityTextSize {
+                // Huge text: the steps need the whole screen, so they scroll and the preview goes.
+                ScrollView {
+                    progressSheet.padding(.top, 12)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
+            } else if let image = session.image {
                 Image(decorative: image, scale: 1)
                     .resizable()
                     .scaledToFit()
@@ -132,9 +140,11 @@ struct ScanProgressView: View {
                 Spacer()
             }
 
-            progressSheet
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
+            if !isAccessibilityTextSize {
+                progressSheet
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("scan.progress")

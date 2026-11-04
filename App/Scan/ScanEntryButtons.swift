@@ -81,12 +81,31 @@ struct ScanEntryButtons: View {
 /// The indigo pill from the ledger design.
 struct PillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.button)
-            .padding(.horizontal, 26)
-            .frame(height: 54)
-            .background(Theme.accent.opacity(configuration.isPressed ? 0.85 : 1), in: Capsule())
-            .foregroundStyle(Theme.onAccent)
-            .shadow(color: Theme.accent.opacity(0.35), radius: 9, y: 6)
+        Pill(configuration: configuration)
+    }
+
+    /// At least 54 pt tall and grows with the text, so large text wraps instead of being cut off.
+    /// Disabled: grey with secondary text, which keeps readable contrast (dimming did not).
+    private struct Pill: View {
+        let configuration: Configuration
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(.button)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 26)
+                .padding(.vertical, 10)
+                .frame(minHeight: 54)
+                .background(background, in: Capsule())
+                .foregroundStyle(isEnabled ? Theme.onAccent : Theme.secondaryText)
+                .shadow(color: isEnabled ? Theme.accent.opacity(0.35) : .clear, radius: 9, y: 6)
+        }
+
+        private var background: Color {
+            guard isEnabled else { return Theme.divider }
+            return configuration.isPressed ? Theme.accent.opacity(0.85) : Theme.accent
+        }
     }
 }

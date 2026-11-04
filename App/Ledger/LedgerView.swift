@@ -11,6 +11,7 @@ struct LedgerView: View {
     var onShowTokens: (() -> Void)?
 
     @State private var showExport = false
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         ScrollView {
@@ -35,7 +36,7 @@ struct LedgerView: View {
         .background(Theme.groundLight.ignoresSafeArea())
         .sheet(isPresented: $showExport) {
             ExportSheet(month: model.month, repository: model.repository)
-                .presentationDetents([.medium])
+                .presentationDetents([.medium, .large])
         }
     }
 
@@ -56,64 +57,83 @@ struct LedgerView: View {
                 .accessibilityLabel(Text("export.button"))
                 .accessibilityIdentifier("ledger.export")
                 if let onShowTokens {
-                    Button(action: onShowTokens) { Image(systemName: "hammer") }
+                    Button(action: onShowTokens) { Image(systemName: "hammer").frame(minWidth: 44, minHeight: 44) }
                         .foregroundStyle(Theme.secondaryText)
                         .accessibilityLabel(Text(verbatim: "Design tokens"))
                         .accessibilityIdentifier("debug.tokens")
                 }
             }
-            HStack {
-                MonthButton(systemImage: "chevron.left", label: "ledger.month.previous", id: "ledger.previous") {
-                    model.showPrevious()
-                }
-                Spacer()
-                VStack(spacing: 0) {
-                    Text(verbatim: LedgerFormat.monthTitle(model.month))
-                        .font(.title2.bold())
-                        .foregroundStyle(Theme.text)
-                        .accessibilityIdentifier("ledger.month")
-                    Text(verbatim: LedgerFormat.eraSubtitle(model.month))
-                        .font(.footnoteText)
-                        .foregroundStyle(Theme.secondaryText)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isHeader)
-                Spacer()
-                MonthButton(systemImage: "chevron.right", label: "ledger.month.next", id: "ledger.next") {
-                    model.showNext()
-                }
-                .disabled(!model.canShowNext)
-                .opacity(model.canShowNext ? 1 : 0.35)
+            if isAccessibilityTextSize {
+                // Huge text: the month gets the full width, the arrows go below it.
+                monthTitle
+                HStack { previousButton; Spacer(); nextButton }
+            } else {
+                HStack { previousButton; Spacer(); monthTitle; Spacer(); nextButton }
             }
         }
+    }
+
+    private var monthTitle: some View {
+        VStack(spacing: 0) {
+            Text(verbatim: LedgerFormat.monthTitle(model.month))
+                .font(.title2.bold())
+                .foregroundStyle(Theme.text)
+                .multilineTextAlignment(.center)
+                .accessibilityIdentifier("ledger.month")
+            Text(verbatim: LedgerFormat.eraSubtitle(model.month))
+                .font(.footnoteText)
+                .foregroundStyle(Theme.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var previousButton: some View {
+        MonthButton(systemImage: "chevron.left", label: "ledger.month.previous", id: "ledger.previous") {
+            model.showPrevious()
+        }
+    }
+
+    private var nextButton: some View {
+        MonthButton(systemImage: "chevron.right", label: "ledger.month.next", id: "ledger.next") {
+            model.showNext()
+        }
+        .disabled(!model.canShowNext)
+        .opacity(model.canShowNext ? 1 : 0.35)
     }
 
     // MARK: Summary
 
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
+            AdaptiveStack(verticalAlignment: .firstTextBaseline) {
                 Text("ledger.total.label").font(.overline).tracking(1).foregroundStyle(Theme.secondaryText)
-                Spacer()
-                Text(verbatim: LedgerFormat.yen(model.summary.totalYen))
+                    .layoutPriority(1)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                YenText(model.summary.totalYen)
                     .font(.amountHero)
                     .foregroundStyle(Theme.text)
                     .minimumScaleFactor(0.6)
                     .lineLimit(1)
                     .accessibilityIdentifier("ledger.total")
             }
-            HStack {
+            AdaptiveStack {
                 Text("ledger.receipts \(model.summary.count)")
                     .accessibilityIdentifier("ledger.count")
-                Spacer()
+                Spacer(minLength: 8)
                 Text("ledger.tax \(LedgerFormat.yen(model.summary.taxYen))")
+                    .accessibilityLabel(Text("ledger.tax \(LedgerFormat.spokenYen(model.summary.taxYen))"))
             }
             .font(.footnoteText)
             .foregroundStyle(Theme.secondaryText)
+            .fixedSize(horizontal: false, vertical: true)
 
             if !model.summary.categories.isEmpty {
                 CategoryBar(categories: model.summary.categories)
-                HStack(spacing: 12) {
+                AdaptiveStack(spacing: 12) {
                     ForEach(model.summary.categories.prefix(3), id: \.category) { entry in
                         HStack(spacing: 6) {
                             Circle().fill(entry.category.color).frame(width: 8, height: 8)
@@ -206,10 +226,10 @@ private struct DaySection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
+            AdaptiveStack {
                 Text(verbatim: LedgerFormat.dayTitle(day.dayKey))
-                Spacer()
-                Text(verbatim: LedgerFormat.yen(day.subtotalYen)).font(.amountSmall)
+                Spacer(minLength: 8)
+                YenText(day.subtotalYen).font(.amountSmall)
             }
             .font(.caption.weight(.medium))
             .foregroundStyle(Theme.secondaryText)
@@ -237,7 +257,7 @@ private struct LedgerRow: View {
     let photoStore: PhotoStore?
 
     var body: some View {
-        HStack(spacing: 12) {
+        AdaptiveStack(spacing: 12) {
             ReceiptThumbnail(name: expense.photoFileName, category: expense.category, photoStore: photoStore)
             VStack(alignment: .leading, spacing: 0) {
                 Group {
@@ -250,28 +270,44 @@ private struct LedgerRow: View {
                 .font(.bodyEmphasis)
                 .lineLimit(2)
                 if let english = expense.storeNameEn {
-                    Text(verbatim: english).font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(1)
+                    Text(verbatim: english).font(.caption).foregroundStyle(Theme.secondaryText)
                 }
-                details.font(.caption).foregroundStyle(Theme.secondaryText).lineLimit(2)
+                details.font(.caption).foregroundStyle(Theme.secondaryText)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(verbatim: LedgerFormat.yen(expense.totalYen))
+            YenText(expense.totalYen)
                 .font(.amount)
                 .foregroundStyle(Theme.text)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 11)
         .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        // One element: "スターバックス, Starbucks, Dining out, Credit card, 1,078 yen, Thursday, November 5".
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: spokenLabel))
+    }
+
+    private var spokenLabel: String {
+        var parts: [String] = [expense.storeName.isEmpty ? String(localized: "ledger.noStore") : expense.storeName]
+        if let english = expense.storeNameEn { parts.append(english) }
+        parts.append(detailParts.joined(separator: ", "))
+        parts.append(LedgerFormat.spokenYen(expense.totalYen))
+        parts.append(LedgerFormat.spokenDay(expense.dayKey))
+        return parts.joined(separator: ", ")
     }
 
     /// "Groceries · IC card · 5 items".
     private var details: Text {
+        Text(verbatim: detailParts.joined(separator: " · "))
+    }
+
+    private var detailParts: [String] {
         var parts = [expense.category.displayName(for: LedgerFormat.language), expense.payment.shortLabel]
         if !expense.items.isEmpty {
             parts.append(String(localized: "ledger.items \(expense.items.count)"))
         }
-        return Text(verbatim: parts.joined(separator: " · "))
+        return parts
     }
 }
 

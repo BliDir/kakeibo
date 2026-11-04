@@ -49,19 +49,15 @@ struct SettingsView: View {
 
             Divider().overlay(Theme.divider)
 
-            SettingsRow("settings.payment") {
-                Picker(selection: Binding(
+            VStack(alignment: .leading, spacing: 6) {
+                Text("settings.payment").foregroundStyle(Theme.text)
+                PaymentMenu(title: "settings.payment", selection: Binding(
                     get: { model.settings.defaultPayment },
                     set: { model.settings.defaultPayment = $0 }
-                )) {
-                    ForEach(PaymentMethod.allCases, id: \.self) { method in
-                        Text(verbatim: method.label).tag(method)
-                    }
-                } label: { Text("settings.payment") }
-                    .pickerStyle(.menu)
-                    .tint(Theme.secondaryText)
-                    .accessibilityIdentifier("settings.payment")
+                ))
+                .accessibilityIdentifier("settings.payment")
             }
+            .padding(.vertical, 10)
         }
     }
 
@@ -171,13 +167,17 @@ private struct SettingsRow<Value: View>: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        // Label above the value at the accessibility text sizes.
+        AdaptiveStack(spacing: 12) {
             Text(label).foregroundStyle(Theme.text)
+                .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             HStack(spacing: 6) { value }
                 .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .font(.body)
+        .padding(.vertical, 6)
         .frame(minHeight: 50)
         .contentShape(Rectangle())
     }

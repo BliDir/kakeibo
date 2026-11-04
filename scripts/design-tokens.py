@@ -72,6 +72,7 @@ PAIRS = [
     ("AccentColor", "Ground", TEXT, "Cancel on the ground"),
     ("AccentColor", "AccentTint", TEXT, "selected chip text"),
     ("Text", "AccentTint", TEXT, "privacy note on Settings"),
+    ("SecondaryText", "Divider", TEXT, "disabled pill button"),
     ("OnAccent", "AccentColor", TEXT, "primary button text"),
     ("Destructive", "Surface", TEXT, "Delete text"),
     ("Destructive", "Ground", TEXT, "Delete button on the ground"),

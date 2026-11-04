@@ -37,7 +37,7 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["review.invoice"].exists == false || app.staticTexts["review.invoice"].label.hasPrefix("T"))
 
         app.buttons["review.save"].tap()
-        XCTAssertTrue(app.staticTexts["Saved ¥754"].waitForExistence(timeout: 5), "save confirmation")
+        XCTAssertTrue(app.staticTexts["Saved 754 yen"].waitForExistence(timeout: 5), "save confirmation")
         XCTAssertTrue(app.buttons["ledger.row"].waitForExistence(timeout: 5))
     }
 
@@ -118,7 +118,7 @@ final class KakeiboUITests: XCTestCase {
         store.tap()
         store.typeText("Cafe Poem")
         app.buttons["review.save"].tap()
-        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
 
         // Edit: change the amount.
         let row = app.buttons["ledger.row"]
@@ -129,7 +129,7 @@ final class KakeiboUITests: XCTestCase {
         amount.tap()
         amount.typeText("0")
         app.buttons["review.save"].tap()
-        XCTAssertTrue(app.staticTexts["Saved ¥8,800"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 8,800 yen"].waitForExistence(timeout: 5))
 
         // Delete with the in-app confirmation.
         row.tap()
@@ -150,7 +150,7 @@ final class KakeiboUITests: XCTestCase {
         app.tabBars.buttons["Summary"].tap()
         let total = app.staticTexts["summary.total"]
         XCTAssertTrue(total.waitForExistence(timeout: 5))
-        XCTAssertEqual(total.label, "¥5,198")
+        XCTAssertEqual(total.label, "5,198 yen")
         XCTAssertEqual(app.staticTexts["summary.count"].label, "4 receipts")
 
         let rows = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'summary.category.'"))
@@ -160,11 +160,11 @@ final class KakeiboUITests: XCTestCase {
         // VoiceOver: both names, the amount and the share.
         let transport = app.descendants(matching: .any)["summary.category.transport"]
         XCTAssertEqual(transport.label, "Transport, 交通")
-        XCTAssertEqual(transport.value as? String, "¥2,150, 41.4%")
+        XCTAssertEqual(transport.value as? String, "2,150 yen, 41.4%")
 
         let comparison = app.descendants(matching: .any)["summary.comparison"]
         XCTAssertTrue(comparison.exists)
-        XCTAssertTrue(comparison.label.hasPrefix("¥1,920 more than"), comparison.label)
+        XCTAssertTrue(comparison.label.hasPrefix("1,920 yen more than"), comparison.label)
 
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = "summary"
@@ -173,13 +173,13 @@ final class KakeiboUITests: XCTestCase {
 
         // Last month: one category.
         app.buttons["summary.previous"].tap()
-        XCTAssertEqual(total.label, "¥3,278")
+        XCTAssertEqual(total.label, "3,278 yen")
         XCTAssertEqual(rows.count, 1)
         XCTAssertTrue(app.descendants(matching: .any)["summary.category.kids"].exists)
 
         // The ledger shows the same month.
         app.tabBars.buttons["Ledger"].tap()
-        XCTAssertEqual(app.staticTexts["ledger.total"].label, "¥3,278")
+        XCTAssertEqual(app.staticTexts["ledger.total"].label, "3,278 yen")
     }
 
     /// A saved entry shows up in the summary straight away.
@@ -188,14 +188,14 @@ final class KakeiboUITests: XCTestCase {
         let app = launch()
         app.tabBars.buttons["Summary"].tap()
         XCTAssertTrue(app.staticTexts["summary.empty"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["summary.total"].label, "¥0")
+        XCTAssertEqual(app.staticTexts["summary.total"].label, "0 yen")
 
         app.tabBars.buttons["Ledger"].tap()
         addManualExpense(app, amount: "880", store: "Cafe Poem")
-        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
 
         app.tabBars.buttons["Summary"].tap()
-        XCTAssertEqual(app.staticTexts["summary.total"].label, "¥880")
+        XCTAssertEqual(app.staticTexts["summary.total"].label, "880 yen")
         XCTAssertFalse(app.staticTexts["summary.empty"].exists)
         XCTAssertTrue(app.descendants(matching: .any)["summary.category.other"].exists)
     }
@@ -254,7 +254,7 @@ final class KakeiboUITests: XCTestCase {
         let app = launch(scan: true)
         XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
         app.buttons["review.save"].tap()
-        XCTAssertTrue(app.staticTexts["Saved ¥754"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 754 yen"].waitForExistence(timeout: 5))
 
         app.tabBars.buttons["Settings"].tap()
         let photos = app.descendants(matching: .any)["settings.photos"]
@@ -269,7 +269,7 @@ final class KakeiboUITests: XCTestCase {
     func testSavingTheSameEntryTwiceWarns() {
         let app = launch()
         addManualExpense(app, amount: "880", store: "Cafe Poem")
-        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Already saved?"].exists, "first save has nothing to match")
 
         addManualExpense(app, amount: "880", store: "Cafe Poem")
@@ -277,7 +277,7 @@ final class KakeiboUITests: XCTestCase {
         let entry = app.descendants(matching: .any)["duplicate.entry"].firstMatch
         XCTAssertTrue(entry.exists)
         XCTAssertTrue(entry.label.contains("Cafe Poem"), entry.label)
-        XCTAssertTrue(entry.label.contains("¥880"), entry.label)
+        XCTAssertTrue(entry.label.contains("880 yen"), entry.label)
         XCTAssertTrue(app.buttons["duplicate.view"].exists)
 
         app.buttons["duplicate.cancel"].tap()
@@ -287,7 +287,7 @@ final class KakeiboUITests: XCTestCase {
         app.buttons["review.save"].tap()
         XCTAssertTrue(app.buttons["duplicate.saveAnyway"].waitForExistence(timeout: 3))
         app.buttons["duplicate.saveAnyway"].tap()
-        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 2)
     }
 
@@ -296,7 +296,7 @@ final class KakeiboUITests: XCTestCase {
     func testDuplicateWarningOpensTheSavedEntry() {
         let app = launch()
         addManualExpense(app, amount: "1200", store: "Bento Ya")
-        XCTAssertTrue(app.staticTexts["Saved ¥1,200"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 1,200 yen"].waitForExistence(timeout: 5))
 
         addManualExpense(app, amount: "1200", store: "Bento Ya")
         XCTAssertTrue(app.buttons["duplicate.view"].waitForExistence(timeout: 3))
@@ -315,9 +315,9 @@ final class KakeiboUITests: XCTestCase {
     func testSameStoreDifferentAmountDoesNotWarn() {
         let app = launch()
         addManualExpense(app, amount: "880", store: "Cafe Poem")
-        XCTAssertTrue(app.staticTexts["Saved ¥880"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
         addManualExpense(app, amount: "450", store: "Cafe Poem")
-        XCTAssertTrue(app.staticTexts["Saved ¥450"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Saved 450 yen"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Already saved?"].exists)
     }
 
@@ -353,7 +353,7 @@ final class KakeiboUITests: XCTestCase {
         let app = launch()
         XCTAssertTrue(app.otherElements["ledger.empty"].waitForExistence(timeout: 5)
                       || app.staticTexts["No receipts for this month"].waitForExistence(timeout: 1))
-        XCTAssertEqual(app.staticTexts["ledger.total"].label, "¥0")
+        XCTAssertEqual(app.staticTexts["ledger.total"].label, "0 yen")
         XCTAssertFalse(app.buttons["ledger.next"].isEnabled, "no future months")
     }
 
@@ -362,18 +362,18 @@ final class KakeiboUITests: XCTestCase {
         let app = launch(seed: true)
         let total = app.staticTexts["ledger.total"]
         XCTAssertTrue(total.waitForExistence(timeout: 5))
-        XCTAssertEqual(total.label, "¥5,198")
+        XCTAssertEqual(total.label, "5,198 yen")
         XCTAssertEqual(app.staticTexts["ledger.count"].label, "4 receipts")
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 4)
         XCTAssertFalse(app.buttons["ledger.next"].isEnabled)
 
         app.buttons["ledger.previous"].tap()
-        XCTAssertEqual(total.label, "¥3,278")
+        XCTAssertEqual(total.label, "3,278 yen")
         XCTAssertEqual(app.staticTexts["ledger.count"].label, "1 receipt")
         XCTAssertTrue(app.buttons["ledger.next"].isEnabled)
 
         app.buttons["ledger.next"].tap()
-        XCTAssertEqual(total.label, "¥5,198")
+        XCTAssertEqual(total.label, "5,198 yen")
     }
 
     @MainActor
@@ -382,13 +382,15 @@ final class KakeiboUITests: XCTestCase {
         let total = app.staticTexts["ledger.total"]
         XCTAssertTrue(total.waitForExistence(timeout: 5))
         let row = app.buttons.matching(identifier: "ledger.row").firstMatch
-        XCTAssertTrue(row.label.contains("¥1,078"))          // newest first: Starbucks
+        XCTAssertTrue(row.label.contains("1,078 yen"))          // newest first: Starbucks
+        // VoiceOver reads the row as one element: store, category, payment, amount, date.
+        XCTAssertTrue(row.label.hasPrefix("スターバックス, Starbucks, Dining out, Credit card, 1,078 yen, "), row.label)
         row.tap()
         let delete = scrollTo(app.buttons["review.delete"], in: app)
         delete.tap()
         app.buttons["confirm.action"].tap()
         XCTAssertTrue(app.staticTexts["Expense deleted"].waitForExistence(timeout: 5))
-        XCTAssertEqual(total.label, "¥4,120")
+        XCTAssertEqual(total.label, "4,120 yen")
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 3)
     }
 

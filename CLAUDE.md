@@ -44,6 +44,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - `BackgroundRefinement` is in Core (it only uses Core types).
 - UI tests launch with `KAKEIBO_IN_MEMORY_STORE=1` (empty ledger, temporary photo folder) and `KAKEIBO_NO_REFINER=1` (no on-device model, so results do not depend on the machine).
 - Ledger: month and summary math (`LedgerMonth`, `JapaneseEra`, `MonthSummary`, `DayGroup`) is in Core; `LedgerModel` (KakeiboStore) reads through `ExpenseRepository` and reloads on `ModelContext.didSave`, so any save or delete updates the ledger. Do not add `@Query` to screens; read through the repository. UI tests can start with sample data via `KAKEIBO_SEED_SAMPLE=1` (with `KAKEIBO_IN_MEMORY_STORE=1`).
+- CSV export: `ExpenseCSV` / `CSVWriter` (Core) define the columns and escaping; `ExpenseExport` (KakeiboStore) writes `kakeibo-yyyy-MM.csv` / `kakeibo-yyyy.csv`. Keep UTF-8 with BOM and CRLF (Excel on Windows), and write user or OCR text with `CSVWriter.textField` so it can never run as a spreadsheet formula.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

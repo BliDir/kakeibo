@@ -10,6 +10,8 @@ struct LedgerView: View {
     /// Debug builds only: opens the design tokens screen.
     var onShowTokens: (() -> Void)?
 
+    @State private var showExport = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
@@ -31,6 +33,10 @@ struct LedgerView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.groundLight.ignoresSafeArea())
+        .sheet(isPresented: $showExport) {
+            ExportSheet(month: model.month, repository: model.repository)
+                .presentationDetents([.medium])
+        }
     }
 
     // MARK: Header and month switcher
@@ -42,6 +48,13 @@ struct LedgerView: View {
                     .font(.overline).tracking(1)
                     .foregroundStyle(Theme.secondaryText)
                 Spacer()
+                Button { showExport = true } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .frame(minWidth: 44, minHeight: 44)
+                }
+                .foregroundStyle(Theme.accent)
+                .accessibilityLabel(Text("export.button"))
+                .accessibilityIdentifier("ledger.export")
                 if let onShowTokens {
                     Button(action: onShowTokens) { Image(systemName: "hammer") }
                         .foregroundStyle(Theme.secondaryText)

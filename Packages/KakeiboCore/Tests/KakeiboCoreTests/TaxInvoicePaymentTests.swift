@@ -153,3 +153,51 @@ private func lines(_ text: String) -> [String] { TextNormalizer.normalize(text: 
         #expect(pay("PAID").payment == .cash)
     }
 }
+
+@Suite struct InvoiceNumberWithoutTTests {
+    private func parse(_ text: String) -> InvoiceNumberParser.Result? {
+        InvoiceNumberParser.parse(lines: TextNormalizer.normalize(text: text))
+    }
+
+    @Test(arguments: [
+        "登録番号 1234567890123",            // Vision dropped the T
+        "登録番号:1234-5678-9012-3",
+        "登録番号 1234 5678 9012 3",
+        "登録NO 1234567890123",
+        "適格請求書発行事業者 1234567890123",
+        "登録番号 丁1234567890123",          // T read as 丁
+        "登録番号 Т1234567890123",           // Cyrillic Т
+        "登録番号 ㄒ1234567890123",
+        "登録番号 †1234567890123",
+    ])
+    func labelledLineForgivesTheT(line: String) throws {
+        let result = try #require(parse(line))
+        #expect(result.invoiceNumber == "T1234567890123")
+        #expect(result.confidence == .high)
+    }
+
+    @Test(arguments: ["登録番号\nT1234567890123", "登録番号:\n1234567890123", "適格請求書発行事業者登録番号\n1234-5678-9012-3"])
+    func numberOnTheLineAfterABareLabel(text: String) throws {
+        #expect(try #require(parse(text)).invoiceNumber == "T1234567890123")
+    }
+
+    @Test(arguments: [
+        "4901234567894",                     // a JAN barcode
+        "牛乳 4901234567894",
+        "会員番号 1234567890123",            // labelled as something else
+        "登録番号 123456789012",             // 12 digits
+        "登録番号 12345678901234",           // 14 digits
+    ])
+    func rejectsUnlabelledOrWrongLength(line: String) {
+        #expect(parse(line) == nil)
+    }
+
+    @Test func numberAfterLabelMustBeOnTheNextLineOnly() {
+        #expect(parse("登録番号\n店長 山田\n1234567890123") == nil)
+    }
+
+    @Test func labelledWinsOverUnlabelled() throws {
+        let result = try #require(parse("T9876543210987\n登録番号 1234567890123"))
+        #expect(result.invoiceNumber == "T1234567890123")
+    }
+}

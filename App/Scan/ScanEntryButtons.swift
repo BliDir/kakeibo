@@ -82,11 +82,11 @@ struct ScanEntryButtons: View {
 struct PillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .bold))
+            .font(.button)
             .padding(.horizontal, 26)
             .frame(height: 54)
             .background(Theme.accent.opacity(configuration.isPressed ? 0.85 : 1), in: Capsule())
-            .foregroundStyle(.white)
+            .foregroundStyle(Theme.onAccent)
             .shadow(color: Theme.accent.opacity(0.35), radius: 9, y: 6)
     }
 }

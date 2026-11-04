@@ -56,7 +56,7 @@ struct ReviewView: View {
 
     private var header: some View {
         ZStack {
-            Text(title).font(.headline).foregroundStyle(Theme.text)
+            Text(title).font(.screenTitle).foregroundStyle(Theme.text)
             HStack {
                 Button("review.cancel", action: cancel)
                     .font(.body.weight(.medium))
@@ -131,7 +131,7 @@ struct ReviewView: View {
     private func ocrDisclosure(_ text: String) -> some View {
         DisclosureGroup {
             Text(verbatim: text)
-                .font(.system(.footnote, design: .monospaced))
+                .font(.code)
                 .foregroundStyle(Theme.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
@@ -166,11 +166,11 @@ struct ReviewView: View {
                     .font(.caption).tracking(0.6)
                     .foregroundStyle(Theme.secondaryText)
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text(verbatim: "¥").font(.system(size: 34, weight: .semibold, design: .monospaced))
+                    Text(verbatim: "¥").font(.amountHero)
                     TextField(text: $form.amountText, prompt: Text(verbatim: "0")) {
                         Text("review.amount.label")
                     }
-                    .font(.system(size: 34, weight: .semibold, design: .monospaced))
+                    .font(.amountHero)
                     .keyboardType(.numberPad)
                     .focused($amountFocused)
                     .accessibilityIdentifier("review.amount")
@@ -230,7 +230,7 @@ struct ReviewView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         FieldLabel("review.time")
                         Text(verbatim: time)
-                            .font(.body.monospacedDigit())
+                            .font(.amountSmall)
                             .foregroundStyle(Theme.text)
                             .frame(minHeight: 34)
                             .accessibilityIdentifier("review.time")
@@ -293,7 +293,7 @@ struct ReviewView: View {
                 HStack {
                     Text("review.invoice").font(.subheadline)
                     Spacer()
-                    Text(verbatim: invoice).font(.system(.footnote, design: .monospaced))
+                    Text(verbatim: invoice).font(.code)
                         .accessibilityIdentifier("review.invoice")
                 }
                 .padding(.vertical, 10)

@@ -1,8 +1,10 @@
 import XCTest
 
 final class KakeiboUITests: XCTestCase {
-    override func setUp() {
+    override func setUpWithError() throws {
         continueAfterFailure = false
+        // The Japanese test plan configuration runs only the smoke test; these tests force English.
+        try XCTSkipIf(ProcessInfo.processInfo.environment["KAKEIBO_SMOKE_ONLY"] == "1", "Smoke test only in this configuration")
     }
 
     @MainActor

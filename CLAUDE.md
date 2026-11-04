@@ -43,6 +43,7 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Review screen logic lives in `ReviewForm` (KakeiboStore): fields to check, validation, unsaved changes, save (photo first, removed again if the expense fails to save) and delete. `ReviewView` only binds to it. Confirmations (discard, delete) use the in-app `ConfirmPanel`, never `.alert` or `.confirmationDialog`.
 - `BackgroundRefinement` is in Core (it only uses Core types).
 - Duplicates: `ReceiptNumberParser` reads the receipt's own number (レシートNo., 取引番号, 伝票番号) with the register when printed (`02/0012`); compare with `comparisonKey`, never `==`. The invoice number is per shop, not per receipt, so never treat it alone as a duplicate. `ExpenseRepository.possibleDuplicates` holds the rules; `ReviewView` checks `ReviewForm.possibleDuplicates` on Save and shows `DuplicatePanel` (warn, never block).
+- UI smoke test (`SmokeTests`, T-51): the core flow (add, save, find in the ledger, open, delete, empty again), run in both test plan configurations. It finds controls by accessibility identifier only, never sets the language itself (the configuration does), and checks amounts by digits so it works in both languages. Keep it passing; if you change an identifier it uses, update it. New UI test classes that force English must skip when `KAKEIBO_SMOKE_ONLY=1`.
 - UI tests launch with `KAKEIBO_IN_MEMORY_STORE=1` (empty ledger, temporary photo folder) and `KAKEIBO_NO_REFINER=1` (no on-device model, so results do not depend on the machine). Debug builds read `KAKEIBO_COLOR_SCHEME=dark|light` to force the appearance; `XCUIDevice.shared.appearance` and `simctl ui … appearance` do not reach the app in tests.
 - Privacy and release: `App/PrivacyInfo.xcprivacy` declares no tracking, no collected data, and only the required-reason APIs our code calls (today `UserDefaults`, CA92.1). If you start using another one (file timestamps, disk space, system boot time, active keyboards), add it there. No network calls and no third-party SDKs. Usage descriptions are `INFOPLIST_KEY_*` build settings with translations in `App/InfoPlist.xcstrings`; keys with no build setting (the launch screen color) go in `Config/Info.plist`, which Xcode merges.
 - Branding: the app icon is the supplied single 1024 px `AppIcon` (no dark or tinted variants); the wordmark is `Image("KakeiboLogo")`, dark lettering for light backgrounds, so it sits on `Theme.logoPlate` (ivory in both modes). Do not regenerate either asset.
@@ -65,7 +66,7 @@ swift test --package-path Packages/KakeiboScan
 swift test --package-path Packages/KakeiboStore
 ```
 
-Full app build and tests (runs the `Kakeibo` test plan: all package tests plus UI tests, on the simulator):
+Full app build and tests (runs the `Kakeibo` test plan on the simulator, in two configurations: **English** runs all package and UI tests; **Japanese** runs the package tests and the UI smoke test `SmokeTests`, and the other UI tests skip there because they force English):
 
 ```
 xcodebuild test -scheme Kakeibo -destination 'platform=iOS Simulator,name=iPhone 17'

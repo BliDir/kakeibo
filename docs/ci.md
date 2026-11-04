@@ -6,7 +6,7 @@ Two Xcode Cloud workflows test every pull request and send every merge to `main`
 
 | File | Purpose |
 | --- | --- |
-| `Kakeibo.xctestplan` | The app's test plan: `KakeiboCoreTests`, `KakeiboScanTests`, `KakeiboStoreTests` and `KakeiboUITests`, run on the iOS simulator. It is the default plan of the shared `Kakeibo` scheme. |
+| `Kakeibo.xctestplan` | The app's test plan: `KakeiboCoreTests`, `KakeiboScanTests`, `KakeiboStoreTests` and `KakeiboUITests`, run on the iOS simulator. It is the default plan of the shared `Kakeibo` scheme. It has two configurations, **English** and **Japanese** (app language and region JP). English runs everything. Japanese runs the package tests and the UI smoke test (`SmokeTests`); the other UI tests skip there (`KAKEIBO_SMOKE_ONLY`) because they force English. |
 | `ci_scripts/ci_pre_xcodebuild.sh` | Xcode Cloud custom step. Before the test action's `build-for-testing`, it runs `swift test` for all three packages on the macOS host. It does nothing for other actions. |
 | `ci_scripts/test_packages.sh` | Runs `swift test` for each package. It can also be run locally. |
 | `ITSAppUsesNonExemptEncryption = NO` | Set in the app's build settings so TestFlight does not ask the export-compliance question for each build. |
@@ -17,7 +17,7 @@ Two Xcode Cloud workflows test every pull request and send every merge to `main`
 
 - **Start condition:** Pull Request Changes, source branch: any, target branch: `main`. Turn on auto-cancel.
 - **Environment:** Xcode: Latest Release (26.x). macOS: Latest Release.
-- **Action:** Test. Scheme `Kakeibo`, test plan `Kakeibo`, platform iOS, destination: iPhone 17 simulator, latest iOS 26.
+- **Action:** Test. Scheme `Kakeibo`, test plan `Kakeibo` (both its configurations run, so the smoke test runs in English and Japanese), platform iOS, destination: iPhone 17 simulator, latest iOS 26.
 - **Result:** Xcode Cloud posts a check on the GitHub pull request.
 
 ### 2. Main to TestFlight
@@ -48,3 +48,5 @@ These steps need the Apple Developer account and cannot be done from the repo.
 ci_scripts/test_packages.sh
 xcodebuild test -scheme Kakeibo -testPlan Kakeibo -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
+
+This runs both configurations. To run one, add `-only-test-configuration English` (or `Japanese`). The smoke test alone: `-only-testing:KakeiboUITests/SmokeTests`.

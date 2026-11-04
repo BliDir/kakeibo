@@ -16,8 +16,10 @@ import XCTest
 ///   predictions about larger sizes that name no element. `ScreenshotTourTests` checks every
 ///   screen at XXXL and AX5 by eye instead.
 final class AccessibilityAuditTests: XCTestCase {
-    override func setUp() {
+    override func setUpWithError() throws {
         continueAfterFailure = true
+        // The Japanese test plan configuration runs only the smoke test; these tests force English.
+        try XCTSkipIf(ProcessInfo.processInfo.environment["KAKEIBO_SMOKE_ONLY"] == "1", "Smoke test only in this configuration")
     }
 
     @MainActor func testLedger() throws {

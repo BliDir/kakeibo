@@ -37,6 +37,9 @@ Work is tracked in Linear, project **Kakeibo iOS v1.0** (team DailyAdventureGame
 - Do not name a package resource folder `Resources` in a test target that uses `.copy`: iOS code signing rejects the bundle ("bundle format unrecognized"). Use a descriptive name such as `SampleImages` or `Fixtures`.
 - Refiner: get one with `ReceiptRefiners.automatic()` (on-device model when Apple Intelligence is available, otherwise `NoopRefiner`). Merge rules live in `RefinementMerger` and are tested with `MockModel`; keep model-specific code in `FoundationModelsRefiner.swift`. The live model test runs only where Apple Intelligence is available and takes about 15 s.
 - Scanning never waits for the model (decided 2026-11-04; the model takes 13–43 s). Use `ExtractionPipeline.extract` (about 1 s) and show its draft on the review screen at once; then run `refine` in a background task and apply its answer with `BackgroundRefinement.apply(refined:original:current:)`, which keeps any field the user has already edited. Cancel the refine task when the user leaves the screen.
+- Scan UI state lives in `ScanSession` (KakeiboScan, main actor, tested with `swift test`); views only observe it. Decode library photos with `ImageDecoding.uprightImage` (applies EXIF orientation), never `CGImageSourceCreateImageAtIndex`.
+- UI tests: give a SwiftUI container `.accessibilityElement(children: .contain)` before `.accessibilityIdentifier`, or the identifier replaces every child's. Debug builds read `KAKEIBO_SCAN_IMAGE_PATH` (start a scan with that image) and `KAKEIBO_SCAN_OCR_DELAY` (seconds) so UI tests can drive the scan flow without the photo picker.
+- App colors come from `Theme` (temporary until T-04's color assets); never write literal colors in views.
 - Format yen with `Yen.format(_:)` (`¥1,234`, `-¥120`), not `NumberFormatter` or locale currency styles.
 
 ## Commands

@@ -1,0 +1,23 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSCameraUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kakeibo uses the camera to scan receipts. Photos stay on this iPhone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レシートを撮影するためにカメラを使います。写真はこのiPhoneの中にだけ保存されます。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

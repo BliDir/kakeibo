@@ -22,3 +22,6 @@ Package.resolved
 
 # Python
 __pycache__/
+
+# Receipt photos captured for re-OCR stay out of the repo
+Packages/KakeiboCore/Tests/Fixtures/**/*.jpg

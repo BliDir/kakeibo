@@ -64,6 +64,13 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    @MainActor func testBudgetSheet() throws {
+        try auditInBothModes("budget sheet") { app in
+            app.buttons["budget.cta.button"].tap()
+            XCTAssertTrue(app.textFields["budget.amount"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testScanReview() throws {
         try auditInBothModes("scan review", scan: true) { app in
             XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))

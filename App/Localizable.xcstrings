@@ -1,6 +1,431 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "budget.amount.help %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whole yen. Counts every expense recorded in %@, scanned or typed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "円単位で入力します。%@に記録したすべての支出（読み取り・手入力）が対象です。"
+          }
+        }
+      }
+    },
+    "budget.amount.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MONTHLY LIMIT · 月の上限"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月の上限 · MONTHLY LIMIT"
+          }
+        }
+      }
+    },
+    "budget.closed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Past month · view only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "過去の月 · 閲覧のみ"
+          }
+        }
+      }
+    },
+    "budget.cta.button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を設定"
+          }
+        }
+      }
+    },
+    "budget.cta.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See what's left this month and how much you can spend this week."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の残りと、今週使える金額がわかります。"
+          }
+        }
+      }
+    },
+    "budget.cta.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set a monthly budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月の予算を設定しましょう"
+          }
+        }
+      }
+    },
+    "budget.edit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編集"
+          }
+        }
+      }
+    },
+    "budget.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "BUDGET 予算"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算 · BUDGET"
+          }
+        }
+      }
+    },
+    "budget.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only expenses you record are counted. Past months can't be edited."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録した支出だけを集計します。過去の月は編集できません。"
+          }
+        }
+      }
+    },
+    "budget.problem.notPositive": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an amount above 0"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "0より大きい金額を入力してください"
+          }
+        }
+      }
+    },
+    "budget.problem.notWholeYen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use whole yen, digits only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "円単位の数字だけで入力してください"
+          }
+        }
+      }
+    },
+    "budget.problem.tooLarge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up to ¥999,999,999"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "999,999,999円までです"
+          }
+        }
+      }
+    },
+    "budget.remove": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を削除"
+          }
+        }
+      }
+    },
+    "budget.remove.action": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除"
+          }
+        }
+      }
+    },
+    "budget.remove.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your receipts stay. Progress and alerts stop for this month."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レシートは残ります。この月の進み具合とアラートは止まります。"
+          }
+        }
+      }
+    },
+    "budget.remove.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove %@'s budget?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の予算を削除しますか？"
+          }
+        }
+      }
+    },
+    "budget.removeFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't remove the budget. Please try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を削除できませんでした。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "budget.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を保存"
+          }
+        }
+      }
+    },
+    "budget.saveFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save the budget. Please try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を保存できませんでした。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "budget.sheet.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
+        }
+      }
+    },
+    "budget.sheet.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の予算"
+          }
+        }
+      }
+    },
+    "budget.template.off %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off: this budget applies to %@ only. You'll set each month yourself."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オフ：%@だけの予算です。毎月ご自身で設定します。"
+          }
+        }
+      }
+    },
+    "budget.template.on %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On: %1$@ and later start with %2$@. Months you've already set stay as they are."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オン：%1$@以降は%2$@から始まります。設定済みの月は変わりません。"
+          }
+        }
+      }
+    },
+    "budget.template.on.noAmount %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On: %@ and later start with the amount above. Months you've already set stay as they are."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オン：%@以降は上の金額から始まります。設定済みの月は変わりません。"
+          }
+        }
+      }
+    },
+    "budget.template.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use this amount for future months"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来月以降もこの金額を使う"
+          }
+        }
+      }
+    },
     "camera.denied.message": {
       "extractionState": "manual",
       "localizations": {

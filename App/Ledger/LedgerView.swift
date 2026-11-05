@@ -11,6 +11,7 @@ struct LedgerView: View {
     var onShowTokens: (() -> Void)?
 
     @State private var showExport = false
+    @State private var budgetForm: BudgetFormItem?
     @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
@@ -34,6 +35,10 @@ struct LedgerView: View {
             .padding(.bottom, 24)
         }
         .background(Theme.groundLight.ignoresSafeArea())
+        .sheet(item: $budgetForm) { item in
+            BudgetSheet(form: item.form)
+                .presentationDetents([.large])
+        }
         .sheet(isPresented: $showExport) {
             ExportSheet(month: model.month, repository: model.repository)
                 .presentationDetents([.medium, .large])
@@ -144,11 +149,86 @@ struct LedgerView: View {
                 .font(.footnoteText)
                 .foregroundStyle(Theme.text)
             }
+            budgetSection
         }
         .padding(18)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("ledger.summary")
+    }
+
+    // MARK: Budget (v1.1)
+
+    /// Current month: a setup prompt, or the budget with Edit. Past months: the budget, view only.
+    @ViewBuilder private var budgetSection: some View {
+        if let budget = model.budgetSummary {
+            if let budgetYen = budget.budgetYen {
+                Divider().overlay(Theme.divider)
+                AdaptiveStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("budget.label").font(.overline).tracking(1).foregroundStyle(Theme.secondaryText)
+                        YenText(budgetYen)
+                            .font(.amount)
+                            .foregroundStyle(Theme.text)
+                    }
+                    // VoiceOver: "BUDGET 予算, 200,000 yen".
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("budget.value")
+                    Spacer(minLength: 8)
+                    if model.canEditBudget {
+                        Button("budget.edit") { openBudgetSheet() }
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(Theme.accent)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .accessibilityIdentifier("budget.edit")
+                    } else {
+                        Label("budget.closed", systemImage: "lock")
+                            .font(.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                            .accessibilityIdentifier("budget.closed")
+                    }
+                }
+            } else if model.canEditBudget {
+                budgetSetupPrompt
+            }
+        }
+    }
+
+    private var budgetSetupPrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "chart.pie")
+                    .font(.title3)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 40, height: 40)
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("budget.cta.title").font(.headline).foregroundStyle(Theme.text)
+                    Text("budget.cta.message").font(.footnote).foregroundStyle(Theme.text)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            .accessibilityElement(children: .combine)
+            Button { openBudgetSheet() } label: {
+                Text("budget.cta.button")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+            }
+            .background(Theme.accent, in: RoundedRectangle(cornerRadius: 12))
+            .foregroundStyle(Theme.onAccent)
+            .accessibilityIdentifier("budget.cta.button")
+        }
+        .padding(16)
+        .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.border, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("budget.cta")
+    }
+
+    private func openBudgetSheet() {
+        if let form = model.makeBudgetForm() { budgetForm = BudgetFormItem(form: form) }
     }
 
     // MARK: Empty state
@@ -343,4 +423,10 @@ private struct ReceiptThumbnail: View {
             image = cgImage.map { UIImage(cgImage: $0) }
         }
     }
+}
+
+/// The budget form presented as a sheet.
+private struct BudgetFormItem: Identifiable {
+    let id = UUID()
+    let form: BudgetForm
 }

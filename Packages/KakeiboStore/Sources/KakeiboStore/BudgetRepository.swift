@@ -102,6 +102,42 @@ public final class BudgetRepository {
         }
     }
 
+    /// Sets the current month's budget and the "use this amount for future months" choice in
+    /// one write: both are saved, or neither. On: the template becomes `yen` from next month.
+    /// Off: any template is turned off (future months only; this month keeps `yen`).
+    public func saveBudget(_ yen: Int, for month: LedgerMonth, useForFutureMonths: Bool, now: Date) throws {
+        try requireCurrent(month, now: now)
+        guard case .yen(let amount) = MonthlyBudget.validated(yen) else {
+            if case .invalid(let problem) = MonthlyBudget.validated(yen) { throw Error.invalidBudget(problem) }
+            throw Error.invalidBudget(.notPositive)
+        }
+        let existing = try row(for: month)
+        let existingTemplate = try template()
+        let start = month.next.key
+        try commit {
+            let row = existing ?? {
+                let new = BudgetMonth(monthKey: month.key, createdAt: now, updatedAt: now)
+                context.insert(new)
+                return new
+            }()
+            row.budgetYen = amount
+            row.appliedFromTemplate = false
+            row.updatedAt = now
+            switch (useForFutureMonths, existingTemplate) {
+            case (true, let template?):
+                template.amountYen = amount
+                template.startMonthKey = start
+                template.updatedAt = now
+            case (true, nil):
+                context.insert(BudgetTemplate(amountYen: amount, startMonthKey: start, createdAt: now, updatedAt: now))
+            case (false, let template?):
+                context.delete(template)
+            case (false, nil):
+                break
+            }
+        }
+    }
+
     /// Removes the current month's budget. Its expenses are not touched, and its handled
     /// thresholds and alert intents stay, so removing and re-adding does not reset alerts.
     public func removeBudget(for month: LedgerMonth, now: Date) throws {

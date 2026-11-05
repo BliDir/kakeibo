@@ -28,13 +28,17 @@ public final class LedgerModel {
     public let budgets: BudgetRepository?
     private let today: () -> Date
     private var observer: (any NSObjectProtocol)?
+    /// The current month when the model last loaded, to notice a Tokyo month rollover.
+    private var loadedCurrentMonth: LedgerMonth
 
     /// - Parameter today: the current date; the ledger opens on its month and never goes past it.
     public init(repository: ExpenseRepository, budgets: BudgetRepository? = nil, today: @escaping () -> Date = { Date() }) {
         self.repository = repository
         self.budgets = budgets
         self.today = today
-        month = LedgerMonth(containing: today())
+        let current = LedgerMonth(containing: today())
+        month = current
+        loadedCurrentMonth = current
         reload()
         observer = NotificationCenter.default.addObserver(
             forName: ModelContext.didSave, object: repository.context, queue: .main
@@ -79,7 +83,20 @@ public final class LedgerModel {
         reload()
     }
 
+    /// Call when the app comes to the foreground and at Tokyo midnight (see
+    /// `Calendar.startOfNextDay(after:)`): "today" may have moved, which changes the weekly
+    /// allowance and maybe the month. If the ledger was showing the month that was current, it
+    /// moves on to the new current month; a past month being browsed stays where it is.
+    public func refreshForCurrentDate() {
+        let current = currentMonth
+        if current != loadedCurrentMonth, month == loadedCurrentMonth {
+            month = current
+        }
+        reload()
+    }
+
     public func reload() {
+        loadedCurrentMonth = currentMonth
         do {
             expenses = try repository.expenses(inMonth: month.key)
             previousSummary = MonthSummary(try repository.expenses(inMonth: month.previous.key))

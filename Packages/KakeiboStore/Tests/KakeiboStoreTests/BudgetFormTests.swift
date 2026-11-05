@@ -218,4 +218,73 @@ private func tokyo(_ dayKey: String) -> Date {
         #expect(model.budgetSummary == nil)
         #expect(!model.canEditBudget)
     }
+
+    @Test func progressUsesBudgetAndRecordedSpend() throws {
+        let container = try KakeiboStore.makeContainer(inMemory: true)
+        let expenses = ExpenseRepository(container: container)
+        let budgets = BudgetRepository(container: container)
+        let now = tokyo("2026-11-05")   // Thursday: D = 26, W = 4
+        try budgets.setBudget(200_000, for: LedgerMonth(year: 2026, month: 11), now: now)
+        try expenses.create(from: ReceiptDraft(dayKey: "2026-11-02", totalYen: 30_000), source: .scan)
+        try expenses.create(from: ReceiptDraft(dayKey: "2026-11-05", totalYen: 11_860), source: .manual)
+        let model = LedgerModel(repository: expenses, budgets: budgets, today: { now })
+        let s = try #require(model.budgetSummary)
+        #expect(s.spentYen == 41_860)
+        #expect(s.remainingYen == 158_140)
+        #expect(s.percentSpent == 20)
+        // This week's ¥11,860 is in S once; the allowance is not reduced by it again.
+        #expect(s.weeklyAllowance?.yen == 158_140 / 26 * 4 + (158_140 % 26) * 4 / 26)
+        #expect(s.weeklyAllowance?.yen == 24_329)
+    }
+
+    @Test func movingAnExpenseToAnotherMonthUpdatesSpend() async throws {
+        let container = try KakeiboStore.makeContainer(inMemory: true)
+        let expenses = ExpenseRepository(container: container)
+        let budgets = BudgetRepository(container: container)
+        let now = tokyo("2026-11-05")
+        try budgets.setBudget(50_000, for: LedgerMonth(year: 2026, month: 11), now: now)
+        let expense = try expenses.create(from: ReceiptDraft(dayKey: "2026-11-03", totalYen: 45_000), source: .manual)
+        let model = LedgerModel(repository: expenses, budgets: budgets, today: { now })
+        #expect(model.budgetSummary?.percentSpent == 90)
+
+        // Edited to 31 October: November's spend drops, October's rises.
+        try expenses.update(expense, from: ReceiptDraft(dayKey: "2026-10-31", totalYen: 45_000))
+        await Task.yield()
+        #expect(model.budgetSummary?.spentYen == 0)
+        #expect(model.budgetSummary?.weeklyAllowance?.yen == 50_000 / 26 * 4 + (50_000 % 26) * 4 / 26)
+        model.showPrevious()
+        #expect(model.summary.totalYen == 45_000)
+    }
+
+    @Test func midnightAndMonthRolloverRefresh() throws {
+        let container = try KakeiboStore.makeContainer(inMemory: true)
+        let expenses = ExpenseRepository(container: container)
+        let budgets = BudgetRepository(container: container)
+        var now = tokyo("2026-11-29")   // Sunday: W = 1
+        try budgets.setBudget(70_000, for: LedgerMonth(year: 2026, month: 11), now: now)
+        let model = LedgerModel(repository: expenses, budgets: budgets, today: { now })
+        #expect(model.budgetSummary?.weeklyAllowance?.daysLeftInWeek == 1)
+        #expect(model.budgetSummary?.weeklyAllowance?.daysLeftInMonth == 2)
+
+        // Past midnight: Monday 30 November, the last day.
+        now = tokyo("2026-11-30")
+        model.refreshForCurrentDate()
+        #expect(model.budgetSummary?.weeklyAllowance?.fromDayKey == "2026-11-30")
+        #expect(model.budgetSummary?.weeklyAllowance?.yen == 70_000, "the last day gets everything left")
+
+        // Into December: the ledger follows to the new month, which has no budget yet.
+        now = tokyo("2026-12-01")
+        model.refreshForCurrentDate()
+        #expect(model.month == LedgerMonth(year: 2026, month: 12))
+        #expect(model.budgetSummary?.status == .unset)
+        #expect(model.canEditBudget)
+
+        // Browsing a past month is left alone by a refresh.
+        model.showPrevious()
+        now = tokyo("2026-12-02")
+        model.refreshForCurrentDate()
+        #expect(model.month == LedgerMonth(year: 2026, month: 11))
+        #expect(model.budgetSummary?.weeklyAllowance == nil, "past months have no weekly allowance")
+        #expect(model.budgetSummary?.budgetYen == 70_000)
+    }
 }

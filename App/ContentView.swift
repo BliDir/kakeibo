@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var editor: EditorItem?
     @State private var banner: Banner?
     @State private var tab: AppTab = .ledger
+    @Environment(\.scenePhase) private var scenePhase
     @State private var settingsModel: SettingsModel
     /// A saved expense to open once the current full-screen cover has gone
     /// (from the duplicate warning). Two covers cannot be presented at the same time.
@@ -71,6 +72,20 @@ struct ContentView: View {
                 case .discarded: break
                 case .viewSaved(let expense): openAfterDismiss = expense
                 }
+            }
+        }
+        // Budgets: "today" changes the weekly allowance and maybe the month. Refresh when the app
+        // comes back, and once at each Tokyo midnight while it is open; nothing runs in the background.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { ledger.refreshForCurrentDate() }
+        }
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                let wait = Calendar.kakeibo.startOfNextDay(after: .now).timeIntervalSinceNow + 1
+                try? await Task.sleep(for: .seconds(max(wait, 1)))
+                guard !Task.isCancelled else { return }
+                ledger.refreshForCurrentDate()
             }
         }
         #if DEBUG

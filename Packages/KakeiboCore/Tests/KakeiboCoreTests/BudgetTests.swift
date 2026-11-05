@@ -283,3 +283,15 @@ private func summary(_ budget: MonthlyBudget, spent: Int, on dayKey: String, mon
         #expect(MonthlyBudget.unset.yen == nil)
     }
 }
+
+@Suite struct NextDayTests {
+    @Test func nextTokyoMidnight() {
+        let next = Calendar.kakeibo.startOfNextDay(after: tokyo("2026-11-05", 23, 59))
+        #expect(next == tokyo("2026-11-06", 0, 0))
+        #expect(Calendar.kakeibo.startOfNextDay(after: tokyo("2026-11-30", 12)) == tokyo("2026-12-01", 0, 0))
+        #expect(Calendar.kakeibo.startOfNextDay(after: tokyo("2026-12-31", 0, 0)) == tokyo("2027-01-01", 0, 0))
+        // An instant late on 1 Nov UTC is already 2 Nov in Tokyo: next midnight is 3 Nov Tokyo.
+        #expect(Calendar.kakeibo.startOfNextDay(after: Date(timeIntervalSince1970: 1_793_547_000)) == tokyo("2026-11-03", 0, 0))
+    }
+}
+

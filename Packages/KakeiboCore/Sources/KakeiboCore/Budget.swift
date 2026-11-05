@@ -23,6 +23,15 @@ extension Calendar {
     }()
 }
 
+extension Calendar {
+    /// The next Tokyo midnight after `date`: when "today", the week and maybe the month change.
+    /// Screens schedule one refresh for it instead of running in the background.
+    public func startOfNextDay(after date: Date) -> Date {
+        let startOfToday = startOfDay(for: date)
+        return self.date(byAdding: .day, value: 1, to: startOfToday) ?? date.addingTimeInterval(86_400)
+    }
+}
+
 // MARK: - The budget amount
 
 /// A month's budget as the user set it, or that it is missing or unusable.

@@ -137,6 +137,23 @@
         }
       }
     },
+    "budget.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り"
+          }
+        }
+      }
+    },
     "budget.note": {
       "extractionState": "manual",
       "localizations": {
@@ -150,6 +167,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "記録した支出だけを集計します。過去の月は編集できません。"
+          }
+        }
+      }
+    },
+    "budget.over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超過"
           }
         }
       }
@@ -201,6 +235,74 @@
           "stringUnit": {
             "state": "translated",
             "value": "999,999,999円までです"
+          }
+        }
+      }
+    },
+    "budget.progress.near %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% used · close to budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%使用 · 予算に近づいています"
+          }
+        }
+      }
+    },
+    "budget.progress.over %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% used · over budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%使用 · 予算超過"
+          }
+        }
+      }
+    },
+    "budget.progress.used %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%% used"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld%%使用"
+          }
+        }
+      }
+    },
+    "budget.progress.within %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Within budget · %lld%% used"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算内 · %lld%%使用"
           }
         }
       }
@@ -324,6 +426,23 @@
         }
       }
     },
+    "budget.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "余り"
+          }
+        }
+      }
+    },
     "budget.sheet.cancel": {
       "extractionState": "manual",
       "localizations": {
@@ -422,6 +541,120 @@
           "stringUnit": {
             "state": "translated",
             "value": "来月以降もこの金額を使う"
+          }
+        }
+      }
+    },
+    "budget.week.days %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld day"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld days"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld日間"
+          }
+        }
+      }
+    },
+    "budget.week.explain %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What's left, spread over the %1$lld days remaining in %2$@. It updates as you spend."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残りの予算を%2$@の残り%1$lld日で割った目安です。支出に合わせて変わります。"
+          }
+        }
+      }
+    },
+    "budget.week.lastDay %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today is the last day of %@, so this is everything that's left."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今日は%@の最終日なので、残りの全額です。"
+          }
+        }
+      }
+    },
+    "budget.week.range %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ – %2$@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@〜%2$@"
+          }
+        }
+      }
+    },
+    "budget.week.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available this week · 今週使える金額"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週使える金額"
+          }
+        }
+      }
+    },
+    "budget.week.usedUp %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@'s budget is used up. The next month starts %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の予算を使い切りました。次の月は%2$@からです。"
           }
         }
       }

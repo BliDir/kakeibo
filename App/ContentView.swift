@@ -23,7 +23,7 @@ struct ContentView: View {
     init(services: AppServices) {
         self.services = services
         _session = State(initialValue: ScanSession(pipeline: services.pipeline))
-        _ledger = State(initialValue: LedgerModel(repository: services.repository))
+        _ledger = State(initialValue: LedgerModel(repository: services.repository, budgets: services.budgets))
         _settingsModel = State(initialValue: SettingsModel(
             settings: services.settings, photoStore: services.photoStore, info: Bundle.main.infoDictionary ?? [:]
         ))

@@ -69,6 +69,21 @@ final class ScreenshotTourTests: XCTestCase {
             app.buttons["export.close"].tap()
         }
 
+        // Budget (v1.1): the sheet from the setup prompt, then last month's read-only budget.
+        let setBudget = app.buttons["budget.cta.button"]
+        if setBudget.waitForExistence(timeout: 3) {
+            setBudget.tap()
+            if app.textFields["budget.amount"].waitForExistence(timeout: 3) {
+                app.textFields["budget.amount"].typeText("200000")
+                app.switches["budget.template"].switches.firstMatch.tap()
+                shot(app, "\(tag)-07b-budget-sheet")
+                app.buttons["budget.cancel"].tap()
+            }
+        }
+        app.buttons["ledger.previous"].tap()
+        shot(app, "\(tag)-07c-past-month-budget")
+        app.buttons["ledger.next"].tap()
+
         // Edit an expense, its lower half, and the delete confirmation.
         let row = app.buttons["ledger.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 3))

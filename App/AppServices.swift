@@ -10,6 +10,7 @@ final class AppServices {
     let container: ModelContainer
     let photoStore: PhotoStore?
     let repository: ExpenseRepository
+    let budgets: BudgetRepository
     let pipeline: ExtractionPipeline
     let settings: AppSettings
 
@@ -20,6 +21,7 @@ final class AppServices {
         self.pipeline = pipeline
         self.settings = settings
         repository = ExpenseRepository(container: container, photoStore: photoStore)
+        budgets = BudgetRepository(container: container)
     }
 
     static func make() -> AppServices {
@@ -79,6 +81,11 @@ final class AppServices {
             )
             _ = try? repository.create(from: draft, source: .manual)
         }
+        // Last month had a ¥5,000 budget (now read-only). The repository only sets the current
+        // month, so the sample writes the row directly.
+        let past = BudgetMonth(monthKey: thisMonth.previous.key, budgetYen: 5_000, createdAt: .now, updatedAt: .now)
+        container.mainContext.insert(past)
+        try? container.mainContext.save()
     }
     #endif
 

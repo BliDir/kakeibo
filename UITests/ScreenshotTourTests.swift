@@ -77,7 +77,12 @@ final class ScreenshotTourTests: XCTestCase {
                 app.textFields["budget.amount"].typeText("200000")
                 app.switches["budget.template"].switches.firstMatch.tap()
                 shot(app, "\(tag)-07b-budget-sheet")
-                app.buttons["budget.cancel"].tap()
+                app.buttons["budget.save"].tap()
+                if app.buttons["budget.edit"].waitForExistence(timeout: 3) {
+                    app.swipeUp()
+                    shot(app, "\(tag)-07d-budget-progress")
+                    app.swipeDown()
+                }
             }
         }
         app.buttons["ledger.previous"].tap()

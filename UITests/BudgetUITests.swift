@@ -115,6 +115,69 @@ final class BudgetUITests: XCTestCase {
         XCTAssertFalse(element(app, "budget.cta").exists, "no setup prompt for a past month")
     }
 
+    // MARK: Progress (B-05)
+
+    /// Sample data: this month ¥5,198 spent. Budgets set so it lands in each state.
+    @MainActor
+    func testProgressStates() {
+        let app = launch(seed: true)
+        XCTAssertTrue(app.buttons["budget.cta.button"].waitForExistence(timeout: 5))
+
+        // On track: ¥200,000 → 2% used, ¥194,802 left, weekly box with a date range.
+        setBudget(app, "200000", fromPrompt: true)
+        XCTAssertTrue(waitForLabel(element(app, "budget.status"), "2% used"))
+        XCTAssertTrue(element(app, "budget.left").label.contains("194,802 yen"), element(app, "budget.left").label)
+        let week = element(app, "budget.week")
+        XCTAssertTrue(week.exists)
+        XCTAssertTrue(week.label.contains("Available this week"), week.label)
+        XCTAssertTrue(week.label.contains("day"), "shows the days it covers: \(week.label)")
+        XCTAssertTrue(week.label.contains("remaining in") || week.label.contains("last day"), week.label)
+
+        // Close: ¥6,000 → 86%, said in words, not only color.
+        setBudget(app, "6000")
+        XCTAssertTrue(waitForLabel(element(app, "budget.status"), "86% used · close to budget"))
+        XCTAssertTrue(element(app, "budget.left").label.contains("802 yen"))
+
+        // Over: ¥5,000 → 103% (not clamped), over by ¥198, nothing available this week.
+        setBudget(app, "5000")
+        XCTAssertTrue(waitForLabel(element(app, "budget.status"), "103% used · over budget"))
+        XCTAssertTrue(element(app, "budget.over").label.contains("198 yen"), element(app, "budget.over").label)
+        XCTAssertTrue(element(app, "budget.week.amount").label.hasPrefix("0 yen"), element(app, "budget.week.amount").label)
+        XCTAssertTrue(element(app, "budget.week").label.contains("used up"), element(app, "budget.week").label)
+
+        // A new manual expense updates the progress straight away.
+        app.buttons["ledger.add"].tap()
+        let amount = app.textFields["review.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 3))
+        amount.tap()
+        amount.typeText("802")
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(waitForLabel(element(app, "budget.status"), "120% used · over budget"))
+        XCTAssertTrue(element(app, "budget.over").label.contains("1,000 yen"))
+    }
+
+    /// Last month (sample: ¥3,278 of ¥5,000): the result, view only, no weekly box.
+    @MainActor
+    func testPastMonthProgress() {
+        let app = launch(seed: true)
+        XCTAssertTrue(app.buttons["ledger.previous"].waitForExistence(timeout: 5))
+        app.buttons["ledger.previous"].tap()
+        XCTAssertTrue(waitForLabel(element(app, "budget.status"), "Within budget · 65% used"))
+        XCTAssertTrue(element(app, "budget.left").label.contains("Saved") && element(app, "budget.left").label.contains("1,722 yen"),
+                      element(app, "budget.left").label)
+        XCTAssertFalse(element(app, "budget.week").exists, "no weekly allowance for a past month")
+    }
+
+    @MainActor
+    private func setBudget(_ app: XCUIApplication, _ value: String, fromPrompt: Bool = false) {
+        app.buttons[fromPrompt ? "budget.cta.button" : "budget.edit"].tap()
+        let amount = app.textFields["budget.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 3))
+        type(value, into: amount, clearing: true)
+        app.buttons["budget.save"].tap()
+        XCTAssertTrue(app.buttons["budget.edit"].waitForExistence(timeout: 5))
+    }
+
     // MARK: Helpers
 
     @MainActor
@@ -157,7 +220,7 @@ final class BudgetUITests: XCTestCase {
     @MainActor
     /// Waits until the element's label ends with `label` (the amount at the end of the row).
     private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 5) -> Bool {
-        let predicate = NSPredicate(format: "label ENDSWITH %@", label)
+        let predicate = NSPredicate(format: "label ENDSWITH %@ OR label == %@", label, label)
         return XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: predicate, object: element)], timeout: timeout) == .completed
     }
 }

@@ -39,6 +39,12 @@ enum LedgerFormat {
         return formatter(template: "EEEMMMd").string(from: date) + " · " + japaneseWeekday.string(from: date)
     }
 
+    /// "Thu, Nov 5" in English, "11月5日(木)" in Japanese.
+    static func shortDay(_ dayKey: String) -> String {
+        guard let date = DayKey.date(from: dayKey) else { return dayKey }
+        return formatter(template: language == .ja ? "MMMdEEE" : "EEEMMMd").string(from: date)
+    }
+
     private static func formatter(template: String) -> DateFormatter {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: language == .ja ? "ja_JP" : "en_US")

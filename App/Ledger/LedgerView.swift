@@ -162,32 +162,9 @@ struct LedgerView: View {
     /// Current month: a setup prompt, or the budget with Edit. Past months: the budget, view only.
     @ViewBuilder private var budgetSection: some View {
         if let budget = model.budgetSummary {
-            if let budgetYen = budget.budgetYen {
+            if budget.budgetYen != nil {
                 Divider().overlay(Theme.divider)
-                AdaptiveStack(spacing: 8) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("budget.label").font(.overline).tracking(1).foregroundStyle(Theme.secondaryText)
-                        YenText(budgetYen)
-                            .font(.amount)
-                            .foregroundStyle(Theme.text)
-                    }
-                    // VoiceOver: "BUDGET 予算, 200,000 yen".
-                    .accessibilityElement(children: .combine)
-                    .accessibilityIdentifier("budget.value")
-                    Spacer(minLength: 8)
-                    if model.canEditBudget {
-                        Button("budget.edit") { openBudgetSheet() }
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(Theme.accent)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .accessibilityIdentifier("budget.edit")
-                    } else {
-                        Label("budget.closed", systemImage: "lock")
-                            .font(.caption)
-                            .foregroundStyle(Theme.secondaryText)
-                            .accessibilityIdentifier("budget.closed")
-                    }
-                }
+                BudgetProgressView(summary: budget, isCurrentMonth: model.canEditBudget, onEdit: openBudgetSheet)
             } else if model.canEditBudget {
                 budgetSetupPrompt
             }

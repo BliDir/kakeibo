@@ -89,6 +89,30 @@ final class ScreenshotTourTests: XCTestCase {
         shot(app, "\(tag)-07c-past-month-budget")
         app.buttons["ledger.next"].tap()
 
+        // Budget states (B-08). The sample month has ¥5,198 spent: a ¥6,000 budget is 86%
+        // (close, 80% banner), ¥5,000 is 103% (over, 100% banner). Then a typing error.
+        if editBudget(app, to: "6000") {
+            shot(app, "\(tag)-07e-budget-near-banner")
+            dismissAlert(app)
+            shot(app, "\(tag)-07f-budget-near")
+        }
+        if editBudget(app, to: "5000") {
+            shot(app, "\(tag)-07g-budget-over-banner")
+            dismissAlert(app)
+            app.swipeUp()
+            shot(app, "\(tag)-07h-budget-over-scrolled")
+            app.swipeDown()
+        }
+        if app.buttons["budget.edit"].waitForExistence(timeout: 3) {
+            app.buttons["budget.edit"].tap()
+            let field = app.textFields["budget.amount"]
+            if field.waitForExistence(timeout: 3) {
+                replace(field, with: "0")
+                shot(app, "\(tag)-07i-budget-invalid")
+                app.buttons["budget.cancel"].tap()
+            }
+        }
+
         // Edit an expense, its lower half, and the delete confirmation.
         let row = app.buttons["ledger.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 3))
@@ -141,13 +165,53 @@ final class ScreenshotTourTests: XCTestCase {
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
         shot(app, "\(tag)-17-ledger-empty")
         app.terminate()
+
+        // Budget alerts on while iOS has notifications off: the warning and the Settings link.
+        app = launch(language: language, size: size, notifications: "denied")
+        tab(app, 2)
+        let alerts = app.switches["settings.alerts"]
+        if alerts.waitForExistence(timeout: 5) {
+            alerts.switches.firstMatch.tap()
+            _ = app.buttons["settings.alerts.openSettings"].waitForExistence(timeout: 3)
+            shot(app, "\(tag)-18-settings-alerts-denied")
+            app.swipeUp()
+            shot(app, "\(tag)-19-settings-alerts-denied-scrolled")
+        }
+        app.terminate()
+    }
+
+    /// Opens the budget sheet, types a new amount and saves. True when back on the ledger.
+    @MainActor
+    private func editBudget(_ app: XCUIApplication, to amount: String) -> Bool {
+        guard app.buttons["budget.edit"].waitForExistence(timeout: 3) else { return false }
+        app.buttons["budget.edit"].tap()
+        let field = app.textFields["budget.amount"]
+        guard field.waitForExistence(timeout: 3) else { return false }
+        replace(field, with: amount)
+        app.buttons["budget.save"].tap()
+        return app.buttons["budget.edit"].waitForExistence(timeout: 3)
+    }
+
+    @MainActor
+    private func replace(_ field: XCUIElement, with text: String) {
+        field.tap()
+        if let current = field.value as? String, !current.isEmpty {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+        }
+        field.typeText(text)
+    }
+
+    @MainActor
+    private func dismissAlert(_ app: XCUIApplication) {
+        let dismiss = app.buttons["budget.alert.dismiss"]
+        if dismiss.waitForExistence(timeout: 3) { dismiss.tap() }
     }
 
     // MARK: Helpers
 
     @MainActor
     private func launch(language: String, size: TextSize, seed: Bool = false, scan: Bool = false,
-                        ocrDelay: Double? = nil) -> XCUIApplication {
+                        ocrDelay: Double? = nil, notifications: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
@@ -155,6 +219,7 @@ final class ScreenshotTourTests: XCTestCase {
             app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = "dark"
         }
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
+        if let notifications { app.launchEnvironment["KAKEIBO_NOTIFICATIONS"] = notifications }
         if scan {
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] =
                 Bundle(for: Self.self).path(forResource: "sample-receipt", ofType: "png")

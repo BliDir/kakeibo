@@ -710,13 +710,30 @@
         }
       }
     },
+    "budget.week.subtitle %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週使える金額 · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
     "budget.week.title": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Available this week · 今週使える金額"
+            "value": "Available this week"
           }
         },
         "ja": {

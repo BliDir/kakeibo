@@ -38,11 +38,15 @@ struct BudgetProgressView: View {
             .accessibilityIdentifier("budget.value")
             Spacer(minLength: 8)
             if isCurrentMonth {
-                Button("budget.edit", action: onEdit)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.accent)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .accessibilityIdentifier("budget.edit")
+                // The 44 pt frame is inside the label, so the whole frame is the tap target.
+                Button(action: onEdit) {
+                    Text("budget.edit")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.accent)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("budget.edit")
             } else {
                 Label("budget.closed", systemImage: "lock")
                     .font(.caption)
@@ -173,7 +177,9 @@ private struct WeeklyAllowanceBox: View {
         let through = LedgerFormat.shortDay(week.throughDayKey)
         let days = String(localized: "budget.week.days \(week.daysLeftInWeek)")
         let range = week.daysLeftInWeek == 1 ? from : String(localized: "budget.week.range \(from) \(through)")
-        return "\(range) · \(days)"
+        // English pairs the Japanese label here, as in the design ("今週使える金額 · Fri, Nov 6 – …"),
+        // so the title stays short and never breaks inside the Japanese word.
+        return String(localized: "budget.week.subtitle \("\(range) · \(days)")")
     }
 
     private var explanation: Text {

@@ -289,18 +289,24 @@ struct HeroAmount: View {
     @ScaledMetric(relativeTo: .largeTitle) private var symbolSize: CGFloat = 28
 
     var body: some View {
-        let (symbol, digits, prefix) = Self.parts(of: amount)
-        let symbolText = Text(verbatim: symbol)
-            .font(.system(size: symbolSize, weight: .medium))
-            .foregroundStyle(Theme.secondaryText)
-        let digitsText = Text(verbatim: digits)
-            .font(.system(size: digitsSize, weight: .medium).monospacedDigit())
-            .foregroundStyle(Theme.text)
-        (prefix ? symbolText + digitsText : digitsText + symbolText)
+        // One attributed string with a font and color per part (Text `+` is deprecated in
+        // iOS 26, and interpolating into Text would make it a String Catalog key).
+        Text(styled)
             .tracking(-digitsSize * 0.03)
             .lineLimit(1)
             .minimumScaleFactor(0.4)
             .accessibilityLabel(Text(verbatim: LedgerFormat.spokenYen(amount)))
+    }
+
+    private var styled: AttributedString {
+        let (symbol, digits, symbolFirst) = Self.parts(of: amount)
+        var symbolPart = AttributedString(symbol)
+        symbolPart.font = .system(size: symbolSize, weight: .medium)
+        symbolPart.foregroundColor = Theme.secondaryText
+        var digitsPart = AttributedString(digits)
+        digitsPart.font = .system(size: digitsSize, weight: .medium).monospacedDigit()
+        digitsPart.foregroundColor = Theme.text
+        return symbolFirst ? symbolPart + digitsPart : digitsPart + symbolPart
     }
 
     /// Splits "¥5,198", "-¥120" or "5,198円" into the symbol and the rest.

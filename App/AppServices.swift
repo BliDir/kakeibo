@@ -3,6 +3,7 @@ import KakeiboCore
 import KakeiboScan
 import KakeiboStore
 import SwiftData
+import UserNotifications
 
 /// The app's long-lived services, made once at launch.
 @MainActor
@@ -13,15 +14,44 @@ final class AppServices {
     let budgets: BudgetRepository
     let pipeline: ExtractionPipeline
     let settings: AppSettings
+    /// Budget alerts: the user's opt-in, the iOS permission, sending and cancelling.
+    let notifier: BudgetNotifier
+    /// Where a tapped budget notification asks to go.
+    let router = NotificationRouter()
+    /// Kept alive here: the notification center holds its delegate weakly.
+    private var notificationDelegate: BudgetNotificationDelegate?
 
     init(container: ModelContainer, photoStore: PhotoStore?, pipeline: ExtractionPipeline,
-         settings: AppSettings = AppSettings()) {
+         settings: AppSettings = AppSettings(), notificationCenter: (any BudgetNotificationCenter)? = nil) {
         self.container = container
         self.photoStore = photoStore
         self.pipeline = pipeline
         self.settings = settings
         repository = ExpenseRepository(container: container, photoStore: photoStore)
         budgets = BudgetRepository(container: container)
+        notifier = BudgetNotifier(center: notificationCenter ?? SystemNotificationCenter(),
+                                  settings: settings, copy: Self.notificationCopy)
+        if notificationCenter == nil { listenForNotificationTaps() }
+    }
+
+    /// Set before launch finishes, so a tap that launches the app reaches the router.
+    private func listenForNotificationTaps() {
+        let router = router
+        let delegate = BudgetNotificationDelegate { payload in router.open(payload) }
+        UNUserNotificationCenter.current().delegate = delegate
+        notificationDelegate = delegate
+    }
+
+    /// The lock-screen text: generic, in the app's language, no amounts or store names.
+    private static let notificationCopy: @Sendable (BudgetThreshold) -> BudgetNotificationCopy = { threshold in
+        switch threshold {
+        case .eighty:
+            BudgetNotificationCopy(title: String(localized: "notification.budget.80.title"),
+                                   body: String(localized: "notification.budget.80.body"))
+        case .hundred:
+            BudgetNotificationCopy(title: String(localized: "notification.budget.100.title"),
+                                   body: String(localized: "notification.budget.100.body"))
+        }
     }
 
     static func make() -> AppServices {
@@ -34,7 +64,8 @@ final class AppServices {
                 container: try! KakeiboStore.makeContainer(inMemory: true),
                 photoStore: try? PhotoStore(directory: photos),
                 pipeline: makePipeline(environment),
-                settings: AppSettings(defaults: uiTestDefaults())
+                settings: AppSettings(defaults: uiTestDefaults()),
+                notificationCenter: uiTestNotificationCenter(environment)
             )
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
             return services
@@ -59,6 +90,18 @@ final class AppServices {
         let defaults = UserDefaults(suiteName: name)!
         defaults.removePersistentDomain(forName: name)
         return defaults
+    }
+
+    /// UI tests never show the iOS permission prompt (it would block the test). The permission
+    /// comes from `KAKEIBO_NOTIFICATIONS`: `notDetermined` (default; the prompt answers
+    /// `allowed`), `notDeterminedDeny` (the prompt answers `denied`), `allowed` or `denied`.
+    private static func uiTestNotificationCenter(_ environment: [String: String]) -> InMemoryNotificationCenter {
+        switch environment["KAKEIBO_NOTIFICATIONS"] {
+        case "allowed": InMemoryNotificationCenter(status: .allowed)
+        case "denied": InMemoryNotificationCenter(status: .denied)
+        case "notDeterminedDeny": InMemoryNotificationCenter(status: .notDetermined, answer: .denied)
+        default: InMemoryNotificationCenter(status: .notDetermined, answer: .allowed)
+        }
     }
 
     /// Made-up expenses for UI tests and screenshots: four this month, one last month.

@@ -3,10 +3,11 @@ import KakeiboStore
 import SwiftUI
 import UIKit
 
-/// The Settings tab: language, default payment, photo storage, privacy and version.
+/// The Settings tab: language, default payment, budget alerts, photo storage, privacy and version.
 /// v1.0 has no account, so there is no login or account section.
 struct SettingsView: View {
     let model: SettingsModel
+    let notifier: BudgetNotifier
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -17,6 +18,7 @@ struct SettingsView: View {
                     .foregroundStyle(Theme.text)
                     .accessibilityAddTraits(.isHeader)
                 general
+                alerts
                 data
                 privacy
                 about
@@ -27,6 +29,7 @@ struct SettingsView: View {
         }
         .background(Theme.groundLight.ignoresSafeArea())
         .task { await model.refreshPhotoUsage() }
+        .task { await notifier.refreshAuthorization() }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("settings")
     }
@@ -64,6 +67,104 @@ struct SettingsView: View {
     /// The language the app is showing now.
     private var languageName: String {
         LedgerFormat.language == .ja ? "日本語" : "English"
+    }
+
+    // MARK: Alerts
+
+    /// Budget alerts: the app's own switch (off by default) and what iOS actually allows.
+    /// The iOS prompt appears only when the user turns the switch on.
+    private var alerts: some View {
+        SettingsSection("settings.section.alerts", footer: "settings.alerts.footer") {
+            Toggle(isOn: Binding(
+                get: { notifier.isEnabled },
+                set: { on in Task { await notifier.setEnabled(on) } }
+            )) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("settings.alerts.toggle")
+                        .foregroundStyle(Theme.text)
+                    Text("settings.alerts.toggle.detail")
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                }
+                .fixedSize(horizontal: false, vertical: true)
+            }
+            .tint(Theme.accent)
+            .disabled(notifier.isRequesting)
+            .padding(.vertical, 10)
+            .frame(minHeight: 50)
+            .accessibilityIdentifier("settings.alerts")
+
+            if notifier.needsSystemSettings {
+                deniedHelp
+                    .padding(.bottom, 12)
+            }
+            if notifier.requestFailed {
+                Text("settings.alerts.failed")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.warningText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.bottom, 10)
+                    .accessibilityIdentifier("settings.alerts.failed")
+            }
+
+            Divider().overlay(Theme.divider)
+
+            SettingsRow("settings.alerts.permission") {
+                Text(permissionText)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(permissionColor)
+                    .accessibilityIdentifier("settings.alerts.permission")
+            }
+        }
+    }
+
+    /// Shown when the user wants alerts but iOS has notifications off for Kakeibo.
+    private var deniedHelp: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label {
+                Text("settings.alerts.denied.title").font(.subheadline.weight(.bold))
+            } icon: {
+                Image(systemName: "exclamationmark.triangle").accessibilityHidden(true)
+            }
+            Text("settings.alerts.denied.body")
+                .font(.footnote)
+            Button {
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
+            } label: {
+                Text("settings.alerts.openSettings")
+                    .font(.subheadline.weight(.bold))
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 44)
+                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.warning))
+            }
+            .accessibilityIdentifier("settings.alerts.openSettings")
+        }
+        .foregroundStyle(Theme.warningText)
+        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Theme.warningFill, in: RoundedRectangle(cornerRadius: 10))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("settings.alerts.denied")
+    }
+
+    /// The real iOS permission, in words (not by color alone).
+    private var permissionText: LocalizedStringKey {
+        switch notifier.authorization {
+        case .allowed: "settings.alerts.permission.allowed"
+        case .denied: "settings.alerts.permission.denied"
+        case .notDetermined: "settings.alerts.permission.notDetermined"
+        }
+    }
+
+    private var permissionColor: Color {
+        switch notifier.authorization {
+        case .allowed: Theme.success
+        case .denied: Theme.warningText
+        case .notDetermined: Theme.secondaryText
+        }
     }
 
     // MARK: Data

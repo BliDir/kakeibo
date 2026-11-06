@@ -48,6 +48,17 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    /// Budget alerts turned on while iOS has notifications off: the warning and the Settings link.
+    @MainActor func testSettingsAlertsDenied() throws {
+        try auditInBothModes("settings, alerts denied", notifications: "denied") { app in
+            app.tabBars.buttons.element(boundBy: 2).tap()
+            let toggle = app.switches["settings.alerts"]
+            XCTAssertTrue(toggle.waitForExistence(timeout: 5))
+            toggle.switches.firstMatch.tap()
+            XCTAssertTrue(app.buttons["settings.alerts.openSettings"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testEditExpense() throws {
         try auditInBothModes("edit", seed: true) { app in
             let row = app.buttons["ledger.row"].firstMatch
@@ -82,9 +93,10 @@ final class AccessibilityAuditTests: XCTestCase {
     /// Launches in light, opens the screen, audits; then the same in dark.
     @MainActor
     private func auditInBothModes(_ screen: String, seed: Bool = false, scan: Bool = false,
+                                  notifications: String? = nil,
                                   open: (XCUIApplication) -> Void) throws {
         for scheme in ["light", "dark"] {
-            let app = launch(seed: seed, scan: scan, colorScheme: scheme)
+            let app = launch(seed: seed, scan: scan, notifications: notifications, colorScheme: scheme)
             open(app)
             try audit(app, "\(screen), \(scheme)")
             app.terminate()
@@ -115,12 +127,14 @@ final class AccessibilityAuditTests: XCTestCase {
     }
 
     @MainActor
-    private func launch(seed: Bool = false, scan: Bool = false, colorScheme: String) -> XCUIApplication {
+    private func launch(seed: Bool = false, scan: Bool = false, notifications: String? = nil,
+                        colorScheme: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = colorScheme
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
+        if let notifications { app.launchEnvironment["KAKEIBO_NOTIFICATIONS"] = notifications }
         if scan {
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] =
                 Bundle(for: Self.self).path(forResource: "sample-receipt", ofType: "png")

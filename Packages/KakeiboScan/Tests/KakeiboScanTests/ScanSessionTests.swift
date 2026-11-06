@@ -134,4 +134,37 @@ private func rotatedAnticlockwise(_ image: CGImage) -> CGImage {
         #expect(s.phase == .finished)
         #expect(s.image?.width == 700)
     }
+
+    /// The read-error screen's "Scan again": a failed photo is replaced by a camera page, and
+    /// nothing of the failed photo is kept (UI-03).
+    @Test func scanningAgainAfterAFailedPhotoKeepsNothingOfIt() async {
+        let s = session(MockOCR(observations: rows))
+        s.start(imageData: Data("not an image".utf8))
+        #expect(s.phase == .failed(.unreadableImage))
+        #expect(s.source == .photoLibrary)
+
+        s.start(image: ScanTestImages.solid(width: 600, height: 900), source: .camera)
+        #expect(s.source == .camera)
+        #expect(s.imageData == nil, "the failed photo's data is gone")
+        await s.waitUntilFinished()
+        #expect(s.phase == .finished)
+        #expect(s.result?.draft.totalYen == 754)
+    }
+
+    /// "Choose another photo" after a finished or failed read: the earlier result is dropped at
+    /// once and the new photo is read from scratch.
+    @Test func choosingAnotherPhotoDropsTheEarlierResult() async throws {
+        let s = session(MockOCR(observations: rows))
+        s.start(image: ScanTestImages.solid(width: 600, height: 900))
+        await s.waitUntilFinished()
+        #expect(s.result != nil)
+
+        let data = try ScanTestImages.bundledData("sample-receipt")
+        s.start(imageData: data)
+        #expect(s.source == .photoLibrary)
+        #expect(s.result == nil)
+        await s.waitUntilFinished()
+        #expect(s.phase == .finished)
+        #expect(s.imageData == data)
+    }
 }

@@ -10,33 +10,28 @@ struct ScanFlowView: View {
     let onSaved: (Int) -> Void
     /// The duplicate warning's "View saved entry": the scan is dropped and the saved expense opened.
     let onViewSaved: (Expense) -> Void
+    /// The read error's "Enter manually": the scan is dropped and an empty manual form opens.
+    let onManual: () -> Void
 
     var body: some View {
         ZStack {
-            Theme.ground.ignoresSafeArea()
+            Theme.groundLight.ignoresSafeArea()
             switch session.phase {
             case .idle:
                 EmptyView()
             case .processing(let stage):
                 ScanProgressView(session: session, stage: stage)
             case .failed(let error):
-                ScanErrorView(error: error, retry: retry, close: session.cancel)
+                ScanErrorView(session: session, error: error, onManual: {
+                    session.cancel()
+                    onManual()
+                }, close: session.cancel)
             case .finished:
                 if let result = session.result {
                     ScanReviewHost(session: session, result: result, services: services,
                                    onSaved: onSaved, onViewSaved: onViewSaved)
                 }
             }
-        }
-    }
-
-    private func retry() {
-        if let data = session.imageData {
-            session.start(imageData: data)
-        } else if let image = session.image, let source = session.source {
-            session.start(image: image, source: source)
-        } else {
-            session.cancel()
         }
     }
 }
@@ -91,7 +86,8 @@ private struct ScanReviewHost: View {
     }
 }
 
-/// "Reading your receipt": the captured page and the pipeline's steps.
+/// "Reading your receipt": the captured page and the pipeline's steps. Cancel stops the read
+/// and returns to the ledger.
 struct ScanProgressView: View {
     let session: ScanSession
     let stage: ExtractionStage
@@ -101,90 +97,70 @@ struct ScanProgressView: View {
         VStack(spacing: 0) {
             HStack {
                 Button("scan.progress.cancel", action: session.cancel)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Theme.text)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
-                    .background(Theme.surface, in: Capsule())
-                    .overlay(Capsule().stroke(Theme.border))
+                    .buttonStyle(TextButtonStyle())
                     .accessibilityIdentifier("scan.cancel")
                 Spacer()
-                if session.source == .camera {
-                    Text("scan.progress.pageCaptured")
+                // At the accessibility sizes it would wrap; the privacy line below says the same.
+                if !isAccessibilityTextSize { Tag("scan.progress.onDevice") }
+            }
+            .padding(.top, Spacing.xs)
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(session.source == .camera ? "scan.progress.eyebrow.camera" : "scan.progress.eyebrow.photo")
+                            .eyebrow()
+                        Text("scan.progress.title")
+                            .font(.title.weight(.bold))
+                            .foregroundStyle(Theme.text)
+                            .accessibilityAddTraits(.isHeader)
+                        Text("scan.progress.subtitle")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+
+                    // Huge text: the steps need the room, so the preview goes.
+                    if !isAccessibilityTextSize, let image = session.image {
+                        Image(decorative: image, scale: 1)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxHeight: 260)
+                            .padding(Spacing.s)
+                            .frame(maxWidth: .infinity)
+                            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    }
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        if session.source == .camera {
+                            StepRow(state: .done, title: "scan.step.captured.camera", detail: "scan.step.captured.camera.detail")
+                        } else {
+                            StepRow(state: .done, title: "scan.step.captured.photo", detail: "scan.step.captured.photo.detail")
+                        }
+                        Divider().overlay(Theme.divider)
+                        StepRow(state: stage == .readingText ? .active : .done,
+                                title: "scan.step.reading", detail: "scan.step.reading.detail")
+                        Divider().overlay(Theme.divider)
+                        StepRow(state: stage == .readingText ? .pending : .active,
+                                title: "scan.step.understanding", detail: "scan.step.understanding.detail")
+                    }
+                    .card(padding: Spacing.m)
+
+                    Label("scan.privacy", systemImage: "lock")
                         .font(.footnote)
                         .foregroundStyle(Theme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-
-            if isAccessibilityTextSize {
-                // Huge text: the steps need the whole screen, so they scroll and the preview goes.
-                ScrollView {
-                    progressSheet.padding(.top, 12)
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 12)
-            } else if let image = session.image {
-                Image(decorative: image, scale: 1)
-                    .resizable()
-                    .scaledToFit()
-                    .padding(12)
-                    .background(Theme.surface)
-                    .shadow(color: Theme.shadow, radius: 15, y: 10)
-                    .rotationEffect(.degrees(-1.2))
-                    .padding(.horizontal, 60)
-                    .padding(.top, 22)
-                    .frame(maxHeight: .infinity, alignment: .top)
-            } else {
-                Spacer()
-            }
-
-            if !isAccessibilityTextSize {
-                progressSheet
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 12)
+                .padding(.vertical, Spacing.m)
             }
         }
+        .screenInset()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("scan.progress")
     }
-
-    private var progressSheet: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("scan.progress.title")
-                    .font(.title3.bold())
-                    .foregroundStyle(Theme.text)
-                Text("scan.progress.subtitle")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.secondaryText)
-            }
-
-            VStack(alignment: .leading, spacing: 14) {
-                if session.source == .camera {
-                    StepRow(state: .done, title: "scan.step.captured.camera", detail: "scan.step.captured.camera.detail")
-                } else {
-                    StepRow(state: .done, title: "scan.step.captured.photo", detail: "scan.step.captured.photo.detail")
-                }
-                StepRow(state: stage == .readingText ? .active : .done,
-                        title: "scan.step.reading", detail: "scan.step.reading.detail")
-                StepRow(state: stage == .readingText ? .pending : .active,
-                        title: "scan.step.understanding", detail: "scan.step.understanding.detail")
-            }
-
-            Divider().overlay(Theme.divider)
-            Label("scan.privacy", systemImage: "lock")
-                .font(.caption)
-                .foregroundStyle(Theme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(20)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18))
-        .shadow(color: Theme.shadow.opacity(0.45), radius: 10, y: -2)
-    }
 }
 
+/// One step: what happens, and its state in words on the right ("Done", a spinner, "Waiting").
 private struct StepRow: View {
     enum State { case done, active, pending }
 
@@ -193,65 +169,94 @@ private struct StepRow: View {
     let detail: LocalizedStringKey
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            indicator
-                .frame(width: 24, height: 24)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
+        AdaptiveStack(verticalAlignment: .center, spacing: Spacing.s) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.body.weight(state == .active ? .bold : .medium))
-                    .foregroundStyle(state == .active ? Theme.accent : state == .done ? Theme.text : Theme.secondaryText)
+                    .font(.body.weight(state == .active ? .semibold : .regular))
+                    .foregroundStyle(state == .pending ? Theme.secondaryText : Theme.text)
                 Text(detail)
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
             }
             // Wrap instead of truncating when the text size is large.
             .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: Spacing.xs)
+            status
         }
+        .padding(.vertical, Spacing.s)
         .accessibilityElement(children: .combine)
     }
 
-    @ViewBuilder private var indicator: some View {
+    @ViewBuilder private var status: some View {
         switch state {
         case .done:
-            Image(systemName: "checkmark")
-                .font(.system(size: 12, weight: .heavy))
-                .foregroundStyle(Theme.onAccent)
-                .frame(width: 24, height: 24)
-                .background(Theme.success, in: Circle())
+            Label("scan.step.done", systemImage: "checkmark")
+                .font(.footnote.weight(.medium))
+                .foregroundStyle(Theme.success)
         case .active:
-            ProgressView().tint(Theme.accent)
+            ProgressView()
+                .tint(Theme.accent)
+                .accessibilityLabel(Text("scan.step.inProgress"))
         case .pending:
-            Circle().stroke(Theme.pending, lineWidth: 2)
+            Text("scan.step.waiting")
+                .font(.footnote)
+                .foregroundStyle(Theme.secondaryText)
         }
     }
 }
 
-/// What went wrong, in words the user can act on.
+/// The receipt could not be read: what to do next. Scan again (camera), choose another photo,
+/// or type the expense in. Cancelling the camera or the picker leaves this screen as it was; a
+/// new image starts reading again in place.
 struct ScanErrorView: View {
+    let session: ScanSession
     let error: ExtractionError
-    let retry: () -> Void
+    let onManual: () -> Void
     let close: () -> Void
 
+    @State private var cameraRequested = false
+    @State private var photoRequested = false
+
+    private let cameraAvailable = DocumentCameraView.isAvailable
+
     var body: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 34))
-                .foregroundStyle(Theme.destructive)
-                .accessibilityHidden(true)
-            Text(title).font(.title3.bold()).foregroundStyle(Theme.text).multilineTextAlignment(.center)
-            Text(message).font(.subheadline).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
-            Spacer()
-            Button(action: retry) { Text("scan.error.tryAgain").frame(maxWidth: .infinity) }
-                .buttonStyle(PillButtonStyle())
-            Button("scan.error.close", action: close)
-                .frame(minHeight: 44)
-                .foregroundStyle(Theme.accent)
+        StatusScreen(
+            systemImage: "doc.text.magnifyingglass",
+            iconTint: Theme.warningText,
+            iconFill: Theme.warningFill,
+            title: title,
+            message: message,
+            closeIdentifier: "scan.error.close",
+            onClose: close
+        ) {
+            // The way the receipt came in is offered first.
+            if session.source == .camera && cameraAvailable {
+                scanAgain.buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                anotherPhoto.buttonStyle(SecondaryButtonStyle(fullWidth: true))
+            } else {
+                anotherPhoto.buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                if cameraAvailable {
+                    scanAgain.buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                }
+            }
+            Button(action: onManual) { Text("scan.error.manual") }
+                .buttonStyle(TextButtonStyle())
+                .accessibilityIdentifier("scan.error.manual")
         }
-        .padding(24)
+        .scanSources(session: session, cameraRequested: $cameraRequested,
+                     photoRequested: $photoRequested, onManual: onManual)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("scan.error")
+    }
+
+    private var scanAgain: some View {
+        Button { cameraRequested = true } label: { Text("scan.error.scanAgain") }
+            .accessibilityIdentifier("scan.error.scanAgain")
+    }
+
+    private var anotherPhoto: some View {
+        Button { photoRequested = true } label: { Text("scan.error.anotherPhoto") }
+            .accessibilityIdentifier("scan.error.photo")
     }
 
     private var title: LocalizedStringKey {

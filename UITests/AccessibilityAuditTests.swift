@@ -130,6 +130,18 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    @MainActor func testScanReadError() throws {
+        try auditInBothModes("scan read error", extra: ["KAKEIBO_SCAN_IMAGE_PATH": Bundle(for: Self.self).path(forResource: "Info", ofType: "plist") ?? ""]) { app in
+            XCTAssertTrue(app.buttons["scan.error.manual"].waitForExistence(timeout: 10))
+        }
+    }
+
+    @MainActor func testCameraDenied() throws {
+        try auditInBothModes("camera denied", extra: ["KAKEIBO_SHOW_CAMERA_DENIED": "1"]) { app in
+            XCTAssertTrue(app.buttons["camera.denied.openSettings"].waitForExistence(timeout: 5))
+        }
+    }
+
     @MainActor func testScanReview() throws {
         try auditInBothModes("scan review", scan: true) { app in
             XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
@@ -153,10 +165,10 @@ final class AccessibilityAuditTests: XCTestCase {
     /// Launches in light, opens the screen, audits; then the same in dark.
     @MainActor
     private func auditInBothModes(_ screen: String, seed: Bool = false, scan: Bool = false,
-                                  notifications: String? = nil,
+                                  notifications: String? = nil, extra: [String: String] = [:],
                                   open: (XCUIApplication) -> Void) throws {
         for scheme in ["light", "dark"] {
-            let app = launch(seed: seed, scan: scan, notifications: notifications, colorScheme: scheme)
+            let app = launch(seed: seed, scan: scan, notifications: notifications, extra: extra, colorScheme: scheme)
             open(app)
             try audit(app, "\(screen), \(scheme)")
             app.terminate()
@@ -191,13 +203,14 @@ final class AccessibilityAuditTests: XCTestCase {
 
     @MainActor
     private func launch(seed: Bool = false, scan: Bool = false, notifications: String? = nil,
-                        colorScheme: String) -> XCUIApplication {
+                        extra: [String: String] = [:], colorScheme: String) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = colorScheme
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
         if let notifications { app.launchEnvironment["KAKEIBO_NOTIFICATIONS"] = notifications }
+        for (key, value) in extra { app.launchEnvironment[key] = value }
         if scan {
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] =
                 Bundle(for: Self.self).path(forResource: "sample-receipt", ofType: "png")

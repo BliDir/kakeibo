@@ -1,44 +1,39 @@
 import SwiftUI
 
-/// Shown when camera access is off, with a way to fix it in Settings.
+/// Shown when camera access is off: a way to fix it in Settings, and the two ways to go on
+/// without the camera (a photo, or typing the expense in).
 struct CameraAccessDeniedView: View {
+    let onChoosePhoto: () -> Void
+    let onManual: () -> Void
+
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "camera.fill")
-                .font(.system(size: 34))
-                .foregroundStyle(Theme.accent)
-                .frame(width: 72, height: 72)
-                .background(Theme.accentTint, in: Circle())
-                .accessibilityHidden(true)
-
-            Text("camera.denied.title")
-                .font(.title3.bold())
-                .foregroundStyle(Theme.text)
-                .multilineTextAlignment(.center)
-
-            Text("camera.denied.message")
-                .font(.subheadline)
-                .foregroundStyle(Theme.secondaryText)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-
+        StatusScreen(
+            systemImage: "camera",
+            title: "camera.denied.title",
+            message: "camera.denied.message",
+            closeIdentifier: "camera.denied.close",
+            onClose: { dismiss() }
+        ) {
             Button {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                 dismiss()
             } label: {
-                Text("camera.denied.openSettings").frame(maxWidth: .infinity)
+                Text("camera.denied.openSettings")
             }
-            .buttonStyle(PillButtonStyle())
+            .buttonStyle(PrimaryButtonStyle(fullWidth: true))
             .accessibilityIdentifier("camera.denied.openSettings")
 
-            Button("camera.denied.notNow") { dismiss() }
-                .frame(minHeight: 44)
-                .foregroundStyle(Theme.accent)
+            Button(action: onChoosePhoto) { Text("camera.denied.choosePhoto") }
+                .buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                .accessibilityIdentifier("camera.denied.photo")
+
+            Button(action: onManual) { Text("camera.denied.manual") }
+                .buttonStyle(TextButtonStyle())
+                .accessibilityIdentifier("camera.denied.manual")
         }
-        .padding(24)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("camera.denied")
     }

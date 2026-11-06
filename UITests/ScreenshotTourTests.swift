@@ -160,6 +160,21 @@ final class ScreenshotTourTests: XCTestCase {
         }
         app.terminate()
 
+        // Receipt not readable (UI-03): a file that is not an image.
+        app = launch(language: language, size: size,
+                     extra: ["KAKEIBO_SCAN_IMAGE_PATH": Bundle(for: Self.self).path(forResource: "Info", ofType: "plist") ?? ""])
+        if app.buttons["scan.error.manual"].waitForExistence(timeout: 10) {
+            shot(app, "\(tag)-16b-scan-read-error")
+        }
+        app.terminate()
+
+        // Camera access off (UI-03).
+        app = launch(language: language, size: size, extra: ["KAKEIBO_SHOW_CAMERA_DENIED": "1"])
+        if app.buttons["camera.denied.openSettings"].waitForExistence(timeout: 5) {
+            shot(app, "\(tag)-16c-camera-denied")
+        }
+        app.terminate()
+
         // Empty ledger.
         app = launch(language: language, size: size)
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
@@ -211,7 +226,8 @@ final class ScreenshotTourTests: XCTestCase {
 
     @MainActor
     private func launch(language: String, size: TextSize, seed: Bool = false, scan: Bool = false,
-                        ocrDelay: Double? = nil, notifications: String? = nil) -> XCUIApplication {
+                        ocrDelay: Double? = nil, notifications: String? = nil,
+                        extra: [String: String] = [:]) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
@@ -220,6 +236,7 @@ final class ScreenshotTourTests: XCTestCase {
         }
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
         if let notifications { app.launchEnvironment["KAKEIBO_NOTIFICATIONS"] = notifications }
+        for (key, value) in extra { app.launchEnvironment[key] = value }
         if scan {
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] =
                 Bundle(for: Self.self).path(forResource: "sample-receipt", ofType: "png")

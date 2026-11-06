@@ -49,6 +49,10 @@ struct BudgetSheet: View {
             }
         }
         .onAppear { if !form.hasBudget { amountFocused = true } }
+        // VoiceOver users are typing in the field and would not hear the error appear under it.
+        .onChange(of: problemAnnouncement) { _, message in
+            if let message { AccessibilityNotification.Announcement(message).post() }
+        }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("budget.sheet")
     }
@@ -72,6 +76,9 @@ struct BudgetSheet: View {
         }
         .padding(.horizontal, 12)
         .padding(.top, 12)
+        .padding(.bottom, 4)
+        // Opaque, so the form scrolling under it never shows through the title at large sizes.
+        .background(Theme.groundLight)
     }
 
     private var title: some View {
@@ -136,6 +143,15 @@ struct BudgetSheet: View {
         case .notPositive: return "budget.problem.notPositive"
         case .notWholeYen: return "budget.problem.notWholeYen"
         case .tooLarge: return "budget.problem.tooLarge"
+        }
+    }
+
+    private var problemAnnouncement: String? {
+        guard case .invalid(let problem) = form.parsed else { return nil }
+        switch problem {
+        case .notPositive: return String(localized: "budget.problem.notPositive")
+        case .notWholeYen: return String(localized: "budget.problem.notWholeYen")
+        case .tooLarge: return String(localized: "budget.problem.tooLarge")
         }
     }
 

@@ -130,6 +130,7 @@ final class BudgetUITests: XCTestCase {
         let week = element(app, "budget.week")
         XCTAssertTrue(week.exists)
         XCTAssertTrue(week.label.contains("Available this week"), week.label)
+        XCTAssertTrue(week.label.contains("今週使える金額 · "), "Japanese label paired on the date line: \(week.label)")
         XCTAssertTrue(week.label.contains("day"), "shows the days it covers: \(week.label)")
         XCTAssertTrue(week.label.contains("remaining in") || week.label.contains("last day"), week.label)
 

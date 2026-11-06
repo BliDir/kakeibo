@@ -1,5 +1,4 @@
 import KakeiboScan
-import PhotosUI
 import SwiftUI
 
 /// The ledger's three ways to add an expense: Scan (solid, the main action), Photo and Manual
@@ -11,9 +10,8 @@ struct ScanEntryButtons: View {
     let session: ScanSession
     let onManual: () -> Void
 
-    @State private var showCamera = false
-    @State private var showCameraDenied = false
-    @State private var photoItem: PhotosPickerItem?
+    @State private var cameraRequested = false
+    @State private var photoRequested = false
     @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     private let cameraAvailable = DocumentCameraView.isAvailable
@@ -24,34 +22,11 @@ struct ScanEntryButtons: View {
                 VStack(spacing: Spacing.xs) { tiles }
             } else {
                 HStack(spacing: 10) { tiles }
-                .fixedSize(horizontal: false, vertical: true)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .fullScreenCover(isPresented: $showCamera) {
-            DocumentCameraView(
-                onScan: { image in
-                    showCamera = false
-                    session.start(image: image)
-                },
-                onCancel: { showCamera = false }
-            )
-            .ignoresSafeArea()
-        }
-        .sheet(isPresented: $showCameraDenied) {
-            CameraAccessDeniedView()
-                .presentationDetents([.medium])
-        }
-        .onChange(of: photoItem) { _, item in
-            guard let item else { return }
-            photoItem = nil
-            Task {
-                if let data = try? await item.loadTransferable(type: Data.self) {
-                    session.start(imageData: data)
-                } else {
-                    session.start(imageData: Data())   // shows "couldn't read this image"
-                }
-            }
-        }
+        .scanSources(session: session, cameraRequested: $cameraRequested,
+                     photoRequested: $photoRequested, onManual: onManual)
     }
 
     @ViewBuilder private var tiles: some View {
@@ -61,9 +36,7 @@ struct ScanEntryButtons: View {
     }
 
     private var scan: some View {
-        Button {
-            Task { await openCamera() }
-        } label: {
+        Button { cameraRequested = true } label: {
             TileLabel(title: "scan.action.scan.short", systemImage: "doc.viewfinder")
         }
         .buttonStyle(PrimaryButtonStyle(fullWidth: true, shape: .tile))
@@ -74,7 +47,7 @@ struct ScanEntryButtons: View {
     }
 
     private var photo: some View {
-        PhotosPicker(selection: $photoItem, matching: .images) {
+        Button { photoRequested = true } label: {
             TileLabel(title: "scan.action.photo.short", systemImage: "photo.on.rectangle")
         }
         .buttonStyle(SecondaryButtonStyle(fullWidth: true, shape: .tile))
@@ -89,14 +62,6 @@ struct ScanEntryButtons: View {
         .buttonStyle(SecondaryButtonStyle(fullWidth: true, shape: .tile))
         .accessibilityLabel(Text("ledger.add"))
         .accessibilityIdentifier("ledger.add")
-    }
-
-    private func openCamera() async {
-        if await CameraPermission.request() {
-            showCamera = true
-        } else {
-            showCameraDenied = true
-        }
     }
 }
 

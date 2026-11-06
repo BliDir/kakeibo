@@ -761,36 +761,53 @@
         }
       }
     },
+    "camera.denied.choosePhoto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a photo instead"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真から選ぶ"
+          }
+        }
+      }
+    },
+    "camera.denied.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add manually"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力で追加"
+          }
+        }
+      }
+    },
     "camera.denied.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "To scan receipts, allow camera access for Kakeibo in Settings. You can still choose a photo."
+            "value": "Allow camera access for Kakeibo in iOS Settings to scan receipts. You can still choose a photo or type an expense in yourself."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レシートを撮影するには、設定でKakeiboのカメラへのアクセスを許可してください。写真から選ぶこともできます。"
-          }
-        }
-      }
-    },
-    "camera.denied.notNow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not now"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今はしない"
+            "value": "レシートを撮影するには、iOSの設定でKakeiboのカメラへのアクセスを許可してください。写真から選ぶことも、手入力することもできます。"
           }
         }
       }
@@ -818,13 +835,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Camera access is off"
+            "value": "Let's turn on the camera"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "カメラへのアクセスがオフです"
+            "value": "カメラをオンにしましょう"
           }
         }
       }
@@ -2315,6 +2332,23 @@
         }
       }
     },
+    "scan.error.anotherPhoto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose another photo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "別の写真を選ぶ"
+          }
+        }
+      }
+    },
     "scan.error.close": {
       "extractionState": "manual",
       "localizations": {
@@ -2332,19 +2366,36 @@
         }
       }
     },
+    "scan.error.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter manually"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力する"
+          }
+        }
+      }
+    },
     "scan.error.noText.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Make sure the photo shows a receipt and is in focus."
+            "value": "Make sure the photo shows a receipt and is in focus, or type the expense in yourself."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レシートが写っていて、ピントが合っているか確認してください。"
+            "value": "レシートが写っていてピントが合っているか確認するか、手入力してください。"
           }
         }
       }
@@ -2355,30 +2406,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No text found"
+            "value": "No receipt text found"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "文字が見つかりませんでした"
+            "value": "レシートの文字が見つかりません"
           }
         }
       }
     },
-    "scan.error.tryAgain": {
+    "scan.error.scanAgain": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Try again"
+            "value": "Scan again"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "もう一度試す"
+            "value": "もう一度撮影"
           }
         }
       }
@@ -2389,13 +2440,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Try again with the whole receipt in view and good light."
+            "value": "We couldn't read this image. Try again with all four edges of the receipt in view, good light and no glare."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レシート全体が写るように、明るい場所でもう一度お試しください。"
+            "value": "この画像を読み取れませんでした。レシートの四隅が写るように、明るく反射のない場所でもう一度お試しください。"
           }
         }
       }
@@ -2406,13 +2457,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Couldn't read this image"
+            "value": "A clearer photo should do it"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この画像を読み取れませんでした"
+            "value": "はっきりした写真なら読み取れます"
           }
         }
       }
@@ -2451,19 +2502,53 @@
         }
       }
     },
-    "scan.progress.pageCaptured": {
+    "scan.progress.eyebrow.camera": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "1 page captured"
+            "value": "Receipt captured"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "1枚撮影済み"
+            "value": "撮影したレシート"
+          }
+        }
+      }
+    },
+    "scan.progress.eyebrow.photo": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo chosen"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選んだ写真"
+          }
+        }
+      }
+    },
+    "scan.progress.onDevice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On-device"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "端末内で処理"
           }
         }
       }
@@ -2570,6 +2655,40 @@
         }
       }
     },
+    "scan.step.done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
+        }
+      }
+    },
+    "scan.step.inProgress": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In progress"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "処理中"
+          }
+        }
+      }
+    },
     "scan.step.reading": {
       "extractionState": "manual",
       "localizations": {
@@ -2634,6 +2753,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "合計・内税・登録番号"
+          }
+        }
+      }
+    },
+    "scan.step.waiting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Waiting"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "待機中"
           }
         }
       }

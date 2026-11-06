@@ -17,6 +17,8 @@ struct ContentView: View {
     /// A saved expense to open once the current full-screen cover has gone
     /// (from the duplicate warning). Two covers cannot be presented at the same time.
     @State private var openAfterDismiss: Expense?
+    /// The read error's "Enter manually": open an empty manual form once the scan cover has gone.
+    @State private var manualAfterDismiss = false
     #if DEBUG
     @State private var showTokens = ProcessInfo.processInfo.environment["KAKEIBO_SHOW_TOKENS"] == "1"
     #endif
@@ -70,7 +72,8 @@ struct ContentView: View {
                 session: session,
                 services: services,
                 onSaved: { total in show(.saved(total)) },
-                onViewSaved: { expense in openAfterDismiss = expense }
+                onViewSaved: { expense in openAfterDismiss = expense },
+                onManual: { manualAfterDismiss = true }
             )
         }
         .fullScreenCover(item: $editor, onDismiss: openPendingExpense) { item in
@@ -122,9 +125,7 @@ struct ContentView: View {
             session: session,
             photoStore: services.photoStore,
             onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
-            onManual: {
-                editor = EditorItem(form: ReviewForm(manualOn: .now, payment: services.settings.defaultPayment))
-            },
+            onManual: openManualEntry,
             onShowTokens: showTokensAction
         )
     }
@@ -144,7 +145,16 @@ struct ContentView: View {
         ledger.show(ledger.currentMonth)
     }
 
+    private func openManualEntry() {
+        editor = EditorItem(form: ReviewForm(manualOn: .now, payment: services.settings.defaultPayment))
+    }
+
     private func openPendingExpense() {
+        if manualAfterDismiss {
+            manualAfterDismiss = false
+            openManualEntry()
+            return
+        }
         guard let expense = openAfterDismiss else { return }
         openAfterDismiss = nil
         editor = EditorItem(form: ReviewForm(editing: expense))

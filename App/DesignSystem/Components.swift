@@ -113,20 +113,38 @@ struct Tag: View {
 
 // MARK: - Buttons
 
+/// The outline of a button: a capsule (default), or a rounded tile for big stacked actions
+/// such as the ledger's Scan / Photo / Manual.
+enum ButtonShapeKind {
+    case capsule
+    case tile
+
+    var shape: AnyShape {
+        switch self {
+        case .capsule: AnyShape(Capsule())
+        case .tile: AnyShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+    }
+
+    var minHeight: CGFloat { self == .tile ? 68 : 54 }
+}
+
 /// Solid ink-green button for the main action of a screen (Scan, Save, a principal
 /// confirmation). At least 54 pt tall; the label wraps at large text sizes instead of being
 /// cut off. Disabled: grey fill with secondary text, which stays readable (dimming did not).
 struct PrimaryButtonStyle: ButtonStyle {
     /// Stretch to the available width (sheet save bars) or hug the label (floating actions).
     var fullWidth = false
+    var shape: ButtonShapeKind = .capsule
 
     func makeBody(configuration: Configuration) -> some View {
-        Styled(configuration: configuration, fullWidth: fullWidth)
+        Styled(configuration: configuration, fullWidth: fullWidth, kind: shape)
     }
 
     private struct Styled: View {
         let configuration: Configuration
         let fullWidth: Bool
+        let kind: ButtonShapeKind
         @Environment(\.isEnabled) private var isEnabled
 
         var body: some View {
@@ -134,14 +152,14 @@ struct PrimaryButtonStyle: ButtonStyle {
                 .font(.button)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 24)
+                .padding(.horizontal, kind == .tile ? 8 : 24)
                 .padding(.vertical, 12)
-                .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: 54)
+                .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: kind.minHeight)
                 .foregroundStyle(isEnabled ? Theme.onAccent : Theme.secondaryText)
-                .background(isEnabled ? Theme.accent : Theme.divider, in: Capsule())
+                .background(isEnabled ? Theme.accent : Theme.divider, in: kind.shape)
                 // Pressed: a darker overlay on the fill only; the label stays fully opaque.
-                .overlay(Capsule().fill(Color.black.opacity(configuration.isPressed ? 0.14 : 0)))
-                .contentShape(Capsule())
+                .overlay(kind.shape.fill(Color.black.opacity(configuration.isPressed ? 0.14 : 0)))
+                .contentShape(kind.shape)
         }
     }
 }
@@ -151,16 +169,18 @@ struct PrimaryButtonStyle: ButtonStyle {
 /// Contrast: an opaque fill. The label and icon are always fully opaque.
 struct SecondaryButtonStyle: ButtonStyle {
     var fullWidth = false
+    var shape: ButtonShapeKind = .capsule
     /// Debug gallery: show the opaque fallback without changing system settings.
     var forceOpaque = false
 
     func makeBody(configuration: Configuration) -> some View {
-        Styled(configuration: configuration, fullWidth: fullWidth, forceOpaque: forceOpaque)
+        Styled(configuration: configuration, fullWidth: fullWidth, kind: shape, forceOpaque: forceOpaque)
     }
 
     private struct Styled: View {
         let configuration: Configuration
         let fullWidth: Bool
+        let kind: ButtonShapeKind
         let forceOpaque: Bool
         @Environment(\.isEnabled) private var isEnabled
         @Environment(\.colorScheme) private var colorScheme
@@ -177,22 +197,22 @@ struct SecondaryButtonStyle: ButtonStyle {
                 .font(.button)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, kind == .tile ? 8 : 20)
                 .padding(.vertical, 12)
-                .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: 54)
+                .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: kind.minHeight)
                 .foregroundStyle(isEnabled ? Theme.text : Theme.secondaryText)
                 .background { fill }
-                .overlay(Capsule().strokeBorder(Theme.secondaryBorder, lineWidth: contrast == .increased ? 1.5 : 1))
-                .overlay(Capsule().fill(Color.black.opacity(configuration.isPressed ? 0.08 : 0)))
-                .contentShape(Capsule())
+                .overlay(kind.shape.stroke(Theme.secondaryBorder, lineWidth: contrast == .increased ? 1.5 : 1))
+                .overlay(kind.shape.fill(Color.black.opacity(configuration.isPressed ? 0.08 : 0)))
+                .contentShape(kind.shape)
         }
 
         @ViewBuilder private var fill: some View {
             if isGlass {
-                Capsule().fill(.ultraThinMaterial)
-                    .overlay(Capsule().fill(Theme.secondaryFill))
+                kind.shape.fill(.ultraThinMaterial)
+                    .overlay(kind.shape.fill(Theme.secondaryFill))
             } else {
-                Capsule().fill(Theme.secondaryFillOpaque)
+                kind.shape.fill(Theme.secondaryFillOpaque)
             }
         }
     }

@@ -115,33 +115,18 @@ struct ContentView: View {
         #endif
     }
 
-    /// The ledger with the scan and manual-add buttons.
+    /// The ledger, with Scan / Photo / Manual at the top of its content.
     private var ledgerTab: some View {
         LedgerView(
             model: ledger,
+            session: session,
             photoStore: services.photoStore,
             onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
+            onManual: {
+                editor = EditorItem(form: ReviewForm(manualOn: .now, payment: services.settings.defaultPayment))
+            },
             onShowTokens: showTokensAction
         )
-        .safeAreaInset(edge: .bottom) {
-            HStack(spacing: 10) {
-                ScanEntryButtons(session: session)
-                Button {
-                    editor = EditorItem(form: ReviewForm(manualOn: .now, payment: services.settings.defaultPayment))
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20, weight: .semibold))
-                        .frame(width: 54, height: 54)
-                        .background(Theme.surface, in: Circle())
-                        .overlay(Circle().stroke(Theme.border))
-                        .foregroundStyle(Theme.accent)
-                }
-                .accessibilityLabel(Text("ledger.add"))
-                .accessibilityIdentifier("ledger.add")
-            }
-            .padding(.bottom, 12)
-            .frame(maxWidth: .infinity)
-        }
     }
 
     private var showTokensAction: (() -> Void)? {
@@ -217,10 +202,14 @@ private struct BannerView: View {
             Image(systemName: "checkmark.circle.fill")
         }
         .font(.subheadline.weight(.semibold))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Theme.text, in: Capsule())
-        .foregroundStyle(Theme.surface)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
+        // Inverted, as in the design: ground-colored text on the text color.
+        .background(Theme.text, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
+        .foregroundStyle(Theme.groundLight)
+        .shadow(color: Theme.shadow, radius: 12, y: 6)
+        .padding(.horizontal, Spacing.l)
         .transition(.move(edge: .top).combined(with: .opacity))
         .accessibilityIdentifier("banner")
     }

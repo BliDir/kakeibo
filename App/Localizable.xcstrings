@@ -1203,6 +1203,23 @@
         }
       }
     },
+    "ledger.activity": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activity"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明細"
+          }
+        }
+      }
+    },
     "ledger.add": {
       "extractionState": "manual",
       "localizations": {
@@ -1220,19 +1237,36 @@
         }
       }
     },
+    "ledger.empty.footnote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account needed. Everything stays on your iPhone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アカウントは不要です。記録はすべてこのiPhoneに保存されます。"
+          }
+        }
+      }
+    },
     "ledger.empty.message": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scan a receipt or choose a photo of one below. To type an expense in yourself, tap +."
+            "value": "Nothing recorded this month yet. Scan a receipt, choose a photo of one, or type an expense in yourself."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "下のボタンでレシートを撮影するか、写真を選んでください。手入力するときは＋をタップします。"
+            "value": "この月の記録はまだありません。レシートを撮影するか、写真を選ぶか、手入力で追加してください。"
           }
         }
       }
@@ -1243,13 +1277,47 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "No receipts for this month"
+            "value": "Start with one receipt"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "この月の記録はまだありません"
+            "value": "まずはレシート1枚から"
+          }
+        }
+      }
+    },
+    "ledger.insight.detail %@ %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · %2$lld%% of spending"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ · 支出の%2$lld%%"
+          }
+        }
+      }
+    },
+    "ledger.insight.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most spent on %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いちばん多い支出：%@"
           }
         }
       }
@@ -2145,6 +2213,23 @@
         }
       }
     },
+    "scan.action.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力"
+          }
+        }
+      }
+    },
     "scan.action.photo": {
       "extractionState": "manual",
       "localizations": {
@@ -2162,6 +2247,23 @@
         }
       }
     },
+    "scan.action.photo.short": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "写真"
+          }
+        }
+      }
+    },
     "scan.action.scan": {
       "extractionState": "manual",
       "localizations": {
@@ -2175,6 +2277,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "レシートを撮影"
+          }
+        }
+      }
+    },
+    "scan.action.scan.short": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撮影"
+          }
+        }
+      }
+    },
+    "scan.camera.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning needs a camera, which this device doesn't have. Choose a photo instead."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この端末ではカメラで読み取れません。写真から選んでください。"
           }
         }
       }

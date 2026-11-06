@@ -7,7 +7,11 @@ struct KakeiboApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(services: services)
-                .task { services.cleanUp() }
+                .task {
+                    services.cleanUp()
+                    // Launch reconciliation: a decided but unconfirmed alert, or an ended month.
+                    services.alerts.reconcile()
+                }
                 .preferredColorScheme(Self.testColorScheme)
         }
     }

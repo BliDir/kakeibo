@@ -16,6 +16,8 @@ final class AppServices {
     let settings: AppSettings
     /// Budget alerts: the user's opt-in, the iOS permission, sending and cancelling.
     let notifier: BudgetNotifier
+    /// Runs the 80%/100% alert policy after every committed change and on reconcile.
+    let alerts: BudgetAlertCoordinator
     /// Where a tapped budget notification asks to go.
     let router = NotificationRouter()
     /// Kept alive here: the notification center holds its delegate weakly.
@@ -31,6 +33,7 @@ final class AppServices {
         budgets = BudgetRepository(container: container)
         notifier = BudgetNotifier(center: notificationCenter ?? SystemNotificationCenter(),
                                   settings: settings, copy: Self.notificationCopy)
+        alerts = BudgetAlertCoordinator(expenses: repository, budgets: budgets, notifier: notifier)
         if notificationCenter == nil { listenForNotificationTaps() }
     }
 

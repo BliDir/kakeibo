@@ -23,6 +23,8 @@ public final class ExpenseRepository {
 
     /// Held so the container outlives its context: SwiftData traps if a context's container is freed.
     private let container: ModelContainer?
+    /// Tests: runs right before each save; throwing simulates a failed save.
+    var beforeSave: (() throws -> Void)?
 
     /// - Parameter context: a context whose container the caller keeps alive.
     public init(context: ModelContext, photoStore: PhotoStore? = nil) {
@@ -76,7 +78,7 @@ public final class ExpenseRepository {
         )
         context.insert(expense)
         expense.items = Self.makeItems(draft.items)
-        try context.save()
+        try save()
         return expense
     }
 
@@ -104,7 +106,7 @@ public final class ExpenseRepository {
         // The user has confirmed every field.
         expense.confidence = .high
         expense.updatedAt = now
-        try context.save()
+        try save()
     }
 
     /// Applies a change made directly to the model and saves it, bumping `updatedAt`.
@@ -112,7 +114,7 @@ public final class ExpenseRepository {
         change(expense)
         _ = try Self.validDayKey(expense.dayKey)
         expense.updatedAt = now
-        try context.save()
+        try save()
     }
 
     // MARK: - Delete
@@ -124,9 +126,21 @@ public final class ExpenseRepository {
     public func delete(_ expense: Expense) throws {
         let photo = expense.photoFileName
         context.delete(expense)
-        try context.save()
+        try save()
         if let photo, let photoStore {
             try photoStore.delete(photo)
+        }
+    }
+
+    /// Saves the context; on failure rolls back the unsaved change and rethrows, so a failed
+    /// save leaves nothing half-done in memory (and posts no `ModelContext.didSave`).
+    private func save() throws {
+        do {
+            try beforeSave?()
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
         }
     }
 

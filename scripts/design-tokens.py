@@ -35,6 +35,8 @@ COLORS = {
     "Success": ("2F7A4F", "6CCB91"),
     "Destructive": ("C23B22", "FF8266"),     # 朱 vermilion
     "OnDestructive": ("FFFFFF", "2A0B05"),
+    "DestructiveFill": ("FBE9E5", "3D1810"),   # over-budget banner
+    "DestructiveText": ("8C2A17", "FFB4A3"),
     "Warning": ("C08419", "E3AE45"),         # "check this field" border (canvas C98A1A, darkened to pass 3:1)
     "WarningFill": ("FFF4DF", "3A2C10"),
     "WarningText": ("7A4E00", "F4CA74"),
@@ -79,6 +81,9 @@ PAIRS = [
     ("Destructive", "Surface", TEXT, "Delete text"),
     ("Destructive", "Ground", TEXT, "Delete button on the ground"),
     ("OnDestructive", "Destructive", TEXT, "confirm button text"),
+    ("DestructiveText", "DestructiveFill", TEXT, "over-budget banner text"),
+    ("Text", "DestructiveFill", TEXT, "over-budget banner title"),
+    ("Destructive", "DestructiveFill", UI, "over-budget banner icon"),
     ("Success", "Surface", TEXT, "total verified line"),
     ("WarningText", "WarningFill", TEXT, "hint text in a highlighted field"),
     ("WarningText", "Surface", TEXT, "hint text under a field"),

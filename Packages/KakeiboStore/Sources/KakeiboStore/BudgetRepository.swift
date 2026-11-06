@@ -6,7 +6,8 @@ import SwiftData
 public enum BudgetAlertIntentState: String, CaseIterable, Sendable {
     /// Decided and handed to the system (or about to be); not known to be shown yet.
     case pending
-    /// The system has delivered it.
+    /// Handed to iOS, which accepted it. Budget alerts have no trigger, so iOS shows them at
+    /// once unless it holds them back (Focus, permission); this is not proof the user saw it.
     case delivered
     /// No longer applies (spend or budget changed first), or alerts were off. Never re-sent.
     case cancelled
@@ -235,6 +236,62 @@ public final class BudgetRepository {
             }
         }
         return result!
+    }
+
+    /// One intent state change, for `storeAlertDecision`.
+    public struct IntentChange: Sendable, Equatable {
+        public var month: LedgerMonth
+        public var threshold: BudgetThreshold
+        public var state: BudgetAlertIntentState
+
+        public init(_ month: LedgerMonth, _ threshold: BudgetThreshold, _ state: BudgetAlertIntentState) {
+            self.month = month
+            self.threshold = threshold
+            self.state = state
+        }
+    }
+
+    /// Stores one alert decision in a single save, all or nothing: thresholds now handled for
+    /// `month` and intent state changes. A crash can then never leave a threshold handled
+    /// without its intent (a lost alert) or the other way round. Later changes to the same
+    /// intent win.
+    public func storeAlertDecision(markHandled thresholds: Set<BudgetThreshold>, for month: LedgerMonth,
+                                   intents changes: [IntentChange], now: Date) throws {
+        var latest: [String: IntentChange] = [:]
+        var order: [String] = []
+        for change in changes {
+            let id = BudgetAlertIntent.requestID(monthKey: change.month.key, threshold: change.threshold)
+            if latest[id] == nil { order.append(id) }
+            latest[id] = change
+        }
+        guard !thresholds.isEmpty || !order.isEmpty else { return }
+        let existingRow = thresholds.isEmpty ? nil : try row(for: month)
+        let existingIntents = try order.map { id -> BudgetAlertIntent? in
+            let change = latest[id]!
+            return try intent(for: change.month, threshold: change.threshold)
+        }
+        try commit {
+            if !thresholds.isEmpty {
+                let row = existingRow ?? {
+                    let new = BudgetMonth(monthKey: month.key, createdAt: now, updatedAt: now)
+                    context.insert(new)
+                    return new
+                }()
+                if thresholds.contains(.eighty) { row.handledEighty = true }
+                if thresholds.contains(.hundred) { row.handledHundred = true }
+                row.updatedAt = now
+            }
+            for (id, existing) in zip(order, existingIntents) {
+                let change = latest[id]!
+                if let existing {
+                    existing.state = change.state
+                    existing.updatedAt = now
+                } else {
+                    context.insert(BudgetAlertIntent(monthKey: change.month.key, threshold: change.threshold,
+                                                     state: change.state, createdAt: now, updatedAt: now))
+                }
+            }
+        }
     }
 
     /// Intents in a state, oldest first (for reconciling notifications on launch).

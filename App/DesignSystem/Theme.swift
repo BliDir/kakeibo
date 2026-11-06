@@ -33,6 +33,9 @@ enum Theme {
     static let destructive = Color(.destructive)
     /// Text on `destructive`.
     static let onDestructive = Color(.onDestructive)
+    /// Over-budget banner background, with `destructiveText` on it.
+    static let destructiveFill = Color(.destructiveFill)
+    static let destructiveText = Color(.destructiveText)
     /// "Check this field": amber border, fill and text.
     static let warning = Color(.warning)
     static let warningFill = Color(.warningFill)

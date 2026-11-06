@@ -50,7 +50,17 @@ struct ContentView: View {
         .sheet(isPresented: $showTokens) { DesignTokensView() }
         #endif
         .overlay(alignment: .top) {
-            if let banner { BannerView(banner: banner).padding(.top, 8) }
+            VStack(spacing: 8) {
+                if let banner { BannerView(banner: banner) }
+                // A budget alert event: the one banner for it (the iOS one is hidden in the foreground).
+                if let alert = services.alerts.banner {
+                    BudgetAlertBannerView(banner: alert) {
+                        withAnimation { services.alerts.dismissBanner() }
+                    }
+                }
+            }
+            .padding(.top, 8)
+            .animation(.default, value: services.alerts.banner)
         }
         .fullScreenCover(isPresented: Binding(
             get: { session.phase != .idle },
@@ -79,6 +89,8 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             ledger.refreshForCurrentDate()
+            // Re-check this month's alerts: retries an unconfirmed one, drops ones for an ended month.
+            services.alerts.reconcile()
             // Notification permission can change in iOS Settings while the app is away.
             Task { await services.notifier.refreshAuthorization() }
         }
@@ -95,6 +107,7 @@ struct ContentView: View {
                 try? await Task.sleep(for: .seconds(max(wait, 1)))
                 guard !Task.isCancelled else { return }
                 ledger.refreshForCurrentDate()
+                services.alerts.reconcile()
             }
         }
         #if DEBUG

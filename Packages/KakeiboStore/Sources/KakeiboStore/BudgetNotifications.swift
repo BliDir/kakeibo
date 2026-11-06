@@ -241,6 +241,8 @@ public actor InMemoryNotificationCenter: BudgetNotificationCenter {
     public private(set) var requestCount = 0
     public private(set) var pending: [BudgetNotificationRequest] = []
     public private(set) var delivered: [String] = []
+    /// Every request ID handed over by `add`, in order, repeats included.
+    public private(set) var added: [String] = []
 
     public init(status: NotificationAuthorization = .notDetermined, answer: NotificationAuthorization = .allowed) {
         self.status = status
@@ -270,6 +272,7 @@ public actor InMemoryNotificationCenter: BudgetNotificationCenter {
 
     public func add(_ request: BudgetNotificationRequest) throws {
         if failAdd { throw Failure.refused }
+        added.append(request.id)
         // The same ID replaces the earlier request, as in iOS.
         pending.removeAll { $0.id == request.id }
         pending.append(request)

@@ -18,9 +18,18 @@ public final class AppSettings {
         didSet { defaults.set(defaultPayment.rawValue, forKey: Self.defaultPaymentKey) }
     }
 
+    static let budgetAlertsEnabledKey = "budgetAlertsEnabled"
+
+    /// The user turned budget alerts (80% and 100%) on in Settings. Off until they do;
+    /// whether iOS allows notifications is separate (`BudgetNotifier.authorization`).
+    public var budgetAlertsEnabled: Bool {
+        didSet { defaults.set(budgetAlertsEnabled, forKey: Self.budgetAlertsEnabledKey) }
+    }
+
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         defaultPayment = defaults.string(forKey: Self.defaultPaymentKey).flatMap(PaymentMethod.init(rawValue:)) ?? .cash
+        budgetAlertsEnabled = defaults.bool(forKey: Self.budgetAlertsEnabledKey)
     }
 }
 

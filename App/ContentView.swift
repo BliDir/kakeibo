@@ -41,7 +41,7 @@ struct ContentView: View {
             }
             .accessibilityIdentifier("tab.summary")
             Tab("tab.settings", systemImage: "gearshape", value: AppTab.settings) {
-                SettingsView(model: settingsModel)
+                SettingsView(model: settingsModel, notifier: services.notifier)
             }
             .accessibilityIdentifier("tab.settings")
         }
@@ -77,7 +77,16 @@ struct ContentView: View {
         // Budgets: "today" changes the weekly allowance and maybe the month. Refresh when the app
         // comes back, and once at each Tokyo midnight while it is open; nothing runs in the background.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { ledger.refreshForCurrentDate() }
+            guard phase == .active else { return }
+            ledger.refreshForCurrentDate()
+            // Notification permission can change in iOS Settings while the app is away.
+            Task { await services.notifier.refreshAuthorization() }
+        }
+        // A tapped budget alert (also one that launched the app) opens this month's budget.
+        .onChange(of: services.router.openBudget, initial: true) { _, payload in
+            guard payload != nil else { return }
+            services.router.openBudget = nil
+            openCurrentBudget()
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
@@ -128,6 +137,13 @@ struct ContentView: View {
         #else
         nil
         #endif
+    }
+
+    /// The ledger tab on the current month, where the budget progress card is at the top.
+    /// The scan or edit screen, if open, stays open: closing it could lose the user's work.
+    private func openCurrentBudget() {
+        tab = .ledger
+        ledger.show(ledger.currentMonth)
     }
 
     private func openPendingExpense() {

@@ -13,12 +13,17 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertEqual(app.state, .runningForeground)
     }
 
-    /// The simulator has no document camera: only "Choose photo" is offered.
+    /// Scan, Photo and Manual are always visible (UI-02). The simulator has no document camera,
+    /// so Scan is shown disabled there, and Photo and Manual work.
     @MainActor
-    func testSimulatorHidesCameraAndOffersPhoto() {
+    func testSimulatorShowsScanDisabledAndOffersPhotoAndManual() {
         let app = launch()
         XCTAssertTrue(app.buttons["scan.photo"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["scan.camera"].exists)
+        XCTAssertTrue(app.buttons["scan.photo"].isEnabled)
+        XCTAssertTrue(app.buttons["ledger.add"].isEnabled)
+        let scan = app.buttons["scan.camera"]
+        XCTAssertTrue(scan.exists, "Scan stays visible")
+        XCTAssertFalse(scan.isEnabled, "no document camera on the simulator")
     }
 
     // MARK: Scan
@@ -354,7 +359,7 @@ final class KakeiboUITests: XCTestCase {
     func testEmptyLedgerExplainsHowToStart() {
         let app = launch()
         XCTAssertTrue(app.otherElements["ledger.empty"].waitForExistence(timeout: 5)
-                      || app.staticTexts["No receipts for this month"].waitForExistence(timeout: 1))
+                      || app.staticTexts["Start with one receipt"].waitForExistence(timeout: 1))
         XCTAssertEqual(app.staticTexts["ledger.total"].label, "0 yen")
         XCTAssertFalse(app.buttons["ledger.next"].isEnabled, "no future months")
     }

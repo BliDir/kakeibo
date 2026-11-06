@@ -1,4 +1,22 @@
 {
-  "images": [{ "filename": "KakeiboLogo.png", "idiom": "universal" }],
-  "info": { "author": "xcode", "version": 1 }
+  "images" : [
+    {
+      "filename" : "KakeiboLogo.png",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KakeiboLogo-dark.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
 }

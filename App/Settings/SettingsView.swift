@@ -12,20 +12,18 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                Text("settings.title")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(Theme.text)
-                    .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                ScreenHeader("settings.title")
+                intro
                 general
                 alerts
                 data
                 privacy
-                about
+                versionFooter
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
+            .screenInset()
+            .padding(.top, Spacing.xs)
+            .padding(.bottom, Spacing.l)
         }
         .background(Theme.groundLight.ignoresSafeArea())
         .task { await model.refreshPhotoUsage() }
@@ -34,7 +32,23 @@ struct SettingsView: View {
         .accessibilityIdentifier("settings")
     }
 
-    // MARK: General
+    // MARK: Intro
+
+    /// The wordmark (ink green in light mode, its ivory reverse in dark mode) and the tagline.
+    private var intro: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            BrandLogo(maxWidth: 150)
+                .frame(maxHeight: 48, alignment: .leading)
+                .accessibilityIdentifier("settings.logo")
+            Text("settings.tagline")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: Preferences
 
     private var general: some View {
         SettingsSection("settings.section.general", footer: "settings.language.footer") {
@@ -42,25 +56,26 @@ struct SettingsView: View {
             Button {
                 if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
             } label: {
-                SettingsRow("settings.language") {
-                    Text("settings.language.value \(languageName)")
-                    Image(systemName: "arrow.up.forward.app").font(.footnote).accessibilityHidden(true)
+                SettingsRow("settings.language", systemImage: "globe",
+                            detail: Text("settings.language.value \(languageName)")) {
+                    Image(systemName: "arrow.up.forward.app")
+                        .font(.footnote.weight(.semibold))
+                        .accessibilityHidden(true)
                 }
             }
+            .buttonStyle(.plain)
             .accessibilityHint(Text("settings.language.hint"))
             .accessibilityIdentifier("settings.language")
 
             Divider().overlay(Theme.divider)
 
-            VStack(alignment: .leading, spacing: 6) {
-                Text("settings.payment").foregroundStyle(Theme.text)
-                PaymentMenu(title: "settings.payment", selection: Binding(
+            SettingsRow("settings.payment", systemImage: "creditcard", detail: Text("settings.payment.detail")) {
+                CompactPaymentMenu(title: "settings.payment", selection: Binding(
                     get: { model.settings.defaultPayment },
                     set: { model.settings.defaultPayment = $0 }
                 ))
                 .accessibilityIdentifier("settings.payment")
             }
-            .padding(.vertical, 10)
         }
     }
 
@@ -79,14 +94,17 @@ struct SettingsView: View {
                 get: { notifier.isEnabled },
                 set: { on in Task { await notifier.setEnabled(on) } }
             )) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("settings.alerts.toggle")
-                        .foregroundStyle(Theme.text)
-                    Text("settings.alerts.toggle.detail")
-                        .font(.caption)
-                        .foregroundStyle(Theme.secondaryText)
+                HStack(spacing: Spacing.s) {
+                    SettingsIcon(systemImage: "bell")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("settings.alerts.toggle")
+                            .foregroundStyle(Theme.text)
+                        Text("settings.alerts.toggle.detail")
+                            .font(.caption)
+                            .foregroundStyle(Theme.secondaryText)
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
                 }
-                .fixedSize(horizontal: false, vertical: true)
             }
             .tint(Theme.accent)
             .disabled(notifier.isRequesting)
@@ -110,7 +128,7 @@ struct SettingsView: View {
 
             Divider().overlay(Theme.divider)
 
-            SettingsRow("settings.alerts.permission") {
+            SettingsRow("settings.alerts.permission", systemImage: "app.badge") {
                 Text(permissionText)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(permissionColor)
@@ -133,19 +151,15 @@ struct SettingsView: View {
                 if let url = URL(string: UIApplication.openNotificationSettingsURLString) { openURL(url) }
             } label: {
                 Text("settings.alerts.openSettings")
-                    .font(.subheadline.weight(.bold))
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 44)
-                    .background(Theme.surface, in: RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.warning))
             }
+            .buttonStyle(SecondaryButtonStyle())
             .accessibilityIdentifier("settings.alerts.openSettings")
         }
         .foregroundStyle(Theme.warningText)
         .fixedSize(horizontal: false, vertical: true)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(Theme.warningFill, in: RoundedRectangle(cornerRadius: 10))
+        .padding(Spacing.s)
+        .background(Theme.warningFill, in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("settings.alerts.denied")
     }
@@ -167,34 +181,48 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: Data
+    // MARK: On this iPhone
 
+    /// Receipt photos: how many, and how much space they take.
     private var data: some View {
         SettingsSection("settings.section.data") {
-            SettingsRow("settings.photos") {
-                Text(verbatim: photoUsageText)
+            SettingsRow("settings.photos", systemImage: "photo.on.rectangle",
+                        detail: Text(verbatim: photoCountText)) {
+                Text(verbatim: photoSizeText)
                     .font(.amountSmall)
-                    // Spoken without the "·": "1 photo, 96 KB".
-                    .accessibilityLabel(Text(verbatim: photoUsageText.replacingOccurrences(of: " · ", with: ", ")))
-                    .accessibilityIdentifier("settings.photos")
             }
+            // One element: "Receipt photos, 1 photo, 96 KB".
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("settings.photos"))
+            .accessibilityValue(Text(verbatim: photoUsageSpoken))
+            .accessibilityIdentifier("settings.photos")
         }
     }
 
-    /// "12 photos · 4.2 MB".
-    private var photoUsageText: String {
+    /// "12 photos", or "Couldn't read".
+    private var photoCountText: String {
         if model.photoUsageFailed { return String(localized: "settings.photos.failed") }
+        return String(localized: "settings.photos.count \(model.photoUsage.count)")
+    }
+
+    /// "4.2 MB" ("0 KB", not "Zero KB").
+    private var photoSizeText: String {
+        if model.photoUsageFailed { return "" }
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
-        formatter.allowsNonnumericFormatting = false   // "0 KB", not "Zero KB"
-        let size = formatter.string(fromByteCount: model.photoUsage.bytes)
-        return String(localized: "settings.photos.count \(model.photoUsage.count)") + " · " + size
+        formatter.allowsNonnumericFormatting = false
+        return formatter.string(fromByteCount: model.photoUsage.bytes)
+    }
+
+    /// "12 photos, 4.2 MB".
+    private var photoUsageSpoken: String {
+        model.photoUsageFailed ? photoCountText : "\(photoCountText), \(photoSizeText)"
     }
 
     // MARK: Privacy
 
     private var privacy: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: Spacing.s) {
             Image(systemName: "checkmark.shield")
                 .font(.title3)
                 .foregroundStyle(Theme.accent)
@@ -204,35 +232,32 @@ struct SettingsView: View {
                 Text("settings.privacy.body").font(.subheadline)
             }
             .foregroundStyle(Theme.text)
+            .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
-        .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 12))
+        .padding(Spacing.m + 4)
+        .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("settings.privacy")
     }
 
-    // MARK: About
+    // MARK: Version
 
-    private var about: some View {
-        SettingsSection("settings.section.about") {
-            // Ink-green wordmark in light mode, its ivory reverse in dark mode: no plate needed.
-            BrandLogo(maxWidth: 180)
-                .frame(maxHeight: 60)
-                .padding(.vertical, 22)
-                .frame(maxWidth: .infinity)
-                .accessibilityIdentifier("settings.logo")
-            Divider().overlay(Theme.divider)
-            SettingsRow("settings.version") {
-                Text(verbatim: model.versionText)
-                    .font(.amountSmall)
-                    .accessibilityIdentifier("settings.version")
-            }
+    /// "Version 1.1 (42)": the real version and build from the app bundle.
+    private var versionFooter: some View {
+        HStack(spacing: 4) {
+            Text("settings.version")
+            Text(verbatim: model.versionText)
+                .monospacedDigit()
+                .accessibilityIdentifier("settings.version")
         }
+        .font(.footnote)
+        .foregroundStyle(Theme.secondaryText)
+        .frame(maxWidth: .infinity)
     }
 }
 
-/// A titled white card of rows, with an optional note under it.
+/// An uppercase title, a card of rows, and an optional note under it.
 private struct SettingsSection<Content: View>: View {
     let title: LocalizedStringKey
     let footer: LocalizedStringKey?
@@ -245,48 +270,111 @@ private struct SettingsSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            // The eyebrow look without its uppercase, which would turn "iPhone" into "IPHONE".
             Text(title)
-                .font(.overline).tracking(0.8)
+                .font(.overline)
+                .tracking(0.6)
                 .foregroundStyle(Theme.secondaryText)
                 .padding(.horizontal, 4)
                 .accessibilityAddTraits(.isHeader)
             VStack(spacing: 0) { content }
-                .padding(.horizontal, 16)
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, Spacing.m)
+                .padding(.vertical, 4)
+                .background(Theme.surface, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
             if let footer {
                 Text(footer)
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 4)
             }
         }
     }
 }
 
-/// A label on the left and its value on the right, at least 50 pt tall.
+/// A row's icon: the symbol in accent green on a soft green tile.
+private struct SettingsIcon: View {
+    let systemImage: String
+
+    var body: some View {
+        Image(systemName: systemImage)
+            .font(.body.weight(.medium))
+            .foregroundStyle(Theme.accent)
+            .frame(width: 36, height: 36)
+            .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Icon, a label with an optional detail line under it, and a value or control on the right.
+/// The value moves under the label at the accessibility text sizes.
 private struct SettingsRow<Value: View>: View {
     let label: LocalizedStringKey
+    let systemImage: String
+    let detail: Text?
     @ViewBuilder let value: Value
 
-    init(_ label: LocalizedStringKey, @ViewBuilder value: () -> Value) {
+    init(_ label: LocalizedStringKey, systemImage: String, detail: Text? = nil, @ViewBuilder value: () -> Value) {
         self.label = label
+        self.systemImage = systemImage
+        self.detail = detail
         self.value = value()
     }
 
     var body: some View {
-        // Label above the value at the accessibility text sizes.
-        AdaptiveStack(spacing: 12) {
-            Text(label).foregroundStyle(Theme.text)
+        AdaptiveStack(spacing: Spacing.s) {
+            HStack(spacing: Spacing.s) {
+                SettingsIcon(systemImage: systemImage)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label).foregroundStyle(Theme.text)
+                    if let detail {
+                        detail.font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                }
                 .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
+            }
+            Spacer(minLength: Spacing.xs)
             HStack(spacing: 6) { value }
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .font(.body)
-        .padding(.vertical, 6)
-        .frame(minHeight: 50)
+        .padding(.vertical, Spacing.xs)
+        .frame(minHeight: 56)
         .contentShape(Rectangle())
+    }
+}
+
+/// The default payment as a compact menu on the right of its row ("IC card ⌃⌄"). The menu
+/// lists both languages; VoiceOver reads the visible choice after the row's label.
+private struct CompactPaymentMenu: View {
+    let title: LocalizedStringKey
+    @Binding var selection: PaymentMethod
+
+    var body: some View {
+        Menu {
+            Picker(selection: $selection) {
+                ForEach(PaymentMethod.allCases, id: \.self) { method in
+                    Text(verbatim: method.label).tag(method)
+                }
+            } label: { Text(title) }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 4) {
+                Text(verbatim: selection.shortLabel)
+                    .multilineTextAlignment(.trailing)
+                    .fixedSize(horizontal: false, vertical: true)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .accessibilityHidden(true)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Theme.accent)
+            .frame(minHeight: minimumTapTarget)
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(Text(title))
+        .accessibilityValue(Text(verbatim: selection.label))
     }
 }

@@ -47,7 +47,7 @@ struct LedgerView: View {
         }
         .sheet(isPresented: $showExport) {
             ExportSheet(month: model.month, repository: model.repository)
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.large])
         }
     }
 
@@ -76,52 +76,7 @@ struct LedgerView: View {
     }
 
     private var monthSwitcher: some View {
-        Group {
-            if isAccessibilityTextSize {
-                // Huge text: the month gets the full width, the arrows go below it.
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    monthTitle.frame(maxWidth: .infinity)
-                    HStack { previousButton; Spacer(); nextButton }
-                }
-            } else {
-                HStack(spacing: Spacing.s) { previousButton; Spacer(minLength: 0); monthTitle; Spacer(minLength: 0); nextButton }
-            }
-        }
-    }
-
-    /// "November 2026" over "令和8年11月 · Reiwa 8", in a soft pill.
-    private var monthTitle: some View {
-        VStack(spacing: 0) {
-            Text(verbatim: LedgerFormat.monthTitle(model.month))
-                .font(.headline)
-                .foregroundStyle(Theme.text)
-                .accessibilityIdentifier("ledger.month")
-            Text(verbatim: LedgerFormat.eraSubtitle(model.month))
-                .font(.caption)
-                .foregroundStyle(Theme.secondaryText)
-        }
-        .multilineTextAlignment(.center)
-        .fixedSize(horizontal: false, vertical: true)
-        .padding(.horizontal, Spacing.m)
-        .padding(.vertical, 6)
-        .frame(maxWidth: isAccessibilityTextSize ? .infinity : nil)
-        .overlay(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).stroke(Theme.border))
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
-    }
-
-    private var previousButton: some View {
-        MonthButton(systemImage: "chevron.left", label: "ledger.month.previous", id: "ledger.previous") {
-            model.showPrevious()
-        }
-    }
-
-    private var nextButton: some View {
-        // No future months: disabled on the current month.
-        MonthButton(systemImage: "chevron.right", label: "ledger.month.next", id: "ledger.next") {
-            model.showNext()
-        }
-        .disabled(!model.canShowNext)
+        MonthSwitcher(model: model, idPrefix: "ledger")
     }
 
     // MARK: Hero
@@ -316,6 +271,64 @@ struct HeroAmount: View {
         guard let index = text.firstIndex(of: "¥") else { return ("", text, true) }
         let sign = String(text[..<index])
         return ("¥", sign + String(text[text.index(after: index)...]), true)
+    }
+}
+
+/// The month and its era in a soft pill, between previous and next buttons (no future months).
+/// Shared by the ledger and the Summary tab, which show the same `LedgerModel` month.
+/// Identifiers: `<prefix>.month`, `<prefix>.previous`, `<prefix>.next`.
+struct MonthSwitcher: View {
+    let model: LedgerModel
+    let idPrefix: String
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
+
+    var body: some View {
+        Group {
+            if isAccessibilityTextSize {
+                // Huge text: the month gets the full width, the arrows go below it.
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    monthTitle.frame(maxWidth: .infinity)
+                    HStack { previousButton; Spacer(); nextButton }
+                }
+            } else {
+                HStack(spacing: Spacing.s) { previousButton; Spacer(minLength: 0); monthTitle; Spacer(minLength: 0); nextButton }
+            }
+        }
+    }
+
+    /// "November 2026" over "令和8年11月 · Reiwa 8", in a soft pill.
+    private var monthTitle: some View {
+        VStack(spacing: 0) {
+            Text(verbatim: LedgerFormat.monthTitle(model.month))
+                .font(.headline)
+                .foregroundStyle(Theme.text)
+                .accessibilityIdentifier("\(idPrefix).month")
+            Text(verbatim: LedgerFormat.eraSubtitle(model.month))
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
+        }
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, 6)
+        .frame(maxWidth: isAccessibilityTextSize ? .infinity : nil)
+        .overlay(RoundedRectangle(cornerRadius: Radius.control, style: .continuous).stroke(Theme.border))
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isHeader)
+    }
+
+    private var previousButton: some View {
+        MonthButton(systemImage: "chevron.left", label: "ledger.month.previous", id: "\(idPrefix).previous") {
+            model.showPrevious()
+        }
+    }
+
+    private var nextButton: some View {
+        // No future months: disabled on the current month.
+        MonthButton(systemImage: "chevron.right", label: "ledger.month.next", id: "\(idPrefix).next") {
+            model.showNext()
+        }
+        .disabled(!model.canShowNext)
     }
 }
 

@@ -107,6 +107,20 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    @MainActor func testExport() throws {
+        try auditInBothModes("export", seed: true) { app in
+            app.buttons["ledger.export"].tap()
+            XCTAssertTrue(app.buttons["export.choice.month"].waitForExistence(timeout: 5))
+        }
+    }
+
+    @MainActor func testExportFailed() throws {
+        try auditInBothModes("export failed", extra: ["KAKEIBO_FAIL_EXPORT": "1"]) { app in
+            app.buttons["ledger.export"].tap()
+            XCTAssertTrue(app.buttons["export.retry"].waitForExistence(timeout: 5))
+        }
+    }
+
     @MainActor func testExpenseDetails() throws {
         try auditInBothModes("expense details", seed: true) { app in
             let row = app.buttons["ledger.row"].firstMatch

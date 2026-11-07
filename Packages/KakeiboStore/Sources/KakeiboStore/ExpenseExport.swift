@@ -15,6 +15,32 @@ public struct ExpenseExport {
         self.directory = directory
     }
 
+    /// A written file and what is in it, for the export screen's choices.
+    public struct PreparedFile: Equatable, Sendable {
+        public let url: URL
+        /// Expenses in the file.
+        public let count: Int
+        /// Their total, as the ledger adds it (`MonthSpend.total`); nil if it overflows.
+        public let totalYen: Int?
+
+        /// Nothing to share: the file holds only the header.
+        public var isEmpty: Bool { count == 0 }
+    }
+
+    /// Writes the month's file and returns it with its count and total, from one read.
+    public func prepare(month: LedgerMonth) throws -> PreparedFile {
+        let expenses = try repository.expenses(inMonth: month.key)
+        let url = try write(expenses, name: ExpenseCSV.fileName(month: month))
+        return PreparedFile(url: url, count: expenses.count, totalYen: MonthSpend.total(expenses))
+    }
+
+    /// Writes the year's file and returns it with its count and total, from one read.
+    public func prepare(year: Int) throws -> PreparedFile {
+        let expenses = try repository.expenses(inYear: year)
+        let url = try write(expenses, name: ExpenseCSV.fileName(year: year))
+        return PreparedFile(url: url, count: expenses.count, totalYen: MonthSpend.total(expenses))
+    }
+
     /// `kakeibo-2026-11.csv` with the month's expenses.
     public func file(for month: LedgerMonth) throws -> URL {
         try write(try repository.expenses(inMonth: month.key), name: ExpenseCSV.fileName(month: month))

@@ -1322,6 +1322,40 @@
         }
       }
     },
+    "export.csv.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dates, stores, categories, payment, amounts, tax, items and notes. UTF-8, opens in Excel and Numbers."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日付・店名・カテゴリ・支払い方法・金額・税額・品目・メモ。UTF-8形式で、ExcelやNumbersで開けます。"
+          }
+        }
+      }
+    },
+    "export.csv.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSV spreadsheet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CSVファイル"
+          }
+        }
+      }
+    },
     "export.empty": {
       "extractionState": "manual",
       "localizations": {
@@ -1356,19 +1390,70 @@
         }
       }
     },
+    "export.headline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your records, ready when you are."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "あなたの記録を、いつでも書き出せます。"
+          }
+        }
+      }
+    },
     "export.note": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "UTF-8 CSV for Excel, Numbers or your accountant. The file stays on this iPhone until you share it."
+            "value": "You choose where to share the file. It stays on this iPhone until you do."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "ExcelやNumbersで開けるUTF-8形式のCSVです。税理士さんへの提出にも使えます。共有するまでこのiPhoneの外には出ません。"
+            "value": "共有先はあなたが選びます。共有するまで、ファイルはこのiPhoneの外に出ません。"
+          }
+        }
+      }
+    },
+    "export.preparing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preparing the file"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルを準備しています"
+          }
+        }
+      }
+    },
+    "export.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度試す"
           }
         }
       }
@@ -1379,13 +1464,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Share CSV file"
+            "value": "Share CSV"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "CSVファイルを共有"
+            "value": "CSVを共有"
+          }
+        }
+      }
+    },
+    "export.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Take your expenses into a spreadsheet."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出を表計算ソフトで使えます。"
           }
         }
       }
@@ -1396,13 +1498,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Export CSV"
+            "value": "Export expenses"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "CSVで書き出す"
+            "value": "支出を書き出す"
           }
         }
       }
@@ -1413,13 +1515,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "All of %@"
+            "value": "Full year · %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%@年の1年分"
+            "value": "%@年 · 1年分"
           }
         }
       }
@@ -3460,13 +3562,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Language 言語"
+            "value": "App language"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "言語"
+            "value": "アプリの言語"
           }
         }
       }
@@ -3477,13 +3579,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kakeibo follows your iPhone's language. To use another language for this app only, choose it in iOS Settings › Kakeibo › Language. New manual entries start with the default payment."
+            "value": "To use another language for Kakeibo only, choose it in iOS Settings › Kakeibo › Language."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "iPhoneの言語に合わせて表示します。このアプリだけ別の言語にするには、iOSの設定 › Kakeibo › 言語 で選びます。手入力の新しい記録は「支払い方法の初期値」で始まります。"
+            "value": "このアプリだけ別の言語にするには、iOSの設定 › Kakeibo › 言語 で選びます。"
           }
         }
       }
@@ -3535,6 +3637,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "支払い方法の初期値"
+          }
+        }
+      }
+    },
+    "settings.payment.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New manual entries start with it"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力の新しい記録に使います"
           }
         }
       }
@@ -3636,30 +3755,13 @@
         }
       }
     },
-    "settings.section.about": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ABOUT このアプリについて"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このアプリについて"
-          }
-        }
-      }
-    },
     "settings.section.alerts": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "ALERTS 通知"
+            "value": "Alerts"
           }
         },
         "ja": {
@@ -3676,13 +3778,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "YOUR DATA データ"
+            "value": "On this iPhone"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "データ"
+            "value": "このiPhone"
           }
         }
       }
@@ -3693,13 +3795,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "GENERAL 一般"
+            "value": "Preferences"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "一般"
+            "value": "設定"
+          }
+        }
+      }
+    },
+    "settings.tagline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little clarity, every day."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "毎日のお金を、すっきりと。"
           }
         }
       }
@@ -3744,13 +3863,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "By category カテゴリ別"
+            "value": "By category"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
             "value": "カテゴリ別"
+          }
+        }
+      }
+    },
+    "summary.byCategory.columns": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amount · share"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額 · 割合"
           }
         }
       }
@@ -3823,36 +3959,87 @@
         }
       }
     },
+    "summary.exportMonth": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export this month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この月を書き出す"
+          }
+        }
+      }
+    },
+    "summary.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only the receipts and manual entries you've saved are included."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存したレシートと手入力の記録だけを集計しています。"
+          }
+        }
+      }
+    },
+    "summary.receipts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receipts"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "件数"
+          }
+        }
+      }
+    },
+    "summary.recorded": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recorded spending"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録した支出"
+          }
+        }
+      }
+    },
     "summary.tax": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tax incl. 内消費税"
+            "value": "Tax included"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "内消費税"
-          }
-        }
-      }
-    },
-    "summary.title %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ summary"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@の集計"
+            "value": "うち消費税"
           }
         }
       }

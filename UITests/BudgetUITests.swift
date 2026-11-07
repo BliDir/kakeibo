@@ -169,6 +169,28 @@ final class BudgetUITests: XCTestCase {
         XCTAssertFalse(element(app, "budget.week").exists, "no weekly allowance for a past month")
     }
 
+    /// The card's "Budget alert settings" opens Settings at the alerts, which explain both
+    /// thresholds. Past months have no such button.
+    @MainActor
+    func testAlertSettingsLinkOpensSettings() {
+        let app = launch(seed: true)
+        XCTAssertTrue(app.buttons["budget.cta.button"].waitForExistence(timeout: 5))
+        setBudget(app, "200000", fromPrompt: true)
+        let link = app.buttons["budget.alertSettings"]
+        var swipes = 0
+        while !link.isHittable, swipes < 6 { app.swipeUp(); swipes += 1 }
+        link.tap()
+        XCTAssertTrue(app.switches["settings.alerts"].waitForExistence(timeout: 5))
+        let thresholds = element(app, "settings.alerts.thresholds")
+        XCTAssertTrue(thresholds.exists)
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS '80%'")).count > 0)
+
+        app.tabBars.buttons["Ledger"].tap()
+        app.buttons["ledger.previous"].tap()
+        XCTAssertTrue(element(app, "budget.closed").waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["budget.alertSettings"].exists, "no alerts link for a past month")
+    }
+
     @MainActor
     private func setBudget(_ app: XCUIApplication, _ value: String, fromPrompt: Bool = false) {
         app.buttons[fromPrompt ? "budget.cta.button" : "budget.edit"].tap()
@@ -198,7 +220,7 @@ final class BudgetUITests: XCTestCase {
     }
 
     @MainActor
-    /// The budget row, read as one element: "BUDGET 予算, 200,000 yen".
+    /// Spent against the budget, read as one element ending in the budget: "¥5,198 spent of, 200,000 yen".
     private func budgetValue(_ app: XCUIApplication) -> XCUIElement {
         element(app, "budget.value")
     }

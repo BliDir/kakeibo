@@ -129,7 +129,8 @@ struct ContentView: View {
                 photoStore: services.photoStore,
                 onSelect: { expense in ledgerPath = [expense] },
                 onManual: openManualEntry,
-                onShowTokens: showTokensAction
+                onShowTokens: showTokensAction,
+                onOpenAlertSettings: { tab = .settings }
             )
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: Expense.self) { expense in

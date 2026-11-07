@@ -2,14 +2,13 @@ import KakeiboCore
 import KakeiboStore
 import SwiftUI
 
-/// "November budget": set, change or remove the current month's budget (v1.1, B-04).
-/// Logic is in `BudgetForm`; this view only binds to it.
+/// "November budget": set, change or remove the current month's budget (v1.1, B-04; visual
+/// refresh, UI-06). Logic is in `BudgetForm`; this view only binds to it.
 struct BudgetSheet: View {
     @Bindable var form: BudgetForm
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemove = false
     @FocusState private var amountFocused: Bool
-    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     private var monthName: String { LedgerFormat.monthName(form.month) }
     private var nextMonthName: String { LedgerFormat.monthName(form.month.next) }
@@ -18,7 +17,8 @@ struct BudgetSheet: View {
         VStack(spacing: 0) {
             header
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    intro
                     amountCard
                     templateCard
                     Label("budget.note", systemImage: "info.circle")
@@ -26,9 +26,9 @@ struct BudgetSheet: View {
                         .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)
-                    if form.hasBudget { removeButton }
                 }
-                .padding(16)
+                .screenInset()
+                .padding(.vertical, Spacing.s)
             }
             .scrollDismissesKeyboard(.interactively)
             saveBar
@@ -37,9 +37,11 @@ struct BudgetSheet: View {
         .overlay {
             if confirmRemove {
                 ConfirmPanel(
+                    systemImage: "chart.pie",
                     title: "budget.remove.title \(monthName)",
                     message: "budget.remove.message",
                     confirmTitle: "budget.remove.action",
+                    keepTitle: "budget.remove.keep",
                     onConfirm: {
                         confirmRemove = false
                         if form.remove() { dismiss() }
@@ -60,49 +62,34 @@ struct BudgetSheet: View {
     // MARK: Header
 
     private var header: some View {
-        Group {
-            if isAccessibilityTextSize {
-                // Huge text: the title gets its own line under Cancel instead of drawing over it.
-                VStack(alignment: .leading, spacing: 4) {
-                    cancelButton
-                    title.frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                ZStack {
-                    title.padding(.horizontal, 88)
-                    HStack { cancelButton; Spacer() }
-                }
-            }
+        TitleBar(title: "budget.sheet.title \(monthName)") {
+            Button("budget.sheet.cancel") { dismiss() }
+                .buttonStyle(TextButtonStyle())
+                .accessibilityIdentifier("budget.cancel")
+        } trailing: {
+            EmptyView()
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 12)
-        .padding(.bottom, 4)
         // Opaque, so the form scrolling under it never shows through the title at large sizes.
         .background(Theme.groundLight)
     }
 
-    private var title: some View {
-        Text("budget.sheet.title \(monthName)").font(.screenTitle).foregroundStyle(Theme.text)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
-    }
-
-    private var cancelButton: some View {
-        Button("budget.sheet.cancel") { dismiss() }
-            .font(.body.weight(.medium))
-            .frame(minWidth: 44, minHeight: 44)
-            .foregroundStyle(Theme.accent)
-            .accessibilityIdentifier("budget.cancel")
+    /// "NOVEMBER 2026" and "Give your spending a little direction."
+    private var intro: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: LedgerFormat.monthTitle(form.month)).eyebrow()
+            Text("budget.sheet.headline")
+                .font(.title.weight(.bold))
+                .foregroundStyle(Theme.text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.bottom, 4)
     }
 
     // MARK: Amount
 
     private var amountCard: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("budget.amount.label")
-                .font(.caption).tracking(0.6)
-                .foregroundStyle(Theme.secondaryText)
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text("budget.amount.label").eyebrow(uppercase: false)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 let symbol = Yen.fieldSymbol(for: LedgerFormat.language)
                 if symbol.isPrefix { Text(verbatim: symbol.symbol).font(.amountHero).foregroundStyle(Theme.secondaryText) }
@@ -128,8 +115,7 @@ struct BudgetSheet: View {
                 .foregroundStyle(Theme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+        .card()
     }
 
     /// Only complain about what was typed, not about an empty field.
@@ -158,9 +144,20 @@ struct BudgetSheet: View {
     // MARK: Template
 
     private var templateCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Spacing.s) {
             Toggle(isOn: $form.useForFutureMonths) {
-                Text("budget.template.title").font(.body.weight(.medium)).foregroundStyle(Theme.text)
+                HStack(spacing: Spacing.s) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(Theme.accent)
+                        .frame(width: 36, height: 36)
+                        .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .accessibilityHidden(true)
+                    Text("budget.template.title")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(Theme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .tint(Theme.accent)
             .accessibilityIdentifier("budget.template")
@@ -178,47 +175,48 @@ struct BudgetSheet: View {
             .font(.caption)
             .foregroundStyle(Theme.text)
             .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Spacing.s)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(form.useForFutureMonths ? Theme.accentTint : Theme.field, in: RoundedRectangle(cornerRadius: 8))
+            .background(form.useForFutureMonths ? Theme.accentTint : Theme.field,
+                        in: RoundedRectangle(cornerRadius: Radius.chip, style: .continuous))
             .accessibilityIdentifier("budget.template.explanation")
         }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+        .card()
     }
 
-    // MARK: Remove and save
+    // MARK: Save and remove
 
-    private var removeButton: some View {
-        Button(role: .destructive) { confirmRemove = true } label: {
-            Text("budget.remove").frame(maxWidth: .infinity, minHeight: 44)
-        }
-        .foregroundStyle(Theme.destructive)
-        .accessibilityIdentifier("budget.remove")
-    }
-
+    /// Save (solid green), then Remove for a month that has a budget (vermilion text).
     private var saveBar: some View {
         VStack(spacing: 6) {
             if let failure = form.failure {
                 Text(failure == .save ? "budget.saveFailed" : "budget.removeFailed")
                     .font(.caption)
                     .foregroundStyle(Theme.destructive)
+                    .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("budget.failed")
             }
             Button {
                 if form.save() { dismiss() }
             } label: {
-                Text("budget.save").frame(maxWidth: .infinity)
+                Text("budget.save")
             }
-            .buttonStyle(PillButtonStyle())
+            .buttonStyle(PrimaryButtonStyle(fullWidth: true))
             .disabled(!form.canSave)
             .accessibilityIdentifier("budget.save")
+            if form.hasBudget {
+                Button { confirmRemove = true } label: {
+                    Text("budget.remove")
+                }
+                .buttonStyle(DestructiveButtonStyle())
+                .accessibilityIdentifier("budget.remove")
+            }
         }
-        .padding(.horizontal, 16)
+        .screenInset()
         .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.bottom, Spacing.xs)
         .background(Theme.groundLight)
         .overlay(alignment: .top) { Divider().overlay(Theme.border) }
     }

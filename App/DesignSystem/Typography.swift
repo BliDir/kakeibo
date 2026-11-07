@@ -36,11 +36,13 @@ extension View {
         modifier(ScaledAmountFont(size: size))
     }
 
-    /// Small uppercase label with letter spacing ("TODAY · ¥3,180", "PREFERENCES").
-    func eyebrow() -> some View {
+    /// Small uppercase label with letter spacing ("TODAY · ¥3,180", "PREFERENCES"). Pass
+    /// `uppercase: false` where the case matters: brand names ("iPhone") or words VoiceOver
+    /// reads as part of a longer label.
+    func eyebrow(uppercase: Bool = true) -> some View {
         font(.overline)
-            .tracking(1.2)
-            .textCase(.uppercase)
+            .tracking(uppercase ? 1.2 : 0.6)
+            .textCase(uppercase ? .uppercase : nil)
             .foregroundStyle(Theme.secondaryText)
     }
 }

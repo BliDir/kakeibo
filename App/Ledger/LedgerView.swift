@@ -13,6 +13,8 @@ struct LedgerView: View {
     let onManual: () -> Void
     /// Debug builds only: opens the design system gallery.
     var onShowTokens: (() -> Void)?
+    /// The budget card's "Budget alert settings": opens the Settings tab.
+    var onOpenAlertSettings: (() -> Void)?
 
     @State private var showExport = false
     @State private var budgetForm: BudgetFormItem?
@@ -147,8 +149,11 @@ struct LedgerView: View {
     @ViewBuilder private var budgetSection: some View {
         if let budget = model.budgetSummary {
             if budget.budgetYen != nil {
-                BudgetProgressView(summary: budget, isCurrentMonth: model.canEditBudget, onEdit: openBudgetSheet)
-                    .card(padding: 18)
+                BudgetProgressView(summary: budget, isCurrentMonth: model.canEditBudget, onEdit: openBudgetSheet,
+                                   onAlertSettings: onOpenAlertSettings)
+                    .card()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("budget.card")
             } else if model.canEditBudget {
                 budgetSetupPrompt
             }
@@ -159,10 +164,10 @@ struct LedgerView: View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack(alignment: .top, spacing: Spacing.s) {
                 Image(systemName: "chart.pie")
-                    .font(.title3)
+                    .font(.title3.weight(.medium))
                     .foregroundStyle(Theme.accent)
                     .frame(width: 44, height: 44)
-                    .background(Theme.groundLight, in: Circle())
+                    .background(Theme.accentTint, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 4) {
                     Text("budget.cta.title").font(.headline).foregroundStyle(Theme.text)
@@ -177,7 +182,7 @@ struct LedgerView: View {
             .buttonStyle(SecondaryButtonStyle(fullWidth: true))
             .accessibilityIdentifier("budget.cta.button")
         }
-        .card(padding: 18)
+        .card()
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("budget.cta")
     }

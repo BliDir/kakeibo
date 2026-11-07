@@ -1,52 +1,61 @@
 import KakeiboCore
 import SwiftUI
 
-/// Budget progress in the ledger summary card (v1.1, B-05): spent against the budget, a bar,
-/// what is left or over, and for the current month "Available this week".
-/// Every figure comes from `BudgetSummary` (Core); this view only lays it out.
+/// "Your budget" on the ledger (v1.1, B-05; visual refresh, UI-06): what is left (or over) this
+/// month in large type, spent against the budget, the bar and its status in words, and for the
+/// current month "Available this week". Every figure comes from `BudgetSummary` (Core); this
+/// view only lays it out.
 struct BudgetProgressView: View {
     let summary: BudgetSummary
-    /// True for the current month: Edit and the weekly box. Past months are view only.
+    /// True for the current month: Edit, the weekly box and the alerts link. Past months are view only.
     let isCurrentMonth: Bool
     let onEdit: () -> Void
+    /// Opens the budget alert settings (current month only).
+    var onAlertSettings: (() -> Void)?
 
     var body: some View {
         if let budgetYen = summary.budgetYen, let spent = summary.spentYen, let remaining = summary.remainingYen {
-            VStack(alignment: .leading, spacing: 10) {
-                header(budgetYen)
-                progressBar
-                statusRow(spent: spent, remaining: remaining)
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                header
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    remainingHero(remaining)
+                    spentLine(spent: spent, budgetYen: budgetYen)
+                }
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    progressBar
+                    statusLabel(summary.percentSpent ?? 0)
+                }
                 if isCurrentMonth, let week = summary.weeklyAllowance {
                     WeeklyAllowanceBox(week: week, month: summary.month, overBudget: remaining <= 0)
+                }
+                Label("budget.basis", systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                if isCurrentMonth, let onAlertSettings {
+                    Button(action: onAlertSettings) {
+                        Label("budget.alertSettings", systemImage: "bell")
+                    }
+                    .buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                    .accessibilityIdentifier("budget.alertSettings")
                 }
             }
         }
     }
 
-    // MARK: Budget and Edit
+    // MARK: Title and Edit
 
-    private func header(_ budgetYen: Int) -> some View {
-        AdaptiveStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("budget.label").font(.overline).tracking(1).foregroundStyle(Theme.secondaryText)
-                YenText(budgetYen)
-                    .font(.amount)
-                    .foregroundStyle(Theme.text)
-            }
-            // VoiceOver: "BUDGET 予算, 200,000 yen".
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("budget.value")
-            Spacer(minLength: 8)
+    private var header: some View {
+        AdaptiveStack(spacing: Spacing.xs) {
+            Text("budget.card.title")
+                .font(.sectionTitle)
+                .foregroundStyle(Theme.text)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: Spacing.xs)
             if isCurrentMonth {
-                // The 44 pt frame is inside the label, so the whole frame is the tap target.
-                Button(action: onEdit) {
-                    Text("budget.edit")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Theme.accent)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityIdentifier("budget.edit")
+                Button("budget.edit", action: onEdit)
+                    .buttonStyle(TextButtonStyle())
+                    .accessibilityIdentifier("budget.edit")
             } else {
                 Label("budget.closed", systemImage: "lock")
                     .font(.caption)
@@ -55,6 +64,37 @@ struct BudgetProgressView: View {
                     .accessibilityIdentifier("budget.closed")
             }
         }
+    }
+
+    // MARK: Left or over
+
+    /// "LEFT THIS MONTH ¥194,802" (past months: "SAVED"), or "OVER BUDGET BY ¥198" in vermilion.
+    private func remainingHero(_ remaining: Int) -> some View {
+        let over = remaining < 0
+        return VStack(alignment: .leading, spacing: 2) {
+            Text(over ? "budget.over" : isCurrentMonth ? "budget.left" : "budget.saved").eyebrow(uppercase: false)
+            YenText(over ? -remaining : remaining)
+                .font(.system(.largeTitle, weight: .semibold).monospacedDigit())
+                .foregroundStyle(over ? Theme.destructive : Theme.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+        }
+        // VoiceOver: "Left this month, 194,802 yen".
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(over ? "budget.over" : "budget.left")
+    }
+
+    /// "¥5,198 spent of ¥200,000"; the budget comes last, so VoiceOver ends on it.
+    private func spentLine(spent: Int, budgetYen: Int) -> some View {
+        HStack(spacing: 4) {
+            Text("budget.spentOf \(LedgerFormat.yen(spent))")
+            YenText(budgetYen).foregroundStyle(Theme.text)
+        }
+        .font(.footnote.monospacedDigit())
+        .foregroundStyle(Theme.secondaryText)
+        .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("budget.value")
     }
 
     // MARK: Progress
@@ -75,44 +115,17 @@ struct BudgetProgressView: View {
         }
     }
 
-    /// The bar is clamped to full; the percentage and amounts next to it are not.
+    /// The bar is clamped to full; the percentage and amounts around it are not.
     private var progressBar: some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule().fill(Theme.divider)
+                Capsule().fill(Theme.field)
                 Capsule().fill(barColor)
                     .frame(width: proxy.size.width * (summary.progressFraction ?? 0))
             }
         }
-        .frame(height: 10)
+        .frame(height: 12)
         .accessibilityHidden(true)
-    }
-
-    private func statusRow(spent: Int, remaining: Int) -> some View {
-        let percent = summary.percentSpent ?? 0
-        return AdaptiveStack(spacing: 8) {
-            statusLabel(percent)
-            Spacer(minLength: 8)
-            if remaining < 0 {
-                HStack(spacing: 4) {
-                    Text("budget.over")
-                    YenText(-remaining).font(.amountSmall.weight(.bold))
-                }
-                .foregroundStyle(Theme.destructive)
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("budget.over")
-            } else {
-                HStack(spacing: 4) {
-                    Text(isCurrentMonth ? "budget.left" : "budget.saved")
-                    YenText(remaining).font(.amountSmall.weight(.semibold))
-                }
-                .foregroundStyle(Theme.text)
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("budget.left")
-            }
-        }
-        .font(.footnote)
-        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// "21% used", "82% used · close to budget", "102% used · over budget". Text, not only color.
@@ -135,6 +148,7 @@ struct BudgetProgressView: View {
             }
         }
         .font(.footnote.weight(.semibold))
+        .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("budget.status")
     }
@@ -148,25 +162,23 @@ private struct WeeklyAllowanceBox: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            AdaptiveStack(verticalAlignment: .firstTextBaseline, spacing: 8) {
-                Text("budget.week.title").font(.subheadline.weight(.bold))
-                Spacer(minLength: 8)
-                YenText(week.yen)
-                    .font(.amount)
-                    .foregroundStyle(overBudget ? Theme.secondaryText : Theme.text)
-                    .accessibilityIdentifier("budget.week.amount")
-            }
+            Text("budget.week.title").eyebrow(uppercase: false)
+            YenText(week.yen)
+                .font(.system(.title, weight: .semibold).monospacedDigit())
+                .foregroundStyle(overBudget ? Theme.secondaryText : Theme.text)
+                .accessibilityIdentifier("budget.week.amount")
             Text(verbatim: rangeText)
-                .font(.caption)
+                .font(.caption.weight(.medium))
                 .accessibilityIdentifier("budget.week.range")
             explanation
                 .font(.caption)
         }
         .foregroundStyle(Theme.text)
         .fixedSize(horizontal: false, vertical: true)
-        .padding(14)
+        .padding(Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(overBudget ? Theme.field : Theme.accentTint, in: RoundedRectangle(cornerRadius: 12))
+        .background(overBudget ? Theme.field : Theme.accentTint,
+                    in: RoundedRectangle(cornerRadius: Radius.control, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("budget.week")
     }

@@ -65,7 +65,12 @@ final class ScreenshotTourTests: XCTestCase {
         app.swipeDown()
         app.buttons["ledger.export"].tap()
         if app.buttons["export.close"].waitForExistence(timeout: 3) {
+            _ = app.buttons["export.choice.month"].waitForExistence(timeout: 3)
             shot(app, "\(tag)-07-export")
+            if app.buttons["export.choice.year"].exists {
+                app.buttons["export.choice.year"].tap()
+                shot(app, "\(tag)-07a-export-year")
+            }
             app.buttons["export.close"].tap()
         }
 
@@ -201,10 +206,26 @@ final class ScreenshotTourTests: XCTestCase {
         }
         app.terminate()
 
-        // Empty ledger.
+        // Empty ledger, its empty Summary, and an export with nothing in it.
         app = launch(language: language, size: size)
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
         shot(app, "\(tag)-17-ledger-empty")
+        tab(app, 1)
+        shot(app, "\(tag)-17a-summary-empty")
+        tab(app, 0)
+        app.buttons["ledger.export"].tap()
+        if app.buttons["export.choice.month"].waitForExistence(timeout: 3) {
+            shot(app, "\(tag)-17b-export-empty")
+        }
+        app.terminate()
+
+        // Export that cannot write its file (UI-05).
+        app = launch(language: language, size: size, extra: ["KAKEIBO_FAIL_EXPORT": "1"])
+        XCTAssertTrue(app.buttons["ledger.export"].waitForExistence(timeout: 5))
+        app.buttons["ledger.export"].tap()
+        if app.buttons["export.retry"].waitForExistence(timeout: 3) {
+            shot(app, "\(tag)-17c-export-failed")
+        }
         app.terminate()
 
         // Budget alerts on while iOS has notifications off: the warning and the Settings link.

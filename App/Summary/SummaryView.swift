@@ -3,145 +3,87 @@ import KakeiboCore
 import KakeiboStore
 import SwiftUI
 
-/// The Summary tab: where the month's money went. Shares `LedgerModel` with the ledger,
-/// so both tabs show the same month and update after any save or delete.
+/// The Summary tab (visual refresh, UI-05): where the month's money went. Shares `LedgerModel`
+/// with the ledger, so both tabs show the same month and update after any save or delete.
+/// Every number comes from `MonthSummary` / `MonthComparison`; this view only lays them out.
 struct SummaryView: View {
     let model: LedgerModel
 
     @State private var showExport = false
-    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                header
-                totalCard
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                ScreenHeader("tab.summary") {
+                    Button { showExport = true } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .buttonStyle(TextButtonStyle())
+                    .accessibilityLabel(Text("export.button"))
+                    .accessibilityIdentifier("summary.export")
+                }
+                MonthSwitcher(model: model, idPrefix: "summary")
+                hero
                 categoryCard
+                statsCard
+                Text("summary.note")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button { showExport = true } label: {
+                    Label("summary.exportMonth", systemImage: "tablecells")
+                }
+                .buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                .accessibilityIdentifier("summary.exportMonth")
                 if model.loadFailed {
                     Text("ledger.loadFailed").font(.caption).foregroundStyle(Theme.destructive)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 24)
+            .screenInset()
+            .padding(.top, Spacing.xs)
+            .padding(.bottom, Spacing.l)
         }
         .background(Theme.groundLight.ignoresSafeArea())
         .sheet(isPresented: $showExport) {
             ExportSheet(month: model.month, repository: model.repository)
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.large])
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("summary")
     }
 
-    // MARK: Header
+    // MARK: Hero: total and month-over-month
 
-    private var header: some View {
-        VStack(spacing: 6) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(verbatim: LedgerFormat.eraSubtitle(model.month))
-                        .font(.overline).tracking(1)
-                        .foregroundStyle(Theme.secondaryText)
-                    Text("summary.title \(LedgerFormat.monthTitle(model.month))")
-                        .font(.title2.bold())
-                        .foregroundStyle(Theme.text)
-                        .accessibilityIdentifier("summary.month")
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isHeader)
-                Spacer()
-                Button { showExport = true } label: {
-                    Image(systemName: "square.and.arrow.up").frame(minWidth: 44, minHeight: 44)
-                }
-                .foregroundStyle(Theme.accent)
-                .accessibilityLabel(Text("export.button"))
-                .accessibilityIdentifier("summary.export")
-            }
-            HStack {
-                MonthButton(systemImage: "chevron.left", label: "ledger.month.previous", id: "summary.previous") {
-                    model.showPrevious()
-                }
-                Spacer()
-                MonthButton(systemImage: "chevron.right", label: "ledger.month.next", id: "summary.next") {
-                    model.showNext()
-                }
-                .disabled(!model.canShowNext)
-                .opacity(model.canShowNext ? 1 : 0.35)
-            }
-        }
-    }
-
-    // MARK: Total, comparison, tax
-
-    private var totalCard: some View {
-        let summary = model.summary
-        return VStack(alignment: .leading, spacing: 10) {
-            AdaptiveStack(verticalAlignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("ledger.total.label")
-                    Text("ledger.receipts \(summary.count)").accessibilityIdentifier("summary.count")
-                }
-                .font(.overline).tracking(1)
-                .foregroundStyle(Theme.secondaryText)
-                .layoutPriority(1)
-                Spacer(minLength: 8)
-                YenText(summary.totalYen)
-                    .font(.amountHero)
-                    .foregroundStyle(Theme.text)
-                    .minimumScaleFactor(0.6)
-                    .lineLimit(1)
-                    .accessibilityIdentifier("summary.total")
-            }
+    /// "RECORDED SPENDING", the month's total, and the change from last month.
+    private var hero: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            Text("summary.recorded").eyebrow()
+            HeroAmount(amount: model.summary.totalYen)
+                .accessibilityIdentifier("summary.total")
             if model.previousSummary.count > 0 { comparisonRow }
-            Divider().overlay(Theme.divider)
-            // One line when it fits; stacked at large text sizes instead of breaking words.
-            Group {
-                if isAccessibilityTextSize {
-                    taxColumn(summary)
-                } else {
-                    ViewThatFits(in: .horizontal) {
-                        HStack(spacing: 8) {
-                            taxItem(Text("summary.tax"), summary.taxYen)
-                            Spacer(minLength: 4)
-                            taxItem(Text(verbatim: "8%"), summary.tax8Yen)
-                            Spacer(minLength: 4)
-                            taxItem(Text(verbatim: "10%"), summary.tax10Yen)
-                        }
-                        taxColumn(summary)
-                    }
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(Theme.secondaryText)
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("summary.tax")
         }
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
     }
 
-    /// "October ¥178,180" and "↑ +¥8,240 (4.6%)".
+    /// "↑ +¥8,240 (4.6%)" and "October ¥178,180".
     private var comparisonRow: some View {
         let comparison = model.comparison
         let previousName = LedgerFormat.monthName(model.month.previous)
         let difference = LedgerFormat.spokenYen(abs(comparison.differenceYen))
-        return AdaptiveStack {
-            Text(verbatim: "\(previousName) \(LedgerFormat.yen(comparison.previousYen))")
-                .foregroundStyle(Theme.secondaryText)
-                .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
+        return AdaptiveStack(spacing: Spacing.xs) {
             HStack(spacing: 4) {
                 Image(systemName: comparison.direction == .down ? "arrow.down" : comparison.direction == .up ? "arrow.up" : "equal")
                     .font(.caption.weight(.bold))
                 Text(verbatim: changeText(comparison))
-                    .font(.amountSmall)
+                    .font(.amountSmall.weight(.semibold))
                     .fixedSize(horizontal: false, vertical: true)
             }
             .foregroundStyle(comparison.direction == .up ? Theme.warningText : comparison.direction == .down ? Theme.success : Theme.secondaryText)
+            Text(verbatim: "\(previousName) \(LedgerFormat.yen(comparison.previousYen))")
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .font(.footnoteText)
-        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: minimumTapTarget, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(comparisonLabel(comparison.direction, difference: difference, month: previousName))
@@ -163,14 +105,77 @@ struct SummaryView: View {
         }
     }
 
-    private func taxColumn(_ summary: MonthSummary) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            taxItem(Text("summary.tax"), summary.taxYen)
-            AdaptiveStack(spacing: 16) {
-                taxItem(Text(verbatim: "8%"), summary.tax8Yen)
-                taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+    // MARK: By category
+
+    private var categoryCard: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            AdaptiveStack(verticalAlignment: .firstTextBaseline, spacing: Spacing.xs) {
+                Text("summary.byCategory")
+                    .font(.sectionTitle)
+                    .foregroundStyle(Theme.text)
+                    .accessibilityAddTraits(.isHeader)
+                Spacer(minLength: 0)
+                if !model.summary.categories.isEmpty {
+                    Text("summary.byCategory.columns")
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .accessibilityHidden(true)
+                }
+            }
+            if model.summary.categories.isEmpty {
+                Text("summary.empty")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.l)
+                    .accessibilityIdentifier("summary.empty")
+            } else {
+                VStack(spacing: Spacing.m) {
+                    ForEach(model.summary.categories, id: \.category) { entry in
+                        CategoryRow(entry: entry)
+                    }
+                }
             }
         }
+        .card()
+    }
+
+    // MARK: Receipts and tax
+
+    /// "RECEIPTS 4" beside "TAX INCL. ¥259", with the 8% and 10% split under it.
+    private var statsCard: some View {
+        let summary = model.summary
+        return AdaptiveStack(verticalAlignment: .top, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("summary.receipts").eyebrow()
+                Text(verbatim: "\(summary.count)")
+                    .font(.title.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Theme.text)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            // One element: "4 receipts".
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("ledger.receipts \(summary.count)"))
+            .accessibilityAddTraits(.isStaticText)
+            .accessibilityIdentifier("summary.count")
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("summary.tax").eyebrow()
+                YenText(summary.taxYen)
+                    .font(.title.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(Theme.text)
+                AdaptiveStack(spacing: Spacing.s) {
+                    taxItem(Text(verbatim: "8%"), summary.tax8Yen)
+                    taxItem(Text(verbatim: "10%"), summary.tax10Yen)
+                }
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("summary.tax")
+        }
+        .card()
     }
 
     private func taxItem(_ label: Text, _ yen: Int) -> some View {
@@ -180,62 +185,37 @@ struct SummaryView: View {
         }
         .accessibilityElement(children: .combine)
     }
-
-    // MARK: By category
-
-    private var categoryCard: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("summary.byCategory")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(Theme.secondaryText)
-                .accessibilityAddTraits(.isHeader)
-            if model.summary.categories.isEmpty {
-                Text("summary.empty")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 24)
-                    .accessibilityIdentifier("summary.empty")
-            } else {
-                ForEach(model.summary.categories, id: \.category) { entry in
-                    CategoryRow(entry: entry)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 8)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
-    }
 }
 
-/// One category: names (ja and en) and share, its bar, and the amount.
+/// One category: its name and amount, its bar in the category's color, then the other
+/// language's name and the share ("食料品 · 38.8%").
 private struct CategoryRow: View {
     let entry: MonthSummary.CategoryTotal
-    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     var body: some View {
         let language = LedgerFormat.language
         let primary = entry.category.displayName(for: language)
         let secondary = entry.category.displayName(for: language == .ja ? .en : .ja)
         let share = entry.share.formatted(.percent.precision(.fractionLength(1)))
-        let amount = LedgerFormat.yen(entry.totalYen)
 
-        AdaptiveStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(verbatim: primary).font(.subheadline.weight(.medium)).foregroundStyle(Theme.text)
-                Text(verbatim: "\(secondary) · \(share)").font(.caption).foregroundStyle(Theme.secondaryText)
+        VStack(alignment: .leading, spacing: 6) {
+            AdaptiveStack(verticalAlignment: .firstTextBaseline, spacing: Spacing.xs) {
+                HStack(spacing: Spacing.xs) {
+                    Circle().fill(entry.category.color).frame(width: 10, height: 10)
+                    Text(verbatim: primary).font(.subheadline.weight(.medium)).foregroundStyle(Theme.text)
+                }
+                Spacer(minLength: Spacing.xs)
+                Text(verbatim: LedgerFormat.yen(entry.totalYen))
+                    .font(.amount)
+                    .foregroundStyle(Theme.text)
             }
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(minWidth: isAccessibilityTextSize ? nil : 112, alignment: .leading)
             CategoryBarChart(entry: entry)
-            Text(verbatim: amount)
-                .font(.amountSmall)
-                .foregroundStyle(Theme.text)
-                .frame(minWidth: isAccessibilityTextSize ? nil : 76, alignment: .trailing)
+            Text(verbatim: "\(secondary) · \(share)")
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
         }
-        .padding(.vertical, 8)
-        // VoiceOver reads "Groceries, 食料品: ¥72,380, 38.8%".
+        .fixedSize(horizontal: false, vertical: true)
+        // VoiceOver reads "Groceries, 食料品: 72,380 yen, 38.8%".
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: "\(primary), \(secondary)"))
         .accessibilityValue(Text(verbatim: "\(LedgerFormat.spokenYen(entry.totalYen)), \(share)"))
@@ -259,7 +239,7 @@ private struct CategoryBarChart: View {
                 xStart: .value(Self.startLabel, 0),
                 xEnd: .value(Self.lengthLabel, max(entry.barFraction, 0.02)),
                 y: .value(Self.categoryLabel, entry.category.rawValue),
-                height: .fixed(10)
+                height: .fixed(8)
             )
             .foregroundStyle(entry.category.color)
             .clipShape(Capsule())
@@ -271,7 +251,7 @@ private struct CategoryBarChart: View {
         .chartPlotStyle { plot in
             plot.background(Theme.field, in: Capsule())
         }
-        .frame(height: 10)
+        .frame(height: 8)
         .accessibilityHidden(true)
     }
 }

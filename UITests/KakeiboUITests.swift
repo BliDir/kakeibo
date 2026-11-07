@@ -228,7 +228,9 @@ final class KakeiboUITests: XCTestCase {
 
         let photos = app.descendants(matching: .any)["settings.photos"]
         XCTAssertTrue(photos.waitForExistence(timeout: 3))
-        XCTAssertTrue(photos.label.hasPrefix("0 photos, "), photos.label)
+        XCTAssertEqual(photos.label, "Receipt photos")
+        let usage = photos.value as? String ?? ""
+        XCTAssertTrue(usage.hasPrefix("0 photos, "), usage)
 
         let version = app.staticTexts["settings.version"].label
         XCTAssertNotNil(version.range(of: #"^\d+(\.\d+)* \(\d+\)$"#, options: .regularExpression), version)
@@ -274,7 +276,8 @@ final class KakeiboUITests: XCTestCase {
         app.tabBars.buttons["Settings"].tap()
         let photos = app.descendants(matching: .any)["settings.photos"]
         XCTAssertTrue(photos.waitForExistence(timeout: 5))
-        XCTAssertTrue(photos.label.hasPrefix("1 photo, "), photos.label)
+        let usage = photos.value as? String ?? ""
+        XCTAssertTrue(usage.hasPrefix("1 photo, "), usage)
     }
 
     // MARK: Duplicates
@@ -514,25 +517,70 @@ final class KakeiboUITests: XCTestCase {
 
     // MARK: Export
 
+    /// Export: the shown month is chosen first, with its count and total; the full year is the
+    /// other choice. Share hands the chosen file to the iOS share sheet.
     @MainActor
     func testExportOffersMonthAndYearFiles() {
         let app = launch(seed: true)
         app.buttons["ledger.export"].tap()
-        XCTAssertTrue(app.buttons["export.month"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["export.year"].exists)
+        let month = app.buttons["export.choice.month"]
+        XCTAssertTrue(month.waitForExistence(timeout: 5))
+        XCTAssertTrue(month.isSelected)
+        XCTAssertEqual(month.value as? String, "4 receipts, 5,198 yen")
+        let format = app.descendants(matching: .any)["export.format"].firstMatch
         // The seed data is dated relative to today, so match the file name's shape, not a date.
-        let monthFile = NSPredicate(format: "label MATCHES 'kakeibo-[0-9]{4}-[0-9]{2}\\.csv · 4 receipts'")
-        XCTAssertEqual(app.staticTexts.matching(monthFile).count, 1)
+        XCTAssertNotNil(format.label.range(of: #"kakeibo-\d{4}-\d{2}\.csv"#, options: .regularExpression), format.label)
+        XCTAssertTrue(app.buttons["export.share"].isEnabled)
+
+        let year = app.buttons["export.choice.year"]
+        year.tap()
+        XCTAssertTrue(year.isSelected)
+        XCTAssertFalse(month.isSelected)
+        XCTAssertNotNil(format.label.range(of: #"kakeibo-\d{4}\.csv"#, options: .regularExpression), format.label)
+        XCTAssertTrue(app.buttons["export.share"].isEnabled)
+
         app.buttons["export.close"].tap()
         XCTAssertTrue(app.buttons["ledger.export"].waitForExistence(timeout: 3))
     }
 
+    /// An empty month says so, and there is nothing to share.
     @MainActor
     func testExportOfAnEmptyMonthHasNothingToShare() {
         let app = launch()
         app.buttons["ledger.export"].tap()
-        XCTAssertTrue(app.staticTexts["Nothing to export"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["export.month"].exists)
+        let month = app.buttons["export.choice.month"]
+        XCTAssertTrue(month.waitForExistence(timeout: 5))
+        XCTAssertEqual(month.value as? String, "Nothing to export")
+        XCTAssertFalse(app.buttons["export.share"].isEnabled)
+    }
+
+    /// A file that cannot be written: the error and Try again, and nothing to share.
+    @MainActor
+    func testExportErrorOffersRetry() {
+        let app = launch(extra: ["KAKEIBO_FAIL_EXPORT": "1"])
+        app.buttons["ledger.export"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["export.failed"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["export.retry"].exists)
+        XCTAssertFalse(app.buttons["export.share"].isEnabled)
+        XCTAssertFalse(app.buttons["export.choice.month"].exists)
+        app.buttons["export.retry"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["export.failed"].firstMatch.waitForExistence(timeout: 3), "still failing")
+    }
+
+    /// Summary's "Export this month" opens the same export, on the month Summary shows.
+    @MainActor
+    func testSummaryExportsTheShownMonth() {
+        let app = launch(seed: true)
+        app.tabBars.buttons["Summary"].tap()
+        XCTAssertTrue(app.buttons["summary.previous"].waitForExistence(timeout: 5))
+        app.buttons["summary.previous"].tap()
+        let button = app.buttons["summary.exportMonth"]
+        var swipes = 0
+        while !button.isHittable, swipes < 6 { app.swipeUp(); swipes += 1 }
+        button.tap()
+        let month = app.buttons["export.choice.month"]
+        XCTAssertTrue(month.waitForExistence(timeout: 5))
+        XCTAssertEqual(month.value as? String, "1 receipt, 3,278 yen", "last month's one sample expense")
     }
 
     // MARK: Debug fixture capture

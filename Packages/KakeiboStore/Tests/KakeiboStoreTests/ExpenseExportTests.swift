@@ -66,6 +66,46 @@ import Testing
         #expect(lines == ["date,store,category,payment,total_yen,tax10_yen,tax8_yen,invoice_no,items,note"])
     }
 
+    @Test func preparedMonthHasCountTotalAndTheSameFile() throws {
+        try add("2026-11-03", "ローソン", 378)
+        try add("2026-11-01", "西友", 1_200)
+        try add("2026-10-31", "ダイソー", 660)
+        let month = LedgerMonth(year: 2026, month: 11)
+
+        let prepared = try export.prepare(month: month)
+        #expect(prepared.count == 2)
+        #expect(prepared.totalYen == 1_578)
+        #expect(!prepared.isEmpty)
+        #expect(prepared.url.lastPathComponent == "kakeibo-2026-11.csv")
+        // Exactly the bytes `file(for:)` writes: the CSV is unchanged.
+        let fromPrepare = try Data(contentsOf: prepared.url)
+        #expect(fromPrepare == (try Data(contentsOf: try export.file(for: month))))
+    }
+
+    @Test func preparedYearCountsTheWholeYear() throws {
+        try add("2026-01-05", "A", 100)
+        try add("2026-12-30", "B", 200)
+        try add("2025-12-31", "C", 300)
+        let prepared = try export.prepare(year: 2026)
+        #expect(prepared.count == 2)
+        #expect(prepared.totalYen == 300)
+        #expect(prepared.url.lastPathComponent == "kakeibo-2026.csv")
+    }
+
+    @Test func preparedEmptyMonthIsEmpty() throws {
+        let prepared = try export.prepare(month: LedgerMonth(year: 2026, month: 9))
+        #expect(prepared.isEmpty)
+        #expect(prepared.totalYen == 0)
+    }
+
+    @Test func prepareFailsWhenTheFolderCannotBeMade() throws {
+        // A folder inside a file cannot be created.
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("ExportBlocker-\(UUID().uuidString)")
+        try Data().write(to: file)
+        let blocked = ExpenseExport(repository: repo, directory: file.appendingPathComponent("Export"))
+        #expect(throws: (any Error).self) { try blocked.prepare(month: LedgerMonth(year: 2026, month: 11)) }
+    }
+
     @Test func exportingAgainReplacesTheFile() throws {
         let month = LedgerMonth(year: 2026, month: 11)
         _ = try export.file(for: month)

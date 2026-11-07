@@ -134,7 +134,27 @@ struct SettingsView: View {
                     .foregroundStyle(permissionColor)
                     .accessibilityIdentifier("settings.alerts.permission")
             }
+
+            Divider().overlay(Theme.divider)
+
+            thresholds
         }
+    }
+
+    /// When the two alerts come, in words, and that progress shows on the ledger either way.
+    private var thresholds: some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            ThresholdRow(percent: "80%", message: "settings.alerts.80", tint: Theme.warningText)
+            ThresholdRow(percent: "100%", message: "settings.alerts.100", tint: Theme.destructive)
+            Label("settings.alerts.progressNote", systemImage: "chart.bar")
+                .font(.caption)
+                .foregroundStyle(Theme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.vertical, Spacing.s)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("settings.alerts.thresholds")
     }
 
     /// Shown when the user wants alerts but iOS has notifications off for Kakeibo.
@@ -271,11 +291,9 @@ private struct SettingsSection<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            // The eyebrow look without its uppercase, which would turn "iPhone" into "IPHONE".
+            // Not uppercased: that would turn "iPhone" into "IPHONE".
             Text(title)
-                .font(.overline)
-                .tracking(0.6)
-                .foregroundStyle(Theme.secondaryText)
+                .eyebrow(uppercase: false)
                 .padding(.horizontal, 4)
                 .accessibilityAddTraits(.isHeader)
             VStack(spacing: 0) { content }
@@ -290,6 +308,27 @@ private struct SettingsSection<Content: View>: View {
                     .padding(.horizontal, 4)
             }
         }
+    }
+}
+
+/// "At 80%: A little room left. Time to check in." Read as one sentence.
+private struct ThresholdRow: View {
+    let percent: String
+    let message: LocalizedStringKey
+    let tint: Color
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
+            Text(verbatim: percent)
+                .font(.subheadline.weight(.bold).monospacedDigit())
+                .foregroundStyle(tint)
+                .frame(minWidth: 44, alignment: .leading)
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(Theme.text)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

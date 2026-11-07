@@ -183,6 +183,17 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    /// Editing a set budget: Remove in the save bar, then its confirmation.
+    @MainActor func testBudgetRemoveConfirmation() throws {
+        try auditInBothModes("budget remove confirmation") { app in
+            self.setBudget(app, "200000")
+            app.buttons["budget.edit"].tap()
+            XCTAssertTrue(app.buttons["budget.remove"].waitForExistence(timeout: 3))
+            app.buttons["budget.remove"].tap()
+            XCTAssertTrue(app.buttons["confirm.action"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testBudgetSheet() throws {
         try auditInBothModes("budget sheet") { app in
             app.buttons["budget.cta.button"].tap()

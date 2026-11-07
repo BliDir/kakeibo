@@ -86,6 +86,23 @@
         }
       }
     },
+    "budget.alertSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget alert settings"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算アラートの設定"
+          }
+        }
+      }
+    },
     "budget.amount.help %@": {
       "extractionState": "manual",
       "localizations": {
@@ -109,13 +126,47 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "MONTHLY LIMIT · 月の上限"
+            "value": "Monthly limit · yen"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "月の上限 · MONTHLY LIMIT"
+            "value": "月の上限 · 円"
+          }
+        }
+      }
+    },
+    "budget.basis": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on the expenses you record, not bank activity."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "銀行の取引ではなく、記録した支出をもとにしています。"
+          }
+        }
+      }
+    },
+    "budget.card.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の予算"
           }
         }
       }
@@ -205,36 +256,19 @@
         }
       }
     },
-    "budget.label": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "BUDGET 予算"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "予算 · BUDGET"
-          }
-        }
-      }
-    },
     "budget.left": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Left"
+            "value": "Left this month"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "残り"
+            "value": "今月の残り"
           }
         }
       }
@@ -262,13 +296,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Over"
+            "value": "Over budget by"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "超過"
+            "value": "予算超過"
           }
         }
       }
@@ -398,13 +432,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Remove budget"
+            "value": "Remove this month's budget"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "予算を削除"
+            "value": "今月の予算を削除"
           }
         }
       }
@@ -422,6 +456,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "削除"
+          }
+        }
+      }
+    },
+    "budget.remove.keep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除しない"
           }
         }
       }
@@ -545,6 +596,23 @@
         }
       }
     },
+    "budget.sheet.headline": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give your spending a little direction."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出に、ちょうどいい目安を。"
+          }
+        }
+      }
+    },
     "budget.sheet.title %@": {
       "extractionState": "manual",
       "localizations": {
@@ -558,6 +626,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@の予算"
+          }
+        }
+      }
+    },
+    "budget.spentOf %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ spent of"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使った金額 %@ / 予算"
           }
         }
       }
@@ -3369,6 +3454,40 @@
         }
       }
     },
+    "settings.alerts.100": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your recorded spending reached the budget."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録した支出が予算に達しました。"
+          }
+        }
+      }
+    },
+    "settings.alerts.80": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little room left. Time to check in."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ少し余裕があります。見直しのタイミングです。"
+          }
+        }
+      }
+    },
     "settings.alerts.denied.body": {
       "extractionState": "manual",
       "localizations": {
@@ -3426,13 +3545,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only spending you record in Kakeibo is counted. Lock-screen alerts never show amounts or store names, and iOS decides when they appear. Warnings inside the app always show, even with alerts off."
+            "value": "Each alert comes once a month. Only spending you record in Kakeibo counts. Lock-screen alerts never show amounts or store names, and iOS decides when they appear."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "Kakeiboに記録した支出だけが対象です。ロック画面の通知には金額や店名は表示されません。通知がいつ表示されるかはiOSが決めます。アプリ内の警告は、通知がオフでも常に表示されます。"
+            "value": "アラートは月に1回ずつです。Kakeiboに記録した支出だけが対象です。ロック画面の通知に金額や店名は表示されません。通知がいつ表示されるかはiOSが決めます。"
           }
         }
       }
@@ -3518,6 +3637,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "未確認"
+          }
+        }
+      }
+    },
+    "settings.alerts.progressNote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Budget progress stays on the ledger, even with alerts off."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アラートがオフでも、予算の進み具合は家計簿に表示されます。"
           }
         }
       }

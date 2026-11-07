@@ -10,12 +10,14 @@ struct ContentView: View {
     @State private var session: ScanSession
     @State private var ledger: LedgerModel
     @State private var editor: EditorItem?
+    /// Saved expenses opened from the ledger (expense details).
+    @State private var ledgerPath: [Expense] = []
     @State private var banner: Banner?
     @State private var tab: AppTab = .ledger
     @Environment(\.scenePhase) private var scenePhase
     @State private var settingsModel: SettingsModel
-    /// A saved expense to open once the current full-screen cover has gone
-    /// (from the duplicate warning). Two covers cannot be presented at the same time.
+    /// A saved expense to show once the current full-screen cover has gone
+    /// (the duplicate warning's "View saved entry"). Two covers cannot be presented at the same time.
     @State private var openAfterDismiss: Expense?
     /// The read error's "Enter manually": open an empty manual form once the scan cover has gone.
     @State private var manualAfterDismiss = false
@@ -81,7 +83,6 @@ struct ContentView: View {
                 editor = nil
                 switch outcome {
                 case .saved(let total): show(.saved(total))
-                case .deleted: show(.deleted)
                 case .discarded: break
                 case .viewSaved(let expense): openAfterDismiss = expense
                 }
@@ -118,16 +119,32 @@ struct ContentView: View {
         #endif
     }
 
-    /// The ledger, with Scan / Photo / Manual at the top of its content.
+    /// The ledger, with Scan / Photo / Manual at the top of its content. A row opens the
+    /// expense's details; Edit there opens the form over it.
     private var ledgerTab: some View {
-        LedgerView(
-            model: ledger,
-            session: session,
-            photoStore: services.photoStore,
-            onSelect: { expense in editor = EditorItem(form: ReviewForm(editing: expense)) },
-            onManual: openManualEntry,
-            onShowTokens: showTokensAction
-        )
+        NavigationStack(path: $ledgerPath) {
+            LedgerView(
+                model: ledger,
+                session: session,
+                photoStore: services.photoStore,
+                onSelect: { expense in ledgerPath = [expense] },
+                onManual: openManualEntry,
+                onShowTokens: showTokensAction
+            )
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Expense.self) { expense in
+                ExpenseDetailView(
+                    expense: expense,
+                    services: services,
+                    onEdit: { editor = EditorItem(form: ReviewForm(editing: $0)) },
+                    onDeleted: {
+                        ledgerPath.removeAll()
+                        show(.deleted)
+                    }
+                )
+            }
+        }
+        .tint(Theme.accent)
     }
 
     private var showTokensAction: (() -> Void)? {
@@ -142,6 +159,7 @@ struct ContentView: View {
     /// The scan or edit screen, if open, stays open: closing it could lose the user's work.
     private func openCurrentBudget() {
         tab = .ledger
+        ledgerPath.removeAll()
         ledger.show(ledger.currentMonth)
     }
 
@@ -157,7 +175,8 @@ struct ContentView: View {
         }
         guard let expense = openAfterDismiss else { return }
         openAfterDismiss = nil
-        editor = EditorItem(form: ReviewForm(editing: expense))
+        tab = .ledger
+        ledgerPath = [expense]
     }
 
     private func show(_ banner: Banner) {

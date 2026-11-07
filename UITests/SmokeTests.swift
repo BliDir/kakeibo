@@ -1,7 +1,7 @@
 import XCTest
 
 /// The core flow, end to end: add an expense by hand, save it, find it in the ledger with the
-/// right amount, open it, delete it, and see the ledger empty again.
+/// right amount, open its details and its edit form, delete it, and see the ledger empty again.
 ///
 /// Runs in both test plan configurations, English and Japanese. The language comes from the
 /// configuration (not launch arguments), so this test never forces one. Controls are found by
@@ -59,14 +59,21 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["ledger.total"].label.contains("1,234"), app.staticTexts["ledger.total"].label)
         XCTAssertFalse(element(app, "ledger.empty").exists)
 
-        // Open it: the saved values come back.
+        // Open it: the details show the saved values, and so does the edit form.
         row.tap()
+        let detailAmount = element(app, "detail.amount")
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 5))
+        XCTAssertTrue(detailAmount.label.contains("1,234"), detailAmount.label)
+        XCTAssertTrue(element(app, "detail.store").label.contains("Smoke Test Cafe"))
+        app.buttons["detail.edit"].tap()
         XCTAssertTrue(amount.waitForExistence(timeout: 5))
         XCTAssertEqual(amount.value as? String, "1234")
         XCTAssertEqual(store.value as? String, "Smoke Test Cafe")
+        app.buttons["review.cancel"].tap()   // nothing changed, so no question
 
-        // Delete it, with the in-app confirmation.
-        let delete = app.buttons["review.delete"]
+        // Delete it from the details, with the in-app confirmation.
+        let delete = app.buttons["detail.delete"]
+        XCTAssertTrue(delete.waitForExistence(timeout: 5))
         var swipes = 0
         while !delete.isHittable, swipes < 8 {
             app.swipeUp()

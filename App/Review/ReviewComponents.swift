@@ -1,19 +1,20 @@
 import KakeiboCore
 import SwiftUI
 
-/// A white rounded section; amber border when it holds a field to check.
+/// A rounded section on the soft grey surface; amber border when it holds a field to check.
 struct Card<Content: View>: View {
     var highlight = false
     @ViewBuilder var content: Content
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
         VStack(alignment: .leading, spacing: 0) { content }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
+            .background(highlight ? Theme.warningFill : Theme.surface, in: shape)
             .overlay {
-                if highlight { RoundedRectangle(cornerRadius: 14).stroke(Theme.warning, lineWidth: 2) }
+                if highlight { shape.stroke(Theme.warning, lineWidth: 2) }
             }
     }
 }
@@ -82,9 +83,7 @@ struct CategoryChip: View {
                     .foregroundStyle(category.color)
                     .accessibilityHidden(true)
                 // UI language first: "食料品 Groceries" / "Groceries 食料品".
-                Text(verbatim: LedgerFormat.language == .ja
-                     ? "\(category.japaneseName) \(category.englishName)"
-                     : "\(category.englishName) \(category.japaneseName)")
+                Text(verbatim: category.pairedLabel)
             }
             .font(.footnote.weight(selected ? .bold : .regular))
             .padding(.horizontal, 12)
@@ -233,46 +232,237 @@ struct ItemRow: View {
     }
 }
 
-/// An in-app confirmation (not a system alert): dimmed backdrop and a card with two buttons.
-struct ConfirmPanel: View {
+/// A screen's top bar: a leading action, the title centered, trailing actions. At the
+/// accessibility text sizes the title moves under the buttons instead of drawing over them.
+struct TitleBar<Leading: View, Trailing: View>: View {
+    let title: LocalizedStringKey
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
+
+    var body: some View {
+        Group {
+            if isAccessibilityTextSize {
+                VStack(alignment: .leading, spacing: 4) {
+                    buttons
+                    titleText.frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                CenteredTitleLayout(spacing: Spacing.xs) {
+                    HStack(spacing: Spacing.xs) { leading }.fixedSize()
+                    titleText
+                    HStack(spacing: Spacing.xs) { trailing }.fixedSize()
+                }
+            }
+        }
+        .screenInset()
+        .padding(.top, Spacing.xs)
+        .padding(.bottom, 4)
+    }
+
+    private var titleText: some View {
+        Text(title).font(.screenTitle).foregroundStyle(Theme.text)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var buttons: some View {
+        HStack(spacing: Spacing.xs) {
+            leading
+            Spacer()
+            trailing
+        }
+    }
+}
+
+/// Leading side, title, trailing side: both sides get the width of the wider one, so the title
+/// stays centered and never runs into a tag or a debug button. When that would leave the title
+/// less than `minimumTitleWidth`, the title goes on its own line under the two sides.
+struct CenteredTitleLayout: Layout {
+    var spacing: CGFloat = 8
+    var minimumTitleWidth: CGFloat = 120
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 390
+        let plan = plan(width, subviews)
+        return CGSize(width: width, height: plan.height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let plan = plan(bounds.width, subviews)
+        let rowMid = bounds.minY + plan.rowHeight / 2
+        subviews[0].place(at: CGPoint(x: bounds.minX, y: rowMid), anchor: .leading, proposal: .unspecified)
+        subviews[2].place(at: CGPoint(x: bounds.maxX, y: rowMid), anchor: .trailing, proposal: .unspecified)
+        let titleProposal = ProposedViewSize(width: plan.titleWidth, height: nil)
+        if plan.stacked {
+            subviews[1].place(at: CGPoint(x: bounds.midX, y: bounds.minY + plan.rowHeight + 4),
+                              anchor: .top, proposal: titleProposal)
+        } else {
+            subviews[1].place(at: CGPoint(x: bounds.midX, y: rowMid), anchor: .center, proposal: titleProposal)
+        }
+    }
+
+    private struct Plan { var stacked: Bool; var titleWidth: CGFloat; var rowHeight: CGFloat; var height: CGFloat }
+
+    private func plan(_ width: CGFloat, _ subviews: Subviews) -> Plan {
+        let leading = subviews[0].sizeThatFits(.unspecified)
+        let trailing = subviews[2].sizeThatFits(.unspecified)
+        let side = max(leading.width, trailing.width)
+        let sideHeight = max(leading.height, trailing.height)
+        let centered = width - 2 * (side + spacing)
+        if centered >= minimumTitleWidth {
+            let titleHeight = subviews[1].sizeThatFits(ProposedViewSize(width: centered, height: nil)).height
+            let row = max(sideHeight, titleHeight)
+            return Plan(stacked: false, titleWidth: centered, rowHeight: row, height: row)
+        }
+        let titleHeight = subviews[1].sizeThatFits(ProposedViewSize(width: width, height: nil)).height
+        return Plan(stacked: true, titleWidth: width, rowHeight: sideHeight, height: sideHeight + 4 + titleHeight)
+    }
+}
+
+/// An in-app confirmation (never a system alert), on the shared `ActionPanel`.
+///
+/// - Delete-style (default): the vermilion confirm first, then a soft "keep" button.
+/// - `keepFirst` (discard): "Keep editing" is the green main action and the destructive
+///   choice is the vermilion text button under it, so the safe choice is the obvious one.
+struct ConfirmPanel<Content: View>: View {
+    var systemImage = "trash"
     let title: LocalizedStringKey
     let message: LocalizedStringKey
     let confirmTitle: LocalizedStringKey
+    var keepTitle: LocalizedStringKey = "confirm.keepEditing"
+    var keepFirst = false
     let onConfirm: () -> Void
     let onCancel: () -> Void
+    @ViewBuilder var content: Content
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Theme.scrim
-                .ignoresSafeArea()
-                .onTapGesture(perform: onCancel)
-                .accessibilityHidden(true)
-            ScrollIfNeeded {
-            VStack(spacing: 14) {
-                Text(title).font(.headline).foregroundStyle(Theme.text).multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(message).font(.subheadline).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button(action: onConfirm) {
-                    Text(confirmTitle).font(.headline).frame(maxWidth: .infinity, minHeight: 50)
-                }
-                .background(Theme.destructive, in: RoundedRectangle(cornerRadius: 14))
-                .foregroundStyle(Theme.onDestructive)
-                .accessibilityIdentifier("confirm.action")
-                Button(action: onCancel) {
-                    Text("confirm.keepEditing").font(.headline).frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .foregroundStyle(Theme.accent)
-                .accessibilityIdentifier("confirm.cancel")
+        ActionPanel(systemImage: systemImage, tone: keepFirst ? .warning : .destructive,
+                    title: title, message: message, onDismiss: onCancel) {
+            content
+        } actions: {
+            if keepFirst {
+                keepButton.buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                confirmButton.buttonStyle(DestructiveButtonStyle())
+            } else {
+                confirmButton.buttonStyle(DestructiveButtonStyle(filled: true))
+                keepButton.buttonStyle(SecondaryButtonStyle(fullWidth: true))
             }
-            .padding(20)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))
-            .padding(16)
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("confirm")
         }
-        .transition(.opacity)
+        .accessibilityIdentifier("confirm")
+    }
+
+    private var confirmButton: some View {
+        Button(action: onConfirm) { Text(confirmTitle) }
+            .accessibilityIdentifier("confirm.action")
+    }
+
+    private var keepButton: some View {
+        Button(action: onCancel) { Text(keepTitle) }
+            .accessibilityIdentifier("confirm.cancel")
+    }
+}
+
+extension ConfirmPanel where Content == EmptyView {
+    init(systemImage: String = "trash", title: LocalizedStringKey, message: LocalizedStringKey,
+         confirmTitle: LocalizedStringKey, keepTitle: LocalizedStringKey = "confirm.keepEditing",
+         keepFirst: Bool = false, onConfirm: @escaping () -> Void, onCancel: @escaping () -> Void) {
+        self.init(systemImage: systemImage, title: title, message: message, confirmTitle: confirmTitle,
+                  keepTitle: keepTitle, keepFirst: keepFirst, onConfirm: onConfirm, onCancel: onCancel,
+                  content: { EmptyView() })
+    }
+}
+
+/// "Not saved yet": a save (or delete) failed. Nothing was lost: the form is still there behind
+/// the panel, so the user can try again at once or go back and change something.
+struct FailurePanel: View {
+    enum Kind { case save, delete }
+
+    let kind: Kind
+    let summary: EntrySummary
+    let onRetry: () -> Void
+    let onBack: () -> Void
+
+    var body: some View {
+        ActionPanel(
+            systemImage: "exclamationmark.icloud",
+            tone: .destructive,
+            title: kind == .save ? "failure.save.title" : "failure.delete.title",
+            message: kind == .save ? "failure.save.message" : "failure.delete.message",
+            onDismiss: onBack
+        ) {
+            summary
+        } actions: {
+            Button(action: onRetry) {
+                Text(kind == .save ? "failure.save.retry" : "failure.delete.retry")
+            }
+            .buttonStyle(PrimaryButtonStyle(fullWidth: true))
+            .accessibilityIdentifier("failure.retry")
+            Button(action: onBack) {
+                Text(kind == .save ? "failure.save.back" : "failure.delete.back")
+            }
+            .buttonStyle(SecondaryButtonStyle(fullWidth: true))
+            .accessibilityIdentifier("failure.back")
+        }
+        .accessibilityIdentifier("failure")
+    }
+}
+
+/// "Receipt captured · サンプルマート · Nov 5, 14:32 ›": the receipt photo as a row that opens it
+/// full screen to compare with the form.
+struct ReceiptLink: View {
+    let image: UIImage?
+    let title: LocalizedStringKey
+    let subtitle: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: Spacing.s) {
+                Group {
+                    if let image {
+                        Image(uiImage: image).resizable().scaledToFill()
+                    } else {
+                        Image(systemName: "doc.text.image")
+                            .font(.title3)
+                            .foregroundStyle(Theme.accent)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Theme.accentTint)
+                    }
+                }
+                .frame(width: 44, height: 58)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Theme.border))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(Theme.text)
+                    if !subtitle.isEmpty {
+                        Text(verbatim: subtitle).font(.caption).foregroundStyle(Theme.secondaryText)
+                    }
+                }
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Theme.secondaryText)
+                    .accessibilityHidden(true)
+            }
+            .padding(Spacing.s)
+            .background(Theme.surface, in: RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text("review.photo.view"))
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+extension ExpenseCategory {
+    /// "食料品 Groceries" / "Groceries 食料品": the UI language first.
+    var pairedLabel: String {
+        LedgerFormat.language == .ja ? "\(japaneseName) \(englishName)" : "\(englishName) \(japaneseName)"
     }
 }
 

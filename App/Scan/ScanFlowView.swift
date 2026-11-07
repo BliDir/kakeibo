@@ -66,7 +66,7 @@ private struct ScanReviewHost: View {
             case .saved(let total):
                 session.reset()
                 onSaved(total)
-            case .deleted, .discarded:
+            case .discarded:
                 session.cancel()
             case .viewSaved(let expense):
                 onViewSaved(expense)

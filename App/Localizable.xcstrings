@@ -852,13 +852,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete"
+            "value": "Delete expense"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "削除"
+            "value": "支出を削除"
+          }
+        }
+      }
+    },
+    "confirm.delete.keep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep expense"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除しない"
           }
         }
       }
@@ -869,13 +886,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "The receipt photo is deleted too. This can't be undone."
+            "value": "The entry and its receipt photo will be removed. This can't be undone."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "レシート写真も削除されます。元に戻せません。"
+            "value": "記録とレシート写真が削除されます。元に戻せません。"
+          }
+        }
+      }
+    },
+    "confirm.delete.message.noPhoto": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The entry will be removed. This can't be undone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録が削除されます。元に戻せません。"
           }
         }
       }
@@ -886,7 +920,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Delete this expense?"
+            "value": "Remove this expense?"
           }
         },
         "ja": {
@@ -903,13 +937,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Discard"
+            "value": "Discard changes"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "破棄"
+            "value": "変更を破棄"
+          }
+        }
+      }
+    },
+    "confirm.discard.action.scan": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard scan"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み取りを破棄"
           }
         }
       }
@@ -920,13 +971,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nothing will be saved."
+            "value": "Your changes will be lost."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "何も保存されません。"
+            "value": "入力した内容は失われます。"
+          }
+        }
+      }
+    },
+    "confirm.discard.message.scan": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This receipt won't be saved."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このレシートは保存されません。"
           }
         }
       }
@@ -937,13 +1005,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Discard your changes?"
+            "value": "Leave without saving?"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "変更を破棄しますか？"
+            "value": "保存せずに戻りますか？"
           }
         }
       }
@@ -982,19 +1050,155 @@
         }
       }
     },
+    "detail.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ledger"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "家計簿"
+          }
+        }
+      }
+    },
+    "detail.dateTime": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date & time"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日時"
+          }
+        }
+      }
+    },
+    "detail.edit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編集"
+          }
+        }
+      }
+    },
+    "detail.photo.caption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved on this iPhone"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このiPhoneに保存"
+          }
+        }
+      }
+    },
+    "detail.source": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entry"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入力方法"
+          }
+        }
+      }
+    },
+    "detail.source.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entered by hand"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力"
+          }
+        }
+      }
+    },
+    "detail.source.scan": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receipt scan"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "レシート読み取り"
+          }
+        }
+      }
+    },
+    "detail.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expense details"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出の詳細"
+          }
+        }
+      }
+    },
     "duplicate.cancel": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cancel"
+            "value": "Keep reviewing"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "キャンセル"
+            "value": "確認を続ける"
           }
         }
       }
@@ -1005,13 +1209,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "An entry with the same store, date, time and amount is already in the ledger."
+            "value": "An entry with the same store, date, time and amount is already in your ledger. You can still save it if it's a different purchase."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "同じお店・日付・時刻・金額の記録がすでにあります。"
+            "value": "同じお店・日付・時刻・金額の記録がすでにあります。別の買い物なら、このまま保存できます。"
           }
         }
       }
@@ -1022,13 +1226,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "A receipt with the same number from this store and day is already in the ledger."
+            "value": "A receipt with the same number from this store and day is already in your ledger. You can still save it if it's a different purchase."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "同じお店・同じ日・同じレシート番号の記録がすでにあります。"
+            "value": "同じお店・同じ日・同じレシート番号の記録がすでにあります。別の買い物なら、このまま保存できます。"
           }
         }
       }
@@ -1216,6 +1420,142 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@年の1年分"
+          }
+        }
+      }
+    },
+    "failure.delete.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep expense"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除しない"
+          }
+        }
+      }
+    },
+    "failure.delete.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong. The expense is still in your ledger; try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "問題が起きました。支出は家計簿に残っています。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "failure.delete.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try deleting again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度削除"
+          }
+        }
+      }
+    },
+    "failure.delete.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not deleted"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "削除できませんでした"
+          }
+        }
+      }
+    },
+    "failure.save.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back to the form"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "入力画面に戻る"
+          }
+        }
+      }
+    },
+    "failure.save.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Something went wrong while saving. Everything you entered is still here; try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存中に問題が起きました。入力した内容はそのまま残っています。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "failure.save.retry": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try saving again"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "もう一度保存"
+          }
+        }
+      }
+    },
+    "failure.save.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not saved yet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ保存されていません"
           }
         }
       }
@@ -1675,13 +2015,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Fields to check: %lld"
+            "value": "%lld to check"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "要確認：%lld項目"
+            "value": "要確認 %lld"
           }
         }
       }
@@ -1873,6 +2213,57 @@
         }
       }
     },
+    "review.more.all": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tax, items & receipt text"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "税額・品目・読み取った文字"
+          }
+        }
+      }
+    },
+    "review.more.tax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tax"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "税額"
+          }
+        }
+      }
+    },
+    "review.more.taxInvoice": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tax & invoice number"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "税額・登録番号"
+          }
+        }
+      }
+    },
     "review.note": {
       "extractionState": "manual",
       "localizations": {
@@ -2009,6 +2400,40 @@
         }
       }
     },
+    "review.receipt.captured": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receipt captured"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "読み取ったレシート"
+          }
+        }
+      }
+    },
+    "review.receipt.original": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original receipt"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "元のレシート"
+          }
+        }
+      }
+    },
     "review.refining": {
       "extractionState": "manual",
       "localizations": {
@@ -2032,13 +2457,30 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Save %@"
+            "value": "Save · %@"
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "保存（%@）"
+            "value": "保存 · %@"
+          }
+        }
+      }
+    },
+    "review.save.changes": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save changes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "変更を保存"
           }
         }
       }
@@ -2056,23 +2498,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "保存"
-          }
-        }
-      }
-    },
-    "review.saveFailed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Couldn't save. Please try again."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "保存できませんでした。もう一度お試しください。"
           }
         }
       }
@@ -2111,6 +2536,40 @@
         }
       }
     },
+    "review.store.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Store or description"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "店名・内容"
+          }
+        }
+      }
+    },
+    "review.store.manual.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "e.g. Lunch at the café"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "例：カフェでランチ"
+          }
+        }
+      }
+    },
     "review.store.placeholder": {
       "extractionState": "manual",
       "localizations": {
@@ -2124,6 +2583,40 @@
           "stringUnit": {
             "state": "translated",
             "value": "店名"
+          }
+        }
+      }
+    },
+    "review.tag.manual": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manual"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手入力"
+          }
+        }
+      }
+    },
+    "review.tag.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済み"
           }
         }
       }

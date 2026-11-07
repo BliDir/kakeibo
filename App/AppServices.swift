@@ -71,6 +71,7 @@ final class AppServices {
                 notificationCenter: uiTestNotificationCenter(environment)
             )
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
+            services.failSavesIfRequested(environment)
             return services
         }
         #endif
@@ -104,6 +105,17 @@ final class AppServices {
         case "denied": InMemoryNotificationCenter(status: .denied)
         case "notDeterminedDeny": InMemoryNotificationCenter(status: .notDetermined, answer: .denied)
         default: InMemoryNotificationCenter(status: .notDetermined, answer: .allowed)
+        }
+    }
+
+    /// `KAKEIBO_FAIL_SAVES=n`: the next n expense saves (or deletes) fail, so UI tests can show
+    /// the failure panel and then succeed with "Try again". Set after the sample data is seeded.
+    private func failSavesIfRequested(_ environment: [String: String]) {
+        guard let value = environment["KAKEIBO_FAIL_SAVES"], var remaining = Int(value), remaining > 0 else { return }
+        repository.beforeSave = {
+            guard remaining > 0 else { return }
+            remaining -= 1
+            throw CocoaError(.fileWriteUnknown)
         }
     }
 

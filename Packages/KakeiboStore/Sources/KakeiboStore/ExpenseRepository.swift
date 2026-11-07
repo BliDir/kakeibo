@@ -23,8 +23,9 @@ public final class ExpenseRepository {
 
     /// Held so the container outlives its context: SwiftData traps if a context's container is freed.
     private let container: ModelContainer?
-    /// Tests: runs right before each save; throwing simulates a failed save.
-    var beforeSave: (() throws -> Void)?
+    /// Tests (and Debug UI tests, `KAKEIBO_FAIL_SAVES`): runs right before each save;
+    /// throwing simulates a failed save.
+    public var beforeSave: (() throws -> Void)?
 
     /// - Parameter context: a context whose container the caller keeps alive.
     public init(context: ModelContext, photoStore: PhotoStore? = nil) {

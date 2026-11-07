@@ -66,7 +66,9 @@ final class KakeiboUITests: XCTestCase {
         let app = launch(scan: true)
         XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
 
-        app.buttons["Text read from the photo"].firstMatch.tap()
+        // Folded with the tax and items under "Tax, items & receipt text".
+        scrollTo(app.buttons["review.more"].firstMatch, in: app).tap()
+        scrollTo(app.buttons["Text read from the photo"].firstMatch, in: app).tap()
         let text = app.staticTexts["review.ocrText"]
         XCTAssertTrue(text.waitForExistence(timeout: 2))
         XCTAssertTrue(text.label.contains("合計 ¥754"))
@@ -127,22 +129,28 @@ final class KakeiboUITests: XCTestCase {
         app.buttons["review.save"].tap()
         XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
 
-        // Edit: change the amount.
+        // Details, then Edit: change the amount. Back on the details, the new amount shows.
         let row = app.buttons["ledger.row"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
+        let detailAmount = app.descendants(matching: .any)["detail.amount"].firstMatch
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 3))
+        XCTAssertEqual(detailAmount.label, "880 yen")
+        app.buttons["detail.edit"].tap()
         XCTAssertTrue(app.staticTexts["Edit expense"].waitForExistence(timeout: 3))
         XCTAssertEqual(amount.value as? String, "880")
+        XCTAssertEqual(app.buttons["review.save"].label, "Save changes")
         amount.tap()
         amount.typeText("0")
         app.buttons["review.save"].tap()
         XCTAssertTrue(app.staticTexts["Saved 8,800 yen"].waitForExistence(timeout: 5))
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 3))
+        XCTAssertEqual(detailAmount.label, "8,800 yen")
 
-        // Delete with the in-app confirmation.
-        row.tap()
-        let delete = scrollTo(app.buttons["review.delete"], in: app)
+        // Delete from the details, with the in-app confirmation.
+        let delete = scrollTo(app.buttons["detail.delete"], in: app)
         delete.tap()
-        XCTAssertTrue(app.staticTexts["Delete this expense?"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.staticTexts["Remove this expense?"].waitForExistence(timeout: 2))
         app.buttons["confirm.action"].tap()
         XCTAssertTrue(app.staticTexts["Expense deleted"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["ledger.row"].exists)
@@ -308,11 +316,18 @@ final class KakeiboUITests: XCTestCase {
         addManualExpense(app, amount: "1200", store: "Bento Ya")
         XCTAssertTrue(app.buttons["duplicate.view"].waitForExistence(timeout: 3))
         app.buttons["duplicate.view"].tap()
-        XCTAssertTrue(app.staticTexts["Edit expense"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.textFields["review.amount"].value as? String, "1200")
+        let detailAmount = app.descendants(matching: .any)["detail.amount"].firstMatch
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 5), "the saved entry's details")
+        XCTAssertEqual(detailAmount.label, "1,200 yen")
 
         // Saving the saved entry unchanged does not warn about itself.
-        app.buttons["review.cancel"].tap()
+        app.buttons["detail.edit"].tap()
+        XCTAssertTrue(app.buttons["review.save"].waitForExistence(timeout: 3))
+        app.buttons["review.save"].tap()
+        XCTAssertFalse(app.buttons["duplicate.view"].waitForExistence(timeout: 2))
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 3))
+
+        app.buttons["detail.back"].tap()
         XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 3))
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 1, "the second entry was not saved")
     }
@@ -341,6 +356,102 @@ final class KakeiboUITests: XCTestCase {
         storeField.tap()
         storeField.typeText(store)
         app.buttons["review.save"].tap()
+    }
+
+    // MARK: Expense details, edit and failures (UI-04)
+
+    /// A saved scan's details: store, amount, how it was entered, the items and the original
+    /// receipt photo, which opens full screen.
+    @MainActor
+    func testDetailsShowSavedScanAndOriginalReceipt() {
+        let app = launch(scan: true)
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        app.buttons["review.save"].tap()
+        let row = app.buttons["ledger.row"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+
+        let detailAmount = app.descendants(matching: .any)["detail.amount"].firstMatch
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 3))
+        XCTAssertEqual(detailAmount.label, "754 yen")
+        XCTAssertEqual(app.descendants(matching: .any)["detail.store"].firstMatch.label, "サンプルマート中野店")
+        let source = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS 'Receipt scan'"))
+        XCTAssertGreaterThan(source.count, 0, "says how it was entered")
+
+        scrollTo(app.buttons["detail.photo"], in: app).tap()
+        let close = app.buttons["photo.close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 3))
+        close.tap()
+        XCTAssertTrue(app.buttons["detail.edit"].waitForExistence(timeout: 3))
+    }
+
+    /// Cancelling an edit with changes asks first; "Keep editing" keeps the change, "Discard"
+    /// leaves the saved expense as it was.
+    @MainActor
+    func testCancellingAnEditAsksAndKeepsTheSavedValues() {
+        let app = launch(seed: true)
+        let row = app.buttons.matching(identifier: "ledger.row").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        app.buttons["detail.edit"].tap()
+        let amount = app.textFields["review.amount"]
+        XCTAssertTrue(amount.waitForExistence(timeout: 3))
+        amount.tap()
+        amount.typeText("9")
+
+        app.buttons["review.cancel"].tap()
+        XCTAssertTrue(app.staticTexts["Leave without saving?"].waitForExistence(timeout: 2))
+        app.buttons["confirm.cancel"].tap()
+        XCTAssertEqual(amount.value as? String, "10789", "the draft is kept")
+
+        app.buttons["review.cancel"].tap()
+        app.buttons["confirm.action"].tap()
+        let detailAmount = app.descendants(matching: .any)["detail.amount"].firstMatch
+        XCTAssertTrue(detailAmount.waitForExistence(timeout: 3))
+        XCTAssertEqual(detailAmount.label, "1,078 yen")
+    }
+
+    /// A failed save keeps everything typed: "Back to the form" returns to the draft, and
+    /// "Try saving again" saves it.
+    @MainActor
+    func testSaveFailureKeepsTheDraftAndRetries() {
+        let app = launch(extra: ["KAKEIBO_FAIL_SAVES": "2"])
+        addManualExpense(app, amount: "640", store: "Soba Stand")
+        XCTAssertTrue(app.staticTexts["Not saved yet"].waitForExistence(timeout: 3))
+        let entry = app.descendants(matching: .any)["failure"].firstMatch
+        XCTAssertTrue(entry.exists)
+
+        app.buttons["failure.back"].tap()
+        XCTAssertFalse(app.staticTexts["Not saved yet"].exists)
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "640")
+        XCTAssertEqual(app.textFields["review.store"].value as? String, "Soba Stand")
+
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(app.buttons["failure.retry"].waitForExistence(timeout: 3))
+        app.buttons["failure.retry"].tap()
+        XCTAssertTrue(app.staticTexts["Saved 640 yen"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 1)
+    }
+
+    /// A failed delete keeps the expense; trying again deletes it.
+    @MainActor
+    func testDeleteFailureKeepsTheExpense() {
+        let app = launch(seed: true, extra: ["KAKEIBO_FAIL_SAVES": "1"])
+        let row = app.buttons.matching(identifier: "ledger.row").firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        row.tap()
+        scrollTo(app.buttons["detail.delete"], in: app).tap()
+        app.buttons["confirm.action"].tap()
+        XCTAssertTrue(app.staticTexts["Not deleted"].waitForExistence(timeout: 3))
+
+        app.buttons["failure.back"].tap()
+        let detailAmount = app.descendants(matching: .any)["detail.amount"].firstMatch
+        XCTAssertTrue(detailAmount.exists, "still on the details")
+
+        scrollTo(app.buttons["detail.delete"], in: app).tap()
+        app.buttons["confirm.action"].tap()
+        XCTAssertTrue(app.staticTexts["Expense deleted"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 3)
     }
 
     @MainActor
@@ -393,7 +504,7 @@ final class KakeiboUITests: XCTestCase {
         // VoiceOver reads the row as one element: store, category, payment, amount, date.
         XCTAssertTrue(row.label.hasPrefix("スターバックス, Starbucks, Dining out, Credit card, 1,078 yen, "), row.label)
         row.tap()
-        let delete = scrollTo(app.buttons["review.delete"], in: app)
+        let delete = scrollTo(app.buttons["detail.delete"], in: app)
         delete.tap()
         app.buttons["confirm.action"].tap()
         XCTAssertTrue(app.staticTexts["Expense deleted"].waitForExistence(timeout: 5))
@@ -452,8 +563,10 @@ final class KakeiboUITests: XCTestCase {
     /// With `scan`, a scan of the bundled made-up receipt starts at once; with `seed`, the ledger
     /// starts with four made-up expenses this month and one last month.
     @MainActor
-    private func launch(scan: Bool = false, ocrDelay: Double? = nil, seed: Bool = false) -> XCUIApplication {
+    private func launch(scan: Bool = false, ocrDelay: Double? = nil, seed: Bool = false,
+                        extra: [String: String] = [:]) -> XCUIApplication {
         let app = XCUIApplication()
+        for (key, value) in extra { app.launchEnvironment[key] = value }
         app.launchEnvironment["KAKEIBO_IN_MEMORY_STORE"] = "1"
         if seed { app.launchEnvironment["KAKEIBO_SEED_SAMPLE"] = "1" }
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"

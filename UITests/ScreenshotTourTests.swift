@@ -113,20 +113,28 @@ final class ScreenshotTourTests: XCTestCase {
             }
         }
 
-        // Edit an expense, its lower half, and the delete confirmation.
+        // An expense's details, the delete confirmation, then its edit form and lower half.
         let row = app.buttons["ledger.row"].firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 3))
         row.tap()
-        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
-        shot(app, "\(tag)-08-edit")
-        let delete = scrollTo(app.buttons["review.delete"], in: app)
-        shot(app, "\(tag)-09-edit-scrolled")
+        XCTAssertTrue(app.buttons["detail.edit"].waitForExistence(timeout: 3))
+        shot(app, "\(tag)-08a-details")
+        let delete = scrollTo(app.buttons["detail.delete"], in: app)
+        shot(app, "\(tag)-08b-details-scrolled")
         delete.tap()
         if app.buttons["confirm.cancel"].waitForExistence(timeout: 2) {
             shot(app, "\(tag)-10-delete-confirm")
             app.buttons["confirm.cancel"].tap()
         }
+        app.buttons["detail.edit"].tap()
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
+        shot(app, "\(tag)-08-edit")
+        app.swipeUp()
+        shot(app, "\(tag)-09-edit-scrolled")
         app.buttons["review.cancel"].tap()
+        if app.buttons["detail.back"].waitForExistence(timeout: 2) {
+            app.buttons["detail.back"].tap()
+        }
 
         // Manual entry that duplicates a sample expense (same store, day and amount).
         app.buttons["ledger.add"].tap()
@@ -154,9 +162,27 @@ final class ScreenshotTourTests: XCTestCase {
         shot(app, "\(tag)-14-scan-review")
         app.swipeUp()
         shot(app, "\(tag)-15-scan-review-scrolled")
+        if app.buttons["review.more"].exists {
+            app.buttons["review.more"].tap()
+            shot(app, "\(tag)-15b-scan-review-more")
+        }
         app.buttons["review.cancel"].tap()
         if app.buttons["confirm.cancel"].waitForExistence(timeout: 2) {
             shot(app, "\(tag)-16-discard-confirm")
+        }
+        app.terminate()
+
+        // Save failure (UI-04): the first save fails.
+        app = launch(language: language, size: size, extra: ["KAKEIBO_FAIL_SAVES": "1"])
+        app.buttons["ledger.add"].tap()
+        let failAmount = app.textFields["review.amount"]
+        if failAmount.waitForExistence(timeout: 3) {
+            failAmount.tap()
+            failAmount.typeText("640")
+            app.buttons["review.save"].tap()
+            if app.buttons["failure.retry"].waitForExistence(timeout: 3) {
+                shot(app, "\(tag)-16d-save-failure")
+            }
         }
         app.terminate()
 

@@ -2,11 +2,11 @@ import KakeiboCore
 import KakeiboStore
 import SwiftUI
 
-/// "Check and save": the same screen for a fresh scan, a manual entry and editing.
+/// "Check and save": the same form for a fresh scan, a manual entry and editing a saved
+/// expense (visual refresh, UI-04). Deleting is on the expense details screen.
 struct ReviewView: View {
     enum Outcome {
         case saved(totalYen: Int)
-        case deleted
         case discarded
         /// The user chose "View saved entry" on the duplicate warning; nothing was saved.
         case viewSaved(Expense)
@@ -19,6 +19,7 @@ struct ReviewView: View {
     @State private var confirm: ConfirmKind?
     @State private var showPhoto = false
     @State private var saveFailed = false
+    @State private var showMore = false
     @State private var duplicate: ExpenseRepository.PossibleDuplicate?
     #if DEBUG
     @State private var fixtureFiles: FixtureFiles?
@@ -27,24 +28,22 @@ struct ReviewView: View {
     @FocusState private var amountFocused: Bool
     @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
-    enum ConfirmKind { case discard, delete }
+    enum ConfirmKind { case discard }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             ScrollView {
-                VStack(spacing: 14) {
-                    if form.hasPhoto { photoCard }
-                    else if let text = form.ocrText, !text.isEmpty { ocrCard(text) }
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    if form.hasPhoto { photoSection }
                     amountCard
                     detailsCard
                     categoryCard
-                    taxAndItemsCard
+                    moreCard
                     noteCard
-                    if form.isEditing { deleteButton }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .screenInset()
+                .padding(.vertical, Spacing.xs)
             }
             .scrollDismissesKeyboard(.interactively)
             saveBar
@@ -53,7 +52,13 @@ struct ReviewView: View {
         .overlay {
             if let confirm { confirmPanel(confirm) }
             if let duplicate { duplicatePanel(duplicate) }
+            if saveFailed {
+                FailurePanel(kind: .save, summary: .draft(form.draft), onRetry: saveNow, onBack: { saveFailed = false })
+            }
         }
+        .animation(.easeOut(duration: 0.2), value: confirm != nil)
+        .animation(.easeOut(duration: 0.2), value: duplicate != nil)
+        .animation(.easeOut(duration: 0.2), value: saveFailed)
         .fullScreenCover(isPresented: $showPhoto) {
             PhotoZoomView(image: photoImage)
         }
@@ -69,52 +74,40 @@ struct ReviewView: View {
     // MARK: Header
 
     private var header: some View {
-        Group {
-            if isAccessibilityTextSize {
-                // Huge text: the title gets its own line under the buttons instead of drawing over them.
-                VStack(alignment: .leading, spacing: 4) {
-                    headerButtons
-                    headerTitle.frame(maxWidth: .infinity, alignment: .leading)
+        TitleBar(title: title) {
+            Button("review.cancel", action: cancel)
+                .buttonStyle(TextButtonStyle())
+                .accessibilityIdentifier("review.cancel")
+        } trailing: {
+            #if DEBUG
+            if form.ocrText?.isEmpty == false {
+                Button {
+                    if let urls = try? FixtureCapture.makeFiles(from: form) { fixtureFiles = FixtureFiles(urls: urls) }
+                } label: {
+                    Image(systemName: "ladybug")
                 }
-            } else {
-                ZStack {
-                    headerTitle.padding(.horizontal, 88)
-                    headerButtons
-                }
+                .buttonStyle(TextButtonStyle())
+                .accessibilityLabel(Text(verbatim: "Save as fixture"))
+                .accessibilityIdentifier("review.fixture")
             }
+            #endif
+            modeTag
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 8)
     }
 
-    private var headerTitle: some View {
-        Text(title).font(.screenTitle).foregroundStyle(Theme.text)
-            .multilineTextAlignment(.center)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
-    }
-
-    private var headerButtons: some View {
-            HStack {
-                Button("review.cancel", action: cancel)
-                    .font(.body.weight(.medium))
-                    .frame(minWidth: 44, minHeight: 44)
-                    .foregroundStyle(Theme.accent)
-                    .accessibilityIdentifier("review.cancel")
-                Spacer()
-                #if DEBUG
-                if form.ocrText?.isEmpty == false {
-                    Button {
-                        if let urls = try? FixtureCapture.makeFiles(from: form) { fixtureFiles = FixtureFiles(urls: urls) }
-                    } label: {
-                        Image(systemName: "ladybug").frame(minWidth: 44, minHeight: 44)
-                    }
-                    .foregroundStyle(Theme.secondaryText)
-                    .accessibilityLabel(Text(verbatim: "Save as fixture"))
-                    .accessibilityIdentifier("review.fixture")
-                }
-                #endif
+    /// "2 to check" on a scan with uncertain fields, "Manual" or "Saved".
+    @ViewBuilder private var modeTag: some View {
+        switch form.mode {
+        case .scan:
+            if !form.fieldsToCheck.isEmpty {
+                Tag("review.check.count \(form.fieldsToCheck.count)", tone: .warning)
+                    .accessibilityIdentifier("review.check.count")
             }
+        case .manual:
+            Tag("review.tag.manual")
+        case .edit:
+            Tag("review.tag.saved")
+        }
     }
 
     private var title: LocalizedStringKey {
@@ -125,69 +118,43 @@ struct ReviewView: View {
         }
     }
 
-    // MARK: Photo and OCR text
+    // MARK: Receipt photo
 
-    private var photoCard: some View {
-        Card {
-            HStack(alignment: .top, spacing: 14) {
-                Button { showPhoto = true } label: {
-                    Group {
-                        if let photoImage {
-                            Image(uiImage: photoImage).resizable().scaledToFill()
-                        } else {
-                            Theme.field
-                        }
-                    }
-                    .frame(width: 58, height: 82)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(Theme.border))
-                }
-                .accessibilityLabel(Text("review.photo.view"))
-                .accessibilityIdentifier("review.photo")
-
-                VStack(alignment: .leading, spacing: 6) {
-                    if !form.fieldsToCheck.isEmpty {
-                        Text("review.check.count \(form.fieldsToCheck.count)")
-                            .font(.caption.weight(.bold))
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(Theme.warningFill, in: Capsule())
-                            .foregroundStyle(Theme.warningText)
-                            .accessibilityIdentifier("review.check.count")
-                    }
-                    if form.isScan {
-                        Text("review.photo.caption").font(.footnote).foregroundStyle(Theme.secondaryText)
-                    }
-                    if form.isRefining {
-                        HStack(spacing: 6) {
-                            ProgressView().controlSize(.mini)
-                            Text("review.refining").font(.caption).foregroundStyle(Theme.secondaryText)
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+    /// The receipt as a row that opens it full screen, the on-device line and refinement status.
+    private var photoSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            ReceiptLink(
+                image: photoImage,
+                title: form.isScan ? "review.receipt.captured" : "review.receipt.original",
+                subtitle: receiptSubtitle
+            ) { showPhoto = true }
+            .accessibilityIdentifier("review.photo")
+            if form.isScan {
+                Text("review.photo.caption")
+                    .font(.footnote)
+                    .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
             }
-            if let text = form.ocrText, !text.isEmpty { ocrDisclosure(text) }
+            if form.isRefining {
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.mini)
+                    Text("review.refining").font(.caption).foregroundStyle(Theme.secondaryText)
+                }
+                .padding(.horizontal, 4)
+                .accessibilityElement(children: .combine)
+            }
         }
     }
 
-    private func ocrCard(_ text: String) -> some View {
-        Card { ocrDisclosure(text) }
-    }
-
-    private func ocrDisclosure(_ text: String) -> some View {
-        DisclosureGroup {
-            Text(verbatim: text)
-                .font(.code)
-                .foregroundStyle(Theme.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
-                .padding(.top, 6)
-                .accessibilityIdentifier("review.ocrText")
-        } label: {
-            Text("review.ocr.show").font(.subheadline.weight(.medium)).foregroundStyle(Theme.accent)
+    /// "サンプルマート · Thu, Nov 5 · 木 14:32", from the form as it is now.
+    private var receiptSubtitle: String {
+        var parts: [String] = []
+        if let store = form.draft.storeName, !store.isEmpty { parts.append(store) }
+        if let dayKey = form.draft.dayKey {
+            parts.append([LedgerFormat.shortDay(dayKey), form.draft.time].compactMap { $0 }.joined(separator: " "))
         }
-        .tint(Theme.accent)
+        return parts.joined(separator: " · ")
     }
 
     private var photoImage: UIImage? {
@@ -210,8 +177,9 @@ struct ReviewView: View {
         Card(highlight: form.needsCheck(.totalYen)) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("review.amount.label")
-                    .font(.caption).tracking(0.6)
+                    .font(.overline).tracking(0.6)
                     .foregroundStyle(Theme.secondaryText)
+                    .fixedSize(horizontal: false, vertical: true)
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     // "¥ 1234" in English, "1234 円" in Japanese.
                     let symbol = Yen.fieldSymbol(for: LedgerFormat.language)
@@ -244,13 +212,13 @@ struct ReviewView: View {
     private var detailsCard: some View {
         Card {
             VStack(alignment: .leading, spacing: 6) {
-                FieldLabel("review.store")
+                FieldLabel(form.isScan || form.isEditing ? "review.store" : "review.store.manual")
                 // Single line normally; at the accessibility sizes it wraps so a long name stays readable.
                 // (A multi-line field's placeholder is invisible to VoiceOver, so only there.)
                 TextField(text: Binding(
                     get: { form.draft.storeName ?? "" },
                     set: { form.draft.storeName = $0.isEmpty ? nil : $0 }
-                ), prompt: Text("review.store.placeholder"),
+                ), prompt: Text(form.isScan || form.isEditing ? "review.store.placeholder" : "review.store.manual.placeholder"),
                    axis: isAccessibilityTextSize ? .vertical : .horizontal) { Text("review.store") }
                     .lineLimit(1...4)
                     .inputStyle(highlight: form.needsCheck(.storeName))
@@ -341,41 +309,66 @@ struct ReviewView: View {
         }
     }
 
-    // MARK: Tax, invoice, items
+    // MARK: Tax, invoice, items and receipt text
 
-    private var taxAndItemsCard: some View {
+    /// Tax, the invoice number, the items and the text read from the photo, folded away: most
+    /// receipts need none of it checked. The label says what is inside.
+    private var moreCard: some View {
         Card {
-            YenRow(label: "review.tax8", value: taxBinding(\.tax8Yen), id: "review.tax8")
-            Divider().overlay(Theme.divider)
-            YenRow(label: "review.tax10", value: taxBinding(\.tax10Yen), id: "review.tax10")
-            if let invoice = form.draft.invoiceNumber {
-                Divider().overlay(Theme.divider)
-                AdaptiveStack {
-                    Text("review.invoice").font(.subheadline)
-                    Spacer(minLength: 8)
-                    Text(verbatim: invoice).font(.code)
-                        .accessibilityIdentifier("review.invoice")
-                }
-                .padding(.vertical, 10)
-            }
-            if !form.draft.items.isEmpty {
-                Divider().overlay(Theme.divider)
-                HStack {
-                    Text("review.items.count \(form.draft.items.count)")
-                    Spacer()
-                    if form.wasRefined, form.draft.items.contains(where: { $0.nameEn != nil }) {
-                        Text("review.items.aiEnglish")
+            DisclosureGroup(isExpanded: $showMore) {
+                VStack(alignment: .leading, spacing: 0) {
+                    YenRow(label: "review.tax8", value: taxBinding(\.tax8Yen), id: "review.tax8")
+                    Divider().overlay(Theme.divider)
+                    YenRow(label: "review.tax10", value: taxBinding(\.tax10Yen), id: "review.tax10")
+                    if let invoice = form.draft.invoiceNumber {
+                        Divider().overlay(Theme.divider)
+                        AdaptiveStack {
+                            Text("review.invoice").font(.subheadline).foregroundStyle(Theme.text)
+                            Spacer(minLength: 8)
+                            Text(verbatim: invoice).font(.code).foregroundStyle(Theme.text)
+                                .accessibilityIdentifier("review.invoice")
+                        }
+                        .padding(.vertical, 10)
+                    }
+                    if !form.draft.items.isEmpty {
+                        Divider().overlay(Theme.divider)
+                        HStack {
+                            Text("review.items.count \(form.draft.items.count)")
+                            Spacer()
+                            if form.wasRefined, form.draft.items.contains(where: { $0.nameEn != nil }) {
+                                Text("review.items.aiEnglish")
+                            }
+                        }
+                        .font(.caption)
+                        .foregroundStyle(Theme.secondaryText)
+                        .padding(.top, 10)
+                        ForEach(Array(form.draft.items.enumerated()), id: \.offset) { index, item in
+                            if index > 0 { Divider().overlay(Theme.divider) }
+                            ItemRow(item: item)
+                        }
+                    }
+                    if let text = form.ocrText, !text.isEmpty {
+                        Divider().overlay(Theme.divider)
+                        OCRDisclosure(text: text).padding(.vertical, 10)
                     }
                 }
-                .font(.caption)
-                .foregroundStyle(Theme.secondaryText)
-                .padding(.top, 10)
-                ForEach(Array(form.draft.items.enumerated()), id: \.offset) { index, item in
-                    if index > 0 { Divider().overlay(Theme.divider) }
-                    ItemRow(item: item)
-                }
+                .padding(.top, 4)
+            } label: {
+                Text(moreTitle)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Theme.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minHeight: minimumTapTarget)
+                    .accessibilityIdentifier("review.more")
             }
+            .tint(Theme.accent)
         }
+    }
+
+    private var moreTitle: LocalizedStringKey {
+        let hasText = form.ocrText?.isEmpty == false
+        if hasText || !form.draft.items.isEmpty { return "review.more.all" }
+        return form.draft.invoiceNumber == nil ? "review.more.tax" : "review.more.taxInvoice"
     }
 
     private func taxBinding(_ path: WritableKeyPath<ReceiptDraft, Int?>) -> Binding<String> {
@@ -388,7 +381,7 @@ struct ReviewView: View {
         )
     }
 
-    // MARK: Note and delete
+    // MARK: Note
 
     private var noteCard: some View {
         Card {
@@ -403,15 +396,6 @@ struct ReviewView: View {
         }
     }
 
-    private var deleteButton: some View {
-        Button(role: .destructive) { confirm = .delete } label: {
-            Text("review.delete").frame(maxWidth: .infinity, minHeight: 44)
-        }
-        .foregroundStyle(Theme.destructive)
-        .accessibilityIdentifier("review.delete")
-        .padding(.top, 8)
-    }
-
     // MARK: Save bar
 
     private var saveBar: some View {
@@ -420,30 +404,31 @@ struct ReviewView: View {
                 Text(problem == .missingAmount ? "review.problem.amount" : "review.problem.date")
                     .font(.caption)
                     .foregroundStyle(Theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            if saveFailed {
-                Text("review.saveFailed").font(.caption).foregroundStyle(Theme.destructive)
-            }
-            Button(action: save) {
-                Group {
-                    if let total = form.draft.totalYen, total > 0 {
-                        Text("review.save \(LedgerFormat.yen(total))")
-                            .accessibilityLabel(Text("review.save \(LedgerFormat.spokenYen(total))"))
-                    } else {
-                        Text("review.save.plain")
-                    }
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(PillButtonStyle())
-            .disabled(!form.canSave)
-            .accessibilityIdentifier("review.save")
+            Button(action: save) { saveLabel }
+                .buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                .disabled(!form.canSave)
+                .accessibilityIdentifier("review.save")
         }
-        .padding(.horizontal, 16)
+        .screenInset()
         .padding(.top, 10)
-        .padding(.bottom, 8)
+        .padding(.bottom, Spacing.xs)
         .background(Theme.groundLight)
         .overlay(alignment: .top) { Divider().overlay(Theme.border) }
+    }
+
+    /// "Save · ¥1,234" for a new entry, "Save changes" when editing.
+    @ViewBuilder private var saveLabel: some View {
+        if form.isEditing {
+            Text("review.save.changes")
+        } else if let total = form.draft.totalYen, total > 0 {
+            Text("review.save \(LedgerFormat.yen(total))")
+                .accessibilityLabel(Text("review.save \(LedgerFormat.spokenYen(total))"))
+        } else {
+            Text("review.save.plain")
+        }
     }
 
     // MARK: Actions
@@ -469,13 +454,18 @@ struct ReviewView: View {
         saveNow()
     }
 
+    /// Saves without the duplicate check (after "Save anyway", or "Try saving again").
+    /// A failure keeps the form as it is and shows the failure panel over it.
     private func saveNow() {
         duplicate = nil
+        saveFailed = false
         guard form.canSave, let total = form.draft.totalYen else { return }
         do {
             try form.save(repository: services.repository, photoStore: services.photoStore)
             onFinish(.saved(totalYen: total))
         } catch {
+            // Put the keyboard away so the whole panel shows; the form keeps everything typed.
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             saveFailed = true
         }
     }
@@ -490,31 +480,37 @@ struct ReviewView: View {
     }
 
     private func confirmPanel(_ kind: ConfirmKind) -> some View {
-        switch kind {
-        case .discard:
-            ConfirmPanel(
-                title: form.isScan ? "confirm.discard.title.scan" : "confirm.discard.title.changes",
-                message: "confirm.discard.message",
-                confirmTitle: "confirm.discard.action",
-                onConfirm: { onFinish(.discarded) },
-                onCancel: { confirm = nil }
-            )
-        case .delete:
-            ConfirmPanel(
-                title: "confirm.delete.title",
-                message: "confirm.delete.message",
-                confirmTitle: "confirm.delete.action",
-                onConfirm: {
-                    do {
-                        try form.delete(repository: services.repository)
-                        onFinish(.deleted)
-                    } catch {
-                        confirm = nil
-                        saveFailed = true
-                    }
-                },
-                onCancel: { confirm = nil }
-            )
+        ConfirmPanel(
+            systemImage: "arrow.uturn.backward",
+            title: form.isScan ? "confirm.discard.title.scan" : "confirm.discard.title.changes",
+            message: form.isScan ? "confirm.discard.message.scan" : "confirm.discard.message",
+            confirmTitle: form.isScan ? "confirm.discard.action.scan" : "confirm.discard.action",
+            keepFirst: true,
+            onConfirm: { onFinish(.discarded) },
+            onCancel: { confirm = nil }
+        )
+    }
+}
+
+/// "Text read from the photo": the raw OCR text, selectable.
+struct OCRDisclosure: View {
+    let text: String
+
+    var body: some View {
+        DisclosureGroup {
+            Text(verbatim: text)
+                .font(.code)
+                .foregroundStyle(Theme.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .textSelection(.enabled)
+                .padding(.top, 6)
+                .accessibilityIdentifier("review.ocrText")
+        } label: {
+            Text("review.ocr.show")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Theme.accent)
+                .frame(minHeight: minimumTapTarget)
         }
+        .tint(Theme.accent)
     }
 }

@@ -107,12 +107,58 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    @MainActor func testExpenseDetails() throws {
+        try auditInBothModes("expense details", seed: true) { app in
+            let row = app.buttons["ledger.row"].firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 5))
+            row.tap()
+            XCTAssertTrue(app.buttons["detail.edit"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testEditExpense() throws {
         try auditInBothModes("edit", seed: true) { app in
             let row = app.buttons["ledger.row"].firstMatch
             XCTAssertTrue(row.waitForExistence(timeout: 5))
             row.tap()
+            app.buttons["detail.edit"].tap()
             XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor func testDeleteConfirmation() throws {
+        try auditInBothModes("delete confirmation", seed: true) { app in
+            let row = app.buttons["ledger.row"].firstMatch
+            XCTAssertTrue(row.waitForExistence(timeout: 5))
+            row.tap()
+            app.buttons["detail.delete"].tap()
+            XCTAssertTrue(app.buttons["confirm.action"].waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor func testDuplicateWarning() throws {
+        try auditInBothModes("duplicate warning", seed: true) { app in
+            self.typeManualEntry(app, amount: "1078", store: "スターバックス")
+            XCTAssertTrue(app.buttons["duplicate.view"].waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor func testSaveFailure() throws {
+        try auditInBothModes("save failure", extra: ["KAKEIBO_FAIL_SAVES": "1"]) { app in
+            self.typeManualEntry(app, amount: "640", store: "Soba Stand")
+            XCTAssertTrue(app.buttons["failure.retry"].waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor func testDiscardConfirmation() throws {
+        try auditInBothModes("discard confirmation") { app in
+            app.buttons["ledger.add"].tap()
+            let amount = app.textFields["review.amount"]
+            XCTAssertTrue(amount.waitForExistence(timeout: 3))
+            amount.tap()
+            amount.typeText("500")
+            app.buttons["review.cancel"].tap()
+            XCTAssertTrue(app.buttons["confirm.action"].waitForExistence(timeout: 3))
         }
     }
 
@@ -149,6 +195,21 @@ final class AccessibilityAuditTests: XCTestCase {
     }
 
     // MARK: Helpers
+
+    /// Opens a manual entry, types an amount and a store, and taps Save.
+    @MainActor
+    private func typeManualEntry(_ app: XCUIApplication, amount: String, store: String) {
+        XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
+        app.buttons["ledger.add"].tap()
+        let amountField = app.textFields["review.amount"]
+        XCTAssertTrue(amountField.waitForExistence(timeout: 3))
+        amountField.tap()
+        amountField.typeText(amount)
+        let storeField = app.textFields["review.store"]
+        storeField.tap()
+        storeField.typeText(store)
+        app.buttons["review.save"].tap()
+    }
 
     /// Sets this month's budget from the setup prompt and waits for the ledger.
     @MainActor

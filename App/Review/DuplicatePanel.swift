@@ -11,74 +11,54 @@ struct DuplicatePanel: View {
     let onCancel: () -> Void
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Theme.scrim
-                .ignoresSafeArea()
-                .onTapGesture(perform: onCancel)
-                .accessibilityHidden(true)
-            ScrollIfNeeded {
-            VStack(spacing: 14) {
-                Image(systemName: "doc.on.doc")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(Theme.warning)
-                    .accessibilityHidden(true)
-                Text("duplicate.title").font(.headline).foregroundStyle(Theme.text).multilineTextAlignment(.center)
-                Text(match.strength == .strong ? "duplicate.message.strong" : "duplicate.message.likely")
-                    .font(.subheadline).foregroundStyle(Theme.secondaryText).multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                savedEntry
-                Button(action: onView) {
-                    Text("duplicate.view").font(.headline).frame(maxWidth: .infinity, minHeight: 50)
-                }
-                .background(Theme.accent, in: RoundedRectangle(cornerRadius: 14))
-                .foregroundStyle(Theme.onAccent)
+        ActionPanel(
+            systemImage: "doc.on.doc",
+            tone: .warning,
+            title: "duplicate.title",
+            message: match.strength == .strong ? "duplicate.message.strong" : "duplicate.message.likely",
+            onDismiss: onCancel
+        ) {
+            EntrySummary.saved(match.expense)
+                .accessibilityIdentifier("duplicate.entry")
+        } actions: {
+            Button(action: onView) { Text("duplicate.view") }
+                .buttonStyle(PrimaryButtonStyle(fullWidth: true))
                 .accessibilityIdentifier("duplicate.view")
-                Button(action: onSaveAnyway) {
-                    Text("duplicate.saveAnyway").font(.headline).frame(maxWidth: .infinity, minHeight: 50)
-                }
-                .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.border))
-                .foregroundStyle(Theme.accent)
+            Button(action: onSaveAnyway) { Text("duplicate.saveAnyway") }
+                .buttonStyle(SecondaryButtonStyle(fullWidth: true))
                 .accessibilityIdentifier("duplicate.saveAnyway")
-                Button(action: onCancel) {
-                    Text("duplicate.cancel").font(.headline).frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .foregroundStyle(Theme.accent)
+            Button(action: onCancel) { Text("duplicate.cancel") }
+                .buttonStyle(TextButtonStyle())
                 .accessibilityIdentifier("duplicate.cancel")
-            }
-            .padding(20)
-            .background(Theme.surface, in: RoundedRectangle(cornerRadius: 20))
-            .padding(16)
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier("duplicate")
         }
-        .transition(.opacity)
+        .accessibilityIdentifier("duplicate")
+    }
+}
+
+extension EntrySummary {
+    /// A saved expense: "Thu, Nov 5 · 木  14:32" and "Groceries · IC card".
+    static func saved(_ expense: Expense) -> EntrySummary {
+        EntrySummary(
+            category: expense.category,
+            storeName: expense.storeName,
+            amount: expense.totalYen,
+            lines: [
+                [LedgerFormat.dayTitle(expense.dayKey), expense.time].compactMap { $0 }.joined(separator: "  "),
+                "\(expense.category.displayName(for: LedgerFormat.language)) · \(expense.payment.shortLabel)",
+            ]
+        )
     }
 
-    /// The saved entry: store, date, time and amount.
-    private var savedEntry: some View {
-        let expense = match.expense
-        return AdaptiveStack(spacing: 12) {
-            CategoryBadge(category: expense.category, size: 34)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: expense.storeName.isEmpty ? "—" : expense.storeName)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.text)
-                    .lineLimit(2)
-                Text(verbatim: [LedgerFormat.dayTitle(expense.dayKey), expense.time].compactMap { $0 }.joined(separator: "  "))
-                    .font(.caption)
-                    .foregroundStyle(Theme.secondaryText)
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            Spacer(minLength: 8)
-            YenText(expense.totalYen)
-                .font(.amount)
-                .foregroundStyle(Theme.text)
+    /// The form being saved, for the save-failure panel.
+    static func draft(_ draft: ReceiptDraft) -> EntrySummary {
+        let category = draft.category ?? .other
+        var lines: [String] = []
+        if let dayKey = draft.dayKey {
+            lines.append([LedgerFormat.dayTitle(dayKey), draft.time].compactMap { $0 }.joined(separator: "  "))
         }
-        .padding(12)
-        .background(Theme.field, in: RoundedRectangle(cornerRadius: 12))
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("duplicate.entry")
+        var detail = [category.displayName(for: LedgerFormat.language)]
+        if let payment = draft.payment { detail.append(payment.shortLabel) }
+        lines.append(detail.joined(separator: " · "))
+        return EntrySummary(category: category, storeName: draft.storeName ?? "", amount: draft.totalYen, lines: lines)
     }
 }

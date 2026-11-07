@@ -94,20 +94,24 @@ struct ScreenHeader<Trailing: View>: View {
 
 // MARK: - Tag
 
-/// A small rounded label on a soft green fill ("November", ".csv").
+/// A small rounded label on a soft green fill ("November", ".csv"), or on amber for something
+/// to check ("2 to check").
 struct Tag: View {
-    let text: Text
+    enum Tone { case accent, warning }
 
-    init(_ key: LocalizedStringKey) { text = Text(key) }
-    init(verbatim: String) { text = Text(verbatim: verbatim) }
+    let text: Text
+    var tone: Tone = .accent
+
+    init(_ key: LocalizedStringKey, tone: Tone = .accent) { text = Text(key); self.tone = tone }
+    init(verbatim: String, tone: Tone = .accent) { text = Text(verbatim: verbatim); self.tone = tone }
 
     var body: some View {
         text
             .font(.caption.weight(.medium))
-            .foregroundStyle(Theme.accent)
+            .foregroundStyle(tone == .accent ? Theme.accent : Theme.warningText)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(Theme.accentTint, in: Capsule())
+            .background(tone == .accent ? Theme.accentTint : Theme.warningFill, in: Capsule())
     }
 }
 

@@ -9,6 +9,7 @@ struct BudgetSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var confirmRemove = false
     @FocusState private var amountFocused: Bool
+    @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
     private var monthName: String { LedgerFormat.monthName(form.month) }
     private var nextMonthName: String { LedgerFormat.monthName(form.month.next) }
@@ -26,6 +27,9 @@ struct BudgetSheet: View {
                         .foregroundStyle(Theme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 4)
+                    // At the accessibility sizes the save bar would cover most of the screen
+                    // above the keyboard, so Remove moves into the form there.
+                    if form.hasBudget && isAccessibilityTextSize { removeButton }
                 }
                 .screenInset()
                 .padding(.vertical, Spacing.s)
@@ -187,7 +191,17 @@ struct BudgetSheet: View {
 
     // MARK: Save and remove
 
-    /// Save (solid green), then Remove for a month that has a budget (vermilion text).
+    /// Remove this month's budget (vermilion text), after a confirmation.
+    private var removeButton: some View {
+        Button { confirmRemove = true } label: {
+            Text("budget.remove")
+        }
+        .buttonStyle(DestructiveButtonStyle())
+        .accessibilityIdentifier("budget.remove")
+    }
+
+    /// Save (solid green), then Remove for a month that has a budget (in the form instead at
+    /// the accessibility sizes).
     private var saveBar: some View {
         VStack(spacing: 6) {
             if let failure = form.failure {
@@ -206,13 +220,7 @@ struct BudgetSheet: View {
             .buttonStyle(PrimaryButtonStyle(fullWidth: true))
             .disabled(!form.canSave)
             .accessibilityIdentifier("budget.save")
-            if form.hasBudget {
-                Button { confirmRemove = true } label: {
-                    Text("budget.remove")
-                }
-                .buttonStyle(DestructiveButtonStyle())
-                .accessibilityIdentifier("budget.remove")
-            }
+            if form.hasBudget && !isAccessibilityTextSize { removeButton }
         }
         .screenInset()
         .padding(.top, 10)

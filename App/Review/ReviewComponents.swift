@@ -468,7 +468,10 @@ extension ExpenseCategory {
 
 /// The receipt photo full screen, pinch to zoom, double-tap to reset.
 struct PhotoZoomView: View {
-    let image: UIImage?
+    /// Loads the full photo; it runs when the view opens, off the main thread.
+    let load: () async -> UIImage?
+    @State private var image: UIImage?
+    @State private var isLoading = true
     @Environment(\.dismiss) private var dismiss
     @State private var scale: CGFloat = 1
     @State private var lastScale: CGFloat = 1
@@ -491,6 +494,10 @@ struct PhotoZoomView: View {
                     .onEnded { _ in lastScale = scale })
                 .onTapGesture(count: 2) { scale = 1; lastScale = 1 }
                 .accessibilityLabel(Text("review.photo.view"))
+            } else if isLoading {
+                ProgressView()
+                    .tint(Theme.onPhoto)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             Button { dismiss() } label: {
                 Image(systemName: "xmark")
@@ -502,6 +509,10 @@ struct PhotoZoomView: View {
             .accessibilityLabel(Text("photo.close"))
             .accessibilityIdentifier("photo.close")
             .padding()
+        }
+        .task {
+            image = await load()
+            isLoading = false
         }
     }
 }

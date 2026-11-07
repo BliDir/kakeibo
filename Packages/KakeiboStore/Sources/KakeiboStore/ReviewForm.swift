@@ -20,7 +20,7 @@ public final class ReviewForm {
     }
 
     /// The receipt photo to save with a new scan.
-    public enum PendingPhoto {
+    public enum PendingPhoto: Sendable {
         /// From the document camera.
         case image(CGImage)
         /// From the photo library, saved with its metadata (minus GPS).
@@ -212,8 +212,11 @@ public final class ReviewForm {
     // MARK: - Save and delete
 
     /// Saves the form: a new expense (with its photo, for a scan) or the edited one.
+    ///
+    /// The photo is encoded off the main actor: a full-size JPEG takes a tenth of a second
+    /// or more on an iPhone, which froze the screen when it ran on tap.
     @discardableResult
-    public func save(repository: ExpenseRepository, photoStore: PhotoStore?, now: Date = .now) throws -> Expense {
+    public func save(repository: ExpenseRepository, photoStore: PhotoStore?, now: Date = .now) async throws -> Expense {
         switch mode {
         case .edit(let expense):
             try repository.update(expense, from: draft, note: note, now: now)
@@ -223,10 +226,9 @@ public final class ReviewForm {
         case .scan:
             var photoName: String?
             if let pendingPhoto, let photoStore {
-                switch pendingPhoto {
-                case .image(let image): photoName = try photoStore.save(image: image)
-                case .data(let data): photoName = try photoStore.save(imageData: data)
-                }
+                photoName = try await Task.detached(priority: .userInitiated) {
+                    try pendingPhoto.save(to: photoStore)
+                }.value
             }
             do {
                 return try repository.create(from: draft, source: .scan, note: note, ocrText: ocrText,

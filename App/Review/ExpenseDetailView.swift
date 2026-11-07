@@ -49,9 +49,9 @@ struct ExpenseDetailView: View {
         .overlay { panelView }
         .animation(.easeOut(duration: 0.2), value: panel)
         .fullScreenCover(isPresented: $showPhoto) {
-            PhotoZoomView(image: photo)
+            PhotoZoomView { await loadPhoto(maxPixelSize: ReceiptPhotos.zoomPixelSize) }
         }
-        .task(id: expense.photoFileName) { loadPhoto() }
+        .task(id: expense.photoFileName) { photo = await loadPhoto(maxPixelSize: ReceiptPhotos.previewPixelSize) }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("detail")
     }
@@ -206,13 +206,9 @@ struct ExpenseDetailView: View {
         }
     }
 
-    private func loadPhoto() {
-        // UIImage applies the saved EXIF orientation.
-        guard let name = expense.photoFileName, let url = try? services.photoStore?.url(for: name) else {
-            photo = nil
-            return
-        }
-        photo = UIImage(contentsOfFile: url.path)
+    private func loadPhoto(maxPixelSize: Int) async -> UIImage? {
+        await ReceiptPhotos.load(pending: nil, storedName: expense.photoFileName,
+                                 photoStore: services.photoStore, maxPixelSize: maxPixelSize)
     }
 }
 

@@ -45,14 +45,28 @@ public final class ScanSession {
     }
 
     /// Reads a photo from the library.
+    ///
+    /// The progress phase starts at once; the photo is decoded off the main thread (a 24 MP
+    /// HEIC takes long enough to freeze the screen), then read. An undecodable photo fails
+    /// with `.unreadableImage`.
     public func start(imageData: Data) {
-        guard let image = ImageDecoding.uprightImage(from: imageData, maxPixelSize: KakeiboScan.maxOCRPixelSize) else {
-            cancel()
-            source = .photoLibrary
-            phase = .failed(.unreadableImage)
-            return
+        cancel()
+        source = .photoLibrary
+        self.imageData = imageData
+        phase = .processing(.readingText)
+        task = Task { [weak self] in
+            let image = await Task.detached(priority: .userInitiated) {
+                ImageDecoding.uprightImage(from: imageData, maxPixelSize: KakeiboScan.maxOCRPixelSize)
+            }.value
+            guard !Task.isCancelled, let self else { return }
+            guard let image else {
+                self.imageData = nil
+                phase = .failed(.unreadableImage)
+                return
+            }
+            self.image = image
+            await read(image)
         }
-        begin(source: .photoLibrary, image: image, data: imageData)
     }
 
     /// Stops reading and forgets the image and any result.
@@ -80,29 +94,31 @@ public final class ScanSession {
         self.image = image
         self.imageData = data
         phase = .processing(.readingText)
+        task = Task { [weak self] in await self?.read(image) }
+    }
 
+    /// Runs the pipeline off the main actor, showing its stages, then the result.
+    private func read(_ image: CGImage) async {
         let pipeline = self.pipeline
         let (stages, continuation) = AsyncStream.makeStream(of: ExtractionStage.self)
-        task = Task { [weak self] in
-            let work = Task.detached { () async -> Result<ExtractionResult, ExtractionError> in
-                defer { continuation.finish() }
-                do throws(ExtractionError) {
-                    return .success(try await pipeline.extract(image, progress: { continuation.yield($0) }))
-                } catch {
-                    return .failure(error)
-                }
+        let work = Task.detached { () async -> Result<ExtractionResult, ExtractionError> in
+            defer { continuation.finish() }
+            do throws(ExtractionError) {
+                return .success(try await pipeline.extract(image, progress: { continuation.yield($0) }))
+            } catch {
+                return .failure(error)
             }
-            await withTaskCancellationHandler {
-                for await stage in stages {
-                    guard !Task.isCancelled else { break }
-                    self?.show(stage)
-                }
-                let outcome = await work.value
-                guard !Task.isCancelled else { return }
-                self?.finish(outcome)
-            } onCancel: {
-                work.cancel()
+        }
+        await withTaskCancellationHandler {
+            for await stage in stages {
+                guard !Task.isCancelled else { break }
+                show(stage)
             }
+            let outcome = await work.value
+            guard !Task.isCancelled else { return }
+            finish(outcome)
+        } onCancel: {
+            work.cancel()
         }
     }
 

@@ -130,6 +130,39 @@ enum TestImages {
         #expect(thumb.height > thumb.width)
     }
 
+    /// The zoom view asks for a large size; a smaller photo comes back at its own size.
+    @Test func thumbnailIsNeverEnlarged() throws {
+        let temp = try TempPhotoStore()
+        let name = try temp.store.save(imageData: TestImages.data(type: .jpeg, width: 400, height: 300))
+        let image = try #require(try temp.store.thumbnail(for: name, maxPixelSize: 8192))
+        #expect(image.width == 400)
+        #expect(image.height == 300)
+    }
+
+    /// Previews of a photo not saved yet (the review screen's receipt row).
+    @Test func pendingLibraryPhotoPreviewIsSmallAndUpright() throws {
+        let photo = ReviewForm.PendingPhoto.data(TestImages.data(type: .jpeg, width: 3000, height: 2000, orientation: 6))
+        let preview = try #require(photo.upright(maxPixelSize: 180))
+        #expect(max(preview.width, preview.height) == 180)
+        #expect(preview.height > preview.width)
+    }
+
+    @Test func pendingCameraImagePreviewIsScaledDown() throws {
+        let photo = ReviewForm.PendingPhoto.image(TestImages.cgImage(width: 1200, height: 3000))
+        let preview = try #require(photo.upright(maxPixelSize: 180))
+        #expect(preview.height == 180)
+        #expect(preview.width == 72)
+    }
+
+    @Test func smallCameraImageIsReturnedAsItIs() throws {
+        let image = TestImages.cgImage(width: 100, height: 150)
+        #expect(ReviewForm.PendingPhoto.image(image).upright(maxPixelSize: 180) === image)
+    }
+
+    @Test func undecodablePendingPhotoHasNoPreview() {
+        #expect(ReviewForm.PendingPhoto.data(Data("nope".utf8)).upright(maxPixelSize: 180) == nil)
+    }
+
     @Test(arguments: ["../secret.jpg", "abc.jpg", "photo.png", "", "/etc/passwd"])
     func rejectsNamesItDidNotCreate(name: String) throws {
         let temp = try TempPhotoStore()

@@ -103,12 +103,18 @@ public final class PhotoStore: Sendable {
         return CGImageSourceCreateImageAtIndex(source, 0, options)
     }
 
-    /// A small upright image for list rows, decoded without loading the full photo.
+    /// An upright image with the long side at most `maxPixelSize` (never enlarged), decoded
+    /// now rather than when it is first drawn. Slow for big sizes: call it off the main actor.
     public func thumbnail(for name: String, maxPixelSize: Int = PhotoStore.thumbnailPixelSize) throws -> CGImage? {
         guard let source = try imageSource(for: name) else { return nil }
+        return Self.thumbnail(from: source, maxPixelSize: maxPixelSize)
+    }
+
+    static func thumbnail(from source: CGImageSource, maxPixelSize: Int) -> CGImage? {
         let options = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
         ] as CFDictionary
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options)

@@ -103,11 +103,37 @@ private func rotatedAnticlockwise(_ image: CGImage) -> CGImage {
         #expect(s.result == nil)
     }
 
-    @Test func undecodablePhotoFailsAtOnce() {
+    @Test func undecodablePhotoFails() async {
         let s = session(MockOCR(observations: rows))
         s.start(imageData: Data("not an image".utf8))
+        await s.waitUntilFinished()
         #expect(s.phase == .failed(.unreadableImage))
         #expect(s.image == nil)
+        #expect(s.imageData == nil)
+    }
+
+    /// Decoding happens off the main actor: `start` returns with the progress phase up and
+    /// the image still to come, so picking a big photo never freezes the screen.
+    @Test func libraryPhotoIsDecodedInTheBackground() async throws {
+        let data = try ScanTestImages.bundledData("sample-receipt")
+        let s = session(MockOCR(observations: rows))
+        s.start(imageData: data)
+        #expect(s.phase == .processing(.readingText))
+        #expect(s.image == nil)
+        await s.waitUntilFinished()
+        #expect(s.image != nil)
+        #expect(s.phase == .finished)
+    }
+
+    @Test func cancellingWhileDecodingKeepsNothing() async throws {
+        let data = try ScanTestImages.bundledData("sample-receipt")
+        let s = session(MockOCR(observations: rows))
+        s.start(imageData: data)
+        s.cancel()
+        try await Task.sleep(for: .milliseconds(300))
+        #expect(s.phase == .idle)
+        #expect(s.image == nil)
+        #expect(s.imageData == nil)
     }
 
     @Test func cancelKeepsNothing() async {
@@ -140,6 +166,7 @@ private func rotatedAnticlockwise(_ image: CGImage) -> CGImage {
     @Test func scanningAgainAfterAFailedPhotoKeepsNothingOfIt() async {
         let s = session(MockOCR(observations: rows))
         s.start(imageData: Data("not an image".utf8))
+        await s.waitUntilFinished()
         #expect(s.phase == .failed(.unreadableImage))
         #expect(s.source == .photoLibrary)
 

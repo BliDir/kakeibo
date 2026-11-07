@@ -122,10 +122,10 @@ import Testing
 
     // MARK: Save
 
-    @Test func savingAScanStoresExpenseAndPhoto() throws {
+    @Test func savingAScanStoresExpenseAndPhoto() async throws {
         let form = scanForm(photo: .data(TestImages.data()))
         form.note = "週末"
-        let expense = try form.save(repository: repo, photoStore: temp.store, now: Self.now)
+        let expense = try await form.save(repository: repo, photoStore: temp.store, now: Self.now)
 
         #expect(expense.source == .scan)
         #expect(expense.totalYen == 1_310)
@@ -136,42 +136,42 @@ import Testing
         #expect(try repo.expenses(inMonth: "2026-10").count == 1)
     }
 
-    @Test func savingACameraScanStoresTheImage() throws {
+    @Test func savingACameraScanStoresTheImage() async throws {
         let form = scanForm(photo: .image(TestImages.cgImage(width: 200, height: 300)))
-        let expense = try form.save(repository: repo, photoStore: temp.store, now: Self.now)
+        let expense = try await form.save(repository: repo, photoStore: temp.store, now: Self.now)
         #expect(try temp.store.image(for: try #require(expense.photoFileName))?.width == 200)
     }
 
-    @Test func failedSaveLeavesNoOrphanPhoto() throws {
+    @Test func failedSaveLeavesNoOrphanPhoto() async throws {
         var draft = Self.scanDraft()
         draft.dayKey = nil                         // the repository rejects this
         let form = scanForm(draft, photo: .data(TestImages.data()))
-        #expect(throws: ExpenseRepository.Error.missingDayKey) {
-            try form.save(repository: repo, photoStore: temp.store, now: Self.now)
+        await #expect(throws: ExpenseRepository.Error.missingDayKey) {
+            _ = try await form.save(repository: repo, photoStore: temp.store, now: Self.now)
         }
         #expect(try temp.store.storedNames().isEmpty)
     }
 
-    @Test func savingManualEntry() throws {
+    @Test func savingManualEntry() async throws {
         let form = ReviewForm(manualOn: Self.now)
         form.amountText = "880"
         form.draft.storeName = "喫茶ポエム"
         form.draft.category = .dining
-        let expense = try form.save(repository: repo, photoStore: temp.store, now: Self.now)
+        let expense = try await form.save(repository: repo, photoStore: temp.store, now: Self.now)
         #expect(expense.source == .manual)
         #expect(expense.photoFileName == nil)
         #expect(expense.category == .dining)
         #expect(try temp.store.storedNames().isEmpty)
     }
 
-    @Test func savingAnEditUpdatesTheSameExpense() throws {
+    @Test func savingAnEditUpdatesTheSameExpense() async throws {
         let saved = try repo.create(from: Self.scanDraft(), source: .scan, now: Self.now)
         let form = ReviewForm(editing: saved)
         #expect(form.draft.totalYen == 1_310)
         #expect(form.draft.items.map(\.name) == ["牛乳"])
         form.amountText = "1400"
         form.note = "修正"
-        let updated = try form.save(repository: repo, photoStore: temp.store, now: Self.now)
+        let updated = try await form.save(repository: repo, photoStore: temp.store, now: Self.now)
         #expect(updated.id == saved.id)
         #expect(updated.totalYen == 1_400)
         #expect(updated.note == "修正")

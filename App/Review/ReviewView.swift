@@ -20,6 +20,10 @@ struct ReviewView: View {
     @State private var showPhoto = false
     @State private var saveFailed = false
     @State private var showMore = false
+    /// The receipt row's small preview, made in the background (see `ReceiptPhotos`).
+    @State private var photoPreview: UIImage?
+    /// True while Save writes the photo and the expense, so a second tap does nothing.
+    @State private var isSaving = false
     @State private var duplicate: ExpenseRepository.PossibleDuplicate?
     #if DEBUG
     @State private var fixtureFiles: FixtureFiles?
@@ -60,7 +64,11 @@ struct ReviewView: View {
         .animation(.easeOut(duration: 0.2), value: duplicate != nil)
         .animation(.easeOut(duration: 0.2), value: saveFailed)
         .fullScreenCover(isPresented: $showPhoto) {
-            PhotoZoomView(image: photoImage)
+            PhotoZoomView { await loadPhoto(maxPixelSize: ReceiptPhotos.zoomPixelSize) }
+        }
+        .task {
+            guard form.hasPhoto else { return }
+            photoPreview = await loadPhoto(maxPixelSize: ReceiptPhotos.previewPixelSize)
         }
         #if DEBUG
         .sheet(item: $fixtureFiles) { files in
@@ -124,7 +132,7 @@ struct ReviewView: View {
     private var photoSection: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             ReceiptLink(
-                image: photoImage,
+                image: photoPreview,
                 title: form.isScan ? "review.receipt.captured" : "review.receipt.original",
                 subtitle: receiptSubtitle
             ) { showPhoto = true }
@@ -157,18 +165,9 @@ struct ReviewView: View {
         return parts.joined(separator: " · ")
     }
 
-    private var photoImage: UIImage? {
-        if let pending = form.pendingPhoto {
-            switch pending {
-            case .image(let image): return UIImage(cgImage: image)
-            case .data(let data): return UIImage(data: data)
-            }
-        }
-        // UIImage applies the saved EXIF orientation.
-        if let name = form.storedPhotoName, let url = try? services.photoStore?.url(for: name) {
-            return UIImage(contentsOfFile: url.path)
-        }
-        return nil
+    private func loadPhoto(maxPixelSize: Int) async -> UIImage? {
+        await ReceiptPhotos.load(pending: form.pendingPhoto, storedName: form.storedPhotoName,
+                                 photoStore: services.photoStore, maxPixelSize: maxPixelSize)
     }
 
     // MARK: Amount
@@ -443,7 +442,7 @@ struct ReviewView: View {
 
     /// Save button: warns first when the ledger already has an expense that looks like this one.
     private func save() {
-        guard form.canSave else { return }
+        guard form.canSave, !isSaving else { return }
         // A failed check must not stop the save; the warning is only a help.
         if let match = try? form.possibleDuplicates(repository: services.repository).first {
             // Put the keyboard away so the whole warning is visible.
@@ -459,14 +458,18 @@ struct ReviewView: View {
     private func saveNow() {
         duplicate = nil
         saveFailed = false
-        guard form.canSave, let total = form.draft.totalYen else { return }
-        do {
-            try form.save(repository: services.repository, photoStore: services.photoStore)
-            onFinish(.saved(totalYen: total))
-        } catch {
-            // Put the keyboard away so the whole panel shows; the form keeps everything typed.
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            saveFailed = true
+        guard form.canSave, !isSaving else { return }
+        isSaving = true
+        Task {
+            defer { isSaving = false }
+            do {
+                let expense = try await form.save(repository: services.repository, photoStore: services.photoStore)
+                onFinish(.saved(totalYen: expense.totalYen))
+            } catch {
+                // Put the keyboard away so the whole panel shows; the form keeps everything typed.
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                saveFailed = true
+            }
         }
     }
 

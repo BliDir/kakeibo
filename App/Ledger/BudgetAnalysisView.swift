@@ -169,8 +169,12 @@ private struct AnalysisContent: View {
     private func projection(_ projected: Int) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("analysis.projection.label").eyebrow(uppercase: false)
-            Text("analysis.projection \(LedgerFormat.yen(projected))")
-                .accessibilityLabel(Text("analysis.projection \(LedgerFormat.spokenYen(projected))"))
+            // The figure gets its own line: inside a sentence, Japanese line breaking split it
+            // ("約123,3 / 33円") at the largest text sizes.
+            Text("analysis.projection.lead")
+                .font(.subheadline)
+                .foregroundStyle(Theme.text)
+            YenText(projected)
                 .font(.headline.monospacedDigit())
                 .foregroundStyle(Theme.text)
             Text("analysis.projection.note")

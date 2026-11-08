@@ -1,4 +1,5 @@
 import KakeiboScan
+import KakeiboStore
 import PhotosUI
 import SwiftUI
 
@@ -50,7 +51,11 @@ struct ScanSources: ViewModifier {
                         showCamera = false
                         session.start(image: image, source: .camera)
                     },
-                    onCancel: { showCamera = false }
+                    onCancel: {
+                        showCamera = false
+                        // No page to read: VisionKit's copies can go at once (B-12).
+                        try? ScratchFiles.clearScannedPages()
+                    }
                 )
                 .ignoresSafeArea()
             }

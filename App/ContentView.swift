@@ -169,6 +169,8 @@ struct ContentView: View {
     }
 
     private func openPendingExpense() {
+        // Whichever cover closed, no scan is in progress now (B-12).
+        services.clearScannedPages()
         if manualAfterDismiss {
             manualAfterDismiss = false
             openManualEntry()

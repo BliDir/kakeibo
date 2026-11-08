@@ -5,6 +5,10 @@ import SwiftUI
 /// "Export expenses" (visual refresh, UI-05): choose the shown month or its whole year, then
 /// hand the CSV to the iOS share sheet. Both files are written when the sheet opens (they are
 /// small); the CSV format itself is `ExpenseCSV`'s and does not change here.
+///
+/// B-12: the files are protected while they exist (`ScratchFiles`). A file is deleted when its
+/// share sheet finishes (shared, saved or cancelled) and written again if Share is tapped once
+/// more; all of them are deleted when this screen closes.
 struct ExportSheet: View {
     let month: LedgerMonth
     let repository: ExpenseRepository
@@ -20,6 +24,15 @@ struct ExportSheet: View {
 
     @State private var load: Load = .loading
     @State private var period: Period = .month
+    /// The file in the open share sheet.
+    @State private var sharing: SharedFile?
+    /// The last file handed to the share sheet, deleted when the sheet has gone.
+    @State private var sharedURL: URL?
+
+    struct SharedFile: Identifiable {
+        let url: URL
+        var id: URL { url }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,6 +69,16 @@ struct ExportSheet: View {
         }
         .background(Theme.groundLight.ignoresSafeArea())
         .task { prepare() }
+        .sheet(item: $sharing, onDismiss: removeShared) { file in
+            ActivityShareSheet(url: file.url) { sharing = nil }
+                .presentationDetents([.medium, .large])
+                .ignoresSafeArea()
+        }
+        // Nothing is left behind once the screen has gone, whatever was or was not shared.
+        .onDisappear {
+            AppServices.logProtection("exports on close", ScratchFiles.exportDirectory)
+            try? makeExport().removeAll()
+        }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("export")
     }
@@ -147,7 +170,7 @@ struct ExportSheet: View {
     private var shareBar: some View {
         Group {
             if case .ready(let monthFile, let yearFile) = load, !selectedFile(monthFile, yearFile).isEmpty {
-                ShareLink(item: selectedFile(monthFile, yearFile).url) {
+                Button(action: share) {
                     Label("export.share", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(PrimaryButtonStyle(fullWidth: true))
@@ -171,6 +194,38 @@ struct ExportSheet: View {
     }
 
     // MARK: Files
+
+    /// Opens the share sheet with the chosen file, writing it again if an earlier share
+    /// sheet has already removed it.
+    private func share() {
+        guard case .ready(let monthFile, let yearFile) = load else { return }
+        var file = selectedFile(monthFile, yearFile)
+        if !FileManager.default.fileExists(atPath: file.url.path) {
+            let export = makeExport()
+            do {
+                if period == .month {
+                    file = try export.prepare(month: month)
+                    load = .ready(month: file, year: yearFile)
+                } else {
+                    file = try export.prepare(year: month.year)
+                    load = .ready(month: monthFile, year: file)
+                }
+            } catch {
+                load = .failed
+                return
+            }
+        }
+        sharedURL = file.url
+        sharing = SharedFile(url: file.url)
+    }
+
+    /// The share sheet has gone: the file was shared, saved or cancelled, so it goes too.
+    private func removeShared() {
+        guard let sharedURL else { return }
+        self.sharedURL = nil
+        AppServices.logProtection("export", sharedURL.deletingLastPathComponent())
+        try? makeExport().remove(sharedURL)
+    }
 
     private func prepare() {
         load = .loading

@@ -14,11 +14,15 @@ import UniformTypeIdentifiers
 /// `real-<timestamp>.jpg` (downscaled to the OCR size, for re-OCR later; not for the repo).
 @MainActor
 enum FixtureCapture {
+    /// Protected while the files exist and emptied at launch (B-12).
+    static var directory: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("Fixtures", isDirectory: true)
+    }
+
     static func makeFiles(from form: ReviewForm, now: Date = .now) throws -> [URL] {
         let name = FixtureWriter.name(at: now)
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Fixtures", isDirectory: true)
-            .appendingPathComponent(name, isDirectory: true)
+        try ScratchFiles.prepare(directory)
+        let folder = directory.appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
 
         let lines = (form.ocrText ?? "").components(separatedBy: "\n")

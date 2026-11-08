@@ -178,9 +178,33 @@ final class AppServices {
     }
     #endif
 
-    /// Deletes receipt photos no expense refers to (for example from a crash mid-save).
+    /// Deletes receipt photos no expense refers to (for example from a crash mid-save), and
+    /// leftover exports and scanned pages (B-12).
     func cleanUp() {
         _ = try? repository.removeOrphanPhotos()
+        var extra: [URL] = []
+        #if DEBUG
+        // Fixture capture files hold a receipt photo too.
+        extra.append(FixtureCapture.directory)
+        #endif
+        if let folder = try? ScratchFiles.documentCameraDirectory() { Self.logProtection("leftover scanned pages", folder) }
+        Self.logProtection("leftover exports", ScratchFiles.exportDirectory)
+        try? ScratchFiles.cleanUpAtLaunch(extra: extra)
+    }
+
+    /// The scan has ended (saved, discarded or cancelled): VisionKit's copies of the pages go.
+    func clearScannedPages() {
+        if let folder = try? ScratchFiles.documentCameraDirectory() { Self.logProtection("scanned pages", folder) }
+        try? ScratchFiles.clearScannedPages()
+    }
+
+    /// Debug `KAKEIBO_PROTECTION_REPORT=1`: prints the class of each file in `folder` just
+    /// before it is deleted (scratch files never live long enough for the launch report).
+    static func logProtection(_ label: String, _ folder: URL) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["KAKEIBO_PROTECTION_REPORT"] == "1" else { return }
+        print("[protection] \(label) before removal:\n" + DataProtection.report(folder).map(\.description).joined(separator: "\n"))
+        #endif
     }
 
     private static func makePipeline(_ environment: [String: String]) -> ExtractionPipeline {

@@ -18,10 +18,27 @@ struct LedgerView: View {
     var onOpenAlertSettings: (() -> Void)?
     /// The insight card's "See analysis" (v1.2, BI-04).
     var onSeeAnalysis: (() -> Void)?
+    /// Optional on-device wording for the insight card (v1.2, BI-06).
+    var summarizer: InsightSummarizer?
+
+    /// The last model answer, with the facts it was asked about.
+    @State private var modelSentence: (facts: InsightSummaryFacts, sentence: String?)?
 
     @State private var showExport = false
     @State private var budgetForm: BudgetFormItem?
     @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
+
+    /// BI-02's figures for the card, in the UI language; nil when there is no summary to reword.
+    private var summaryFacts: InsightSummaryFacts? {
+        guard summarizer != nil, let analysis = model.overspend else { return nil }
+        return InsightSummaryFacts(analysis, language: LedgerFormat.language)
+    }
+
+    private func sentence(for facts: InsightSummaryFacts?) -> String? {
+        guard let facts else { return nil }
+        if let modelSentence, modelSentence.facts == facts { return modelSentence.sentence }
+        return summarizer?.cachedSentence(for: facts) ?? nil
+    }
 
     var body: some View {
         ScrollView {
@@ -37,7 +54,8 @@ struct LedgerView: View {
                 }
                 budgetSection
                 if let analysis = model.overspend, let onSeeAnalysis {
-                    BudgetInsightCard(analysis: analysis, onSeeAnalysis: onSeeAnalysis)
+                    BudgetInsightCard(analysis: analysis, modelSentence: sentence(for: summaryFacts),
+                                      onSeeAnalysis: onSeeAnalysis)
                 }
                 if !model.isEmpty { activity }
                 if model.loadFailed {
@@ -49,6 +67,14 @@ struct LedgerView: View {
             .padding(.bottom, Spacing.l)
         }
         .background(Theme.groundLight.ignoresSafeArea())
+        .task(id: summaryFacts) {
+            // Template first; ask the model only for new facts, and drop the answer if they
+            // change before it comes back (the task is cancelled).
+            guard let facts = summaryFacts, let summarizer, summarizer.cachedSentence(for: facts) == nil else { return }
+            let sentence = await summarizer.sentence(for: facts)
+            guard !Task.isCancelled else { return }
+            modelSentence = (facts, sentence)
+        }
         .sheet(item: $budgetForm) { item in
             BudgetSheet(form: item.form)
                 .presentationDetents([.large])

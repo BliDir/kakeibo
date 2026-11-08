@@ -103,3 +103,24 @@ enum GeneratedPayment {
         }
     }
 }
+
+/// Writes the insight card's sentence with Apple's on-device model (v1.2, BI-06). Only the
+/// facts' prompt is sent; the answer is checked by `InsightSummarizer` before it is shown.
+public struct FoundationModelsInsightModel: InsightSentenceModel {
+    public init() {}
+
+    public func supports(_ language: AppLanguage) -> Bool {
+        let model = SystemLanguageModel.default
+        guard case .available = model.availability else { return false }
+        return model.supportsLocale(Locale(identifier: language == .ja ? "ja_JP" : "en_US"))
+    }
+
+    public func sentence(for request: InsightSentenceRequest) async throws -> String {
+        let session = LanguageModelSession(instructions: request.instructions)
+        let response = try await session.respond(
+            to: request.prompt,
+            options: GenerationOptions(sampling: .greedy, maximumResponseTokens: 120)
+        )
+        return response.content
+    }
+}

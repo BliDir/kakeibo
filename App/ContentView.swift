@@ -131,7 +131,8 @@ struct ContentView: View {
                 onManual: openManualEntry,
                 onShowTokens: showTokensAction,
                 onOpenAlertSettings: { tab = .settings },
-                onSeeAnalysis: { ledgerPath = [.analysis] }
+                onSeeAnalysis: { ledgerPath = [.analysis] },
+                summarizer: services.insightSummarizer
             )
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: LedgerRoute.self) { route in

@@ -10,8 +10,8 @@ struct ContentView: View {
     @State private var session: ScanSession
     @State private var ledger: LedgerModel
     @State private var editor: EditorItem?
-    /// Saved expenses opened from the ledger (expense details).
-    @State private var ledgerPath: [Expense] = []
+    /// Screens pushed on the ledger tab: expense details, the budget analysis, a filtered ledger.
+    @State private var ledgerPath: [LedgerRoute] = []
     @State private var banner: Banner?
     @State private var tab: AppTab = .ledger
     @Environment(\.scenePhase) private var scenePhase
@@ -127,22 +127,33 @@ struct ContentView: View {
                 model: ledger,
                 session: session,
                 photoStore: services.photoStore,
-                onSelect: { expense in ledgerPath = [expense] },
+                onSelect: { expense in ledgerPath = [.expense(expense)] },
                 onManual: openManualEntry,
                 onShowTokens: showTokensAction,
-                onOpenAlertSettings: { tab = .settings }
+                onOpenAlertSettings: { tab = .settings },
+                onSeeAnalysis: { ledgerPath = [.analysis] }
             )
             .toolbar(.hidden, for: .navigationBar)
-            .navigationDestination(for: Expense.self) { expense in
-                ExpenseDetailView(
-                    expense: expense,
-                    services: services,
-                    onEdit: { editor = EditorItem(form: ReviewForm(editing: $0)) },
-                    onDeleted: {
-                        ledgerPath.removeAll()
-                        show(.deleted)
+            .navigationDestination(for: LedgerRoute.self) { route in
+                switch route {
+                case .expense(let expense):
+                    ExpenseDetailView(
+                        expense: expense,
+                        services: services,
+                        onEdit: { editor = EditorItem(form: ReviewForm(editing: $0)) },
+                        onDeleted: {
+                            // Back to where the details were opened from (the ledger or a filtered ledger).
+                            if !ledgerPath.isEmpty { ledgerPath.removeLast() }
+                            show(.deleted)
+                        }
+                    )
+                case .analysis:
+                    BudgetAnalysisView(model: ledger) { target in ledgerPath.append(.filtered(target)) }
+                case .filtered(let target):
+                    FilteredLedgerView(model: ledger, target: target, photoStore: services.photoStore) { expense in
+                        ledgerPath.append(.expense(expense))
                     }
-                )
+                }
             }
         }
         .tint(Theme.accent)
@@ -179,7 +190,7 @@ struct ContentView: View {
         guard let expense = openAfterDismiss else { return }
         openAfterDismiss = nil
         tab = .ledger
-        ledgerPath = [expense]
+        ledgerPath = [.expense(expense)]
     }
 
     private func show(_ banner: Banner) {
@@ -199,6 +210,15 @@ struct ContentView: View {
         session.start(imageData: data)
     }
     #endif
+}
+
+/// A screen pushed on the ledger tab's navigation stack.
+enum LedgerRoute: Hashable {
+    case expense(Expense)
+    /// Why the shown month is over budget (BI-04).
+    case analysis
+    /// The shown month's expenses in one driver's category or store.
+    case filtered(InsightTarget)
 }
 
 enum AppTab: Hashable {

@@ -71,6 +71,7 @@ final class AppServices {
                 notificationCenter: uiTestNotificationCenter(environment)
             )
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
+            if let insight = environment["KAKEIBO_SEED_INSIGHT"] { services.seedInsight(insight) }
             services.failSavesIfRequested(environment)
             return services
         }
@@ -175,6 +176,59 @@ final class AppServices {
         let past = BudgetMonth(monthKey: thisMonth.previous.key, budgetYen: 5_000, createdAt: .now, updatedAt: .now)
         container.mainContext.insert(past)
         try? container.mainContext.save()
+    }
+    #endif
+
+    #if DEBUG
+    /// `KAKEIBO_SEED_INSIGHT=over|onPace|closed|limited`: made-up months for the budget insight
+    /// card and analysis (BI-04). Four usual months before this one (groceries, dining out and
+    /// café visits), then:
+    /// - `over`: this month ¥37,000 against a ¥30,000 budget (more dining out, a large one-off);
+    /// - `onPace`: the same month against ¥40,000 (92%);
+    /// - `closed`: last month spent the same ¥37,000 against a ¥30,000 budget; this month has none;
+    /// - `limited`: `over` with no earlier months (limited history).
+    private func seedInsight(_ kind: String) {
+        let thisMonth = LedgerMonth(containing: .now)
+        let today = Int(DayKey.make(from: .now).suffix(2))!
+        func day(_ month: LedgerMonth, _ d: Int) -> String { month.key + String(format: "-%02d", min(max(d, 1), 28)) }
+        func add(_ dayKey: String, _ store: String, _ english: String?, _ yen: Int, _ category: ExpenseCategory,
+                 _ payment: PaymentMethod = .credit) {
+            let draft = ReceiptDraft(storeName: store, storeNameEn: english, dayKey: dayKey, totalYen: yen,
+                                     payment: payment, category: category)
+            _ = try? repository.create(from: draft, source: .manual)
+        }
+        func usual(_ month: LedgerMonth) {
+            for d in [3, 12, 21] { add(day(month, d), "まいばすけっと 架空町店", "My Basket", 10_000, .groceries, .icCard) }
+            for d in [6, 18] { add(day(month, d), "さくら食堂", nil, 1_500, .dining) }
+            for d in [9, 24] { add(day(month, d), "スターバックス", "Starbucks", 500, .dining) }
+        }
+        /// ¥37,000 up to `last`: usual groceries, more dining out, and a large one-off.
+        func busy(_ month: LedgerMonth, last: Int) {
+            add(day(month, 1), "まいばすけっと 架空町店", "My Basket", 10_000, .groceries, .icCard)
+            for d in [last, last - 1, last - 2] { add(day(month, d), "さくら食堂", nil, 3_000, .dining) }
+            add(day(month, last - 1), "ニトリ", "Nitori", 18_000, .household)
+        }
+        func setPastBudget(_ yen: Int, _ month: LedgerMonth) {
+            container.mainContext.insert(BudgetMonth(monthKey: month.key, budgetYen: yen, createdAt: .now, updatedAt: .now))
+            try? container.mainContext.save()
+        }
+        // The four months before the analysed one (this month, or last month for `closed`).
+        if kind != "limited" {
+            var month = kind == "closed" ? thisMonth.previous : thisMonth
+            for _ in 0..<4 { month = month.previous; usual(month) }
+        }
+        switch kind {
+        case "closed":
+            busy(thisMonth.previous, last: 27)
+            setPastBudget(30_000, thisMonth.previous)
+            add(day(thisMonth, today), "スターバックス", "Starbucks", 500, .dining)
+        case "onPace":
+            busy(thisMonth, last: today)
+            try? budgets.setBudget(40_000, for: thisMonth, now: .now)
+        default:
+            busy(thisMonth, last: today)
+            try? budgets.setBudget(30_000, for: thisMonth, now: .now)
+        }
     }
     #endif
 

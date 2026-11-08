@@ -4,7 +4,8 @@ import KakeiboStore
 import SwiftUI
 
 /// The ledger home screen (visual refresh, UI-02): the month's total at a glance, the three
-/// ways to add an expense, the top category, the budget, and the month's activity by day.
+/// ways to add an expense, the top category, the budget, the over-budget insight (BI-04), and
+/// the month's activity by day.
 struct LedgerView: View {
     let model: LedgerModel
     let session: ScanSession
@@ -15,6 +16,8 @@ struct LedgerView: View {
     var onShowTokens: (() -> Void)?
     /// The budget card's "Budget alert settings": opens the Settings tab.
     var onOpenAlertSettings: (() -> Void)?
+    /// The insight card's "See analysis" (v1.2, BI-04).
+    var onSeeAnalysis: (() -> Void)?
 
     @State private var showExport = false
     @State private var budgetForm: BudgetFormItem?
@@ -33,6 +36,9 @@ struct LedgerView: View {
                     insight
                 }
                 budgetSection
+                if let analysis = model.overspend, let onSeeAnalysis {
+                    BudgetInsightCard(analysis: analysis, onSeeAnalysis: onSeeAnalysis)
+                }
                 if !model.isEmpty { activity }
                 if model.loadFailed {
                     Text("ledger.loadFailed").font(.caption).foregroundStyle(Theme.destructive)
@@ -443,8 +449,9 @@ struct WrapLayout: Layout {
     }
 }
 
-/// One day: its date and subtotal ("FRI, NOV 6 · 金   ¥2,388"), then its expenses.
-private struct DaySection: View {
+/// One day: its date and subtotal ("FRI, NOV 6 · 金   ¥2,388"), then its expenses. Also used
+/// by the filtered ledger.
+struct DaySection: View {
     let day: DayGroup<Expense>
     let photoStore: PhotoStore?
     let onSelect: (Expense) -> Void
@@ -569,7 +576,7 @@ private struct ReceiptThumbnail: View {
 }
 
 /// The budget form presented as a sheet.
-private struct BudgetFormItem: Identifiable {
+struct BudgetFormItem: Identifiable {
     let id = UUID()
     let form: BudgetForm
 }

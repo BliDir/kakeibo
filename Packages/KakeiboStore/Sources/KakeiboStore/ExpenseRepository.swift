@@ -169,6 +169,19 @@ public final class ExpenseRepository {
         try fetch(prefix: String(format: "%04d-", year))
     }
 
+    /// Expenses from the start of `first` up to (not including) `end`, newest day first. The
+    /// budget insights read their baseline history this way.
+    public func expenses(from first: LedgerMonth, before end: LedgerMonth) throws -> [Expense] {
+        guard first < end else { return [] }
+        // dayKeys are zero-padded `yyyy-MM-dd`, so string order is date order.
+        let lower = first.key + "-01", upper = end.key + "-01"
+        let descriptor = FetchDescriptor<Expense>(
+            predicate: #Predicate { $0.dayKey >= lower && $0.dayKey < upper },
+            sortBy: [SortDescriptor(\.dayKey, order: .reverse), SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try context.fetch(descriptor)
+    }
+
     public func expense(id: UUID) throws -> Expense? {
         var descriptor = FetchDescriptor<Expense>(predicate: #Predicate { $0.id == id })
         descriptor.fetchLimit = 1

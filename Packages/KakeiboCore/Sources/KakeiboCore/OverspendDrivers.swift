@@ -23,6 +23,15 @@ import Foundation
 public enum InsightTarget: Sendable, Hashable {
     case category(ExpenseCategory)
     case store(String)
+
+    /// Whether `item` belongs to this category or store, grouped the way the drivers group
+    /// them (stores by trimmed saved name; an unknown store matches no store).
+    public func matches(_ item: some InsightItem) -> Bool {
+        switch self {
+        case .category(let category): item.category == category
+        case .store(let name): StoreKey.make(item.storeName) == StoreKey.make(name) && StoreKey.make(name) != nil
+        }
+    }
 }
 
 /// One cause of the overspend, with its yen impact and the figures for its suggestion.

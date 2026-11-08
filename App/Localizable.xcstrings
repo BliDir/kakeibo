@@ -1,6 +1,635 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "analysis.closed.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This month has ended, so its budget can't be changed here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終了した月の予算はここでは変更できません。"
+          }
+        }
+      }
+    },
+    "analysis.driver.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows these expenses"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "該当する支出を表示します"
+          }
+        }
+      }
+    },
+    "analysis.drivers.limitedTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your largest categories"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出の多いカテゴリ"
+          }
+        }
+      }
+    },
+    "analysis.drivers.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What changed"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出が増えた理由"
+          }
+        }
+      }
+    },
+    "analysis.explained.limited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These are shares of the budget, not causes of overspending."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算に対する割合で、超過の原因を示すものではありません。"
+          }
+        }
+      }
+    },
+    "analysis.explained.onPace %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These explain %1$lld%% of the %2$@ spent above your usual pace."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以下の要因で、いつものペースを上回った%2$@の%1$lld%%を説明できます。"
+          }
+        }
+      }
+    },
+    "analysis.explained.over %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These explain %1$lld%% of the %2$@ overspend."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "以下の要因で、超過額%2$@の%1$lld%%を説明できます。"
+          }
+        }
+      }
+    },
+    "analysis.finalSpend %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Final spend %1$@ of a %2$@ budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確定支出%1$@ / 予算%2$@"
+          }
+        }
+      }
+    },
+    "analysis.guidance.daily": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Per day"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1日あたりの目安"
+          }
+        }
+      }
+    },
+    "analysis.guidance.guide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These are guides, not limits."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額は支出の目安です。"
+          }
+        }
+      }
+    },
+    "analysis.guidance.left %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ left."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り%@。"
+          }
+        }
+      }
+    },
+    "analysis.guidance.leftDays %@ %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ left. Days left including today: %2$lld (this week: %3$lld)."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残り%1$@ · 今日を含めて残り%2$lld日（今週は%3$lld日）。"
+          }
+        }
+      }
+    },
+    "analysis.guidance.over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The budget is used up, so both are ¥0. Keeping further spending low limits the overspend."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を使い切ったため、どちらも0円です。これからの支出を抑えると、超過を小さくできます。"
+          }
+        }
+      }
+    },
+    "analysis.guidance.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For the rest of the month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の残り"
+          }
+        }
+      }
+    },
+    "analysis.guidance.weekly": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Available this week"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週使える金額"
+          }
+        }
+      }
+    },
+    "analysis.headline.closed %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in review"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の振り返り"
+          }
+        }
+      }
+    },
+    "analysis.headline.current": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Understand your spending"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出を振り返る"
+          }
+        }
+      }
+    },
+    "analysis.limited.message": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparisons with your usual spending start after your first full month with expenses. For now, here are your largest categories."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出を記録した月が1か月分そろうと、いつもの支出と比較できます。今は支出の多いカテゴリを表示しています。"
+          }
+        }
+      }
+    },
+    "analysis.limited.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little more history helps"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録が増えると比較できます"
+          }
+        }
+      }
+    },
+    "analysis.method.closed %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compared with the full months of %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の月全体と比較しています。"
+          }
+        }
+      }
+    },
+    "analysis.method.common": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Each expense counts toward one reason only. Everything is worked out on this iPhone."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1つの支出は1つの要因にだけ数えます。分析はすべてこのiPhoneの中で行います。"
+          }
+        }
+      }
+    },
+    "analysis.method.current %@ %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compared with the average of %1$@, scaled to day %2$lld of %3$lld."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の平均を、%3$lld日中%2$lld日目までに換算して比較しています。"
+          }
+        }
+      }
+    },
+    "analysis.method.limited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There is no earlier month with expenses to compare with yet."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "比較できる過去の月の記録はまだありません。"
+          }
+        }
+      }
+    },
+    "analysis.method.projectionLater %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The month-end estimate appears from day %lld."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月末の見込みは%lld日から表示します。"
+          }
+        }
+      }
+    },
+    "analysis.method.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How this is worked out"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "計算方法"
+          }
+        }
+      }
+    },
+    "analysis.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This month is no longer over its budget or on pace to go over."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月は予算を超えるペースではなくなりました。"
+          }
+        }
+      }
+    },
+    "analysis.overBy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over budget by"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算の超過額"
+          }
+        }
+      }
+    },
+    "analysis.projection %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At this pace: about %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このペースなら約%@"
+          }
+        }
+      }
+    },
+    "analysis.projection.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Month-end estimate"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "月末の見込み"
+          }
+        }
+      }
+    },
+    "analysis.projection.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A simple estimate from the expenses recorded so far, not actual spending."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記録済みの支出から計算した見込みで、実際の支出ではありません。"
+          }
+        }
+      }
+    },
+    "analysis.review": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を見直す"
+          }
+        }
+      }
+    },
+    "analysis.spentOfBudget %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ spent of a %2$@ budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出%1$@ / 予算%2$@"
+          }
+        }
+      }
+    },
+    "analysis.spentSoFar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spent so far"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "これまでの支出"
+          }
+        }
+      }
+    },
+    "analysis.status.closed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Closed month · Read only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "終了した月 · 閲覧のみ"
+          }
+        }
+      }
+    },
+    "analysis.status.onPace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On pace to go over"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超過の見込み"
+          }
+        }
+      }
+    },
+    "analysis.status.over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Over budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を超過"
+          }
+        }
+      }
+    },
+    "analysis.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spending analysis"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出の分析"
+          }
+        }
+      }
+    },
     "budget.alert.100.title %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1743,6 +2372,550 @@
           "stringUnit": {
             "state": "translated",
             "value": "まだ保存されていません"
+          }
+        }
+      }
+    },
+    "filtered.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Analysis"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分析"
+          }
+        }
+      }
+    },
+    "filtered.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No expenses here this month."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の該当する支出はありません。"
+          }
+        }
+      }
+    },
+    "filtered.tag %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filtered · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "絞り込み中 · %@"
+          }
+        }
+      }
+    },
+    "filtered.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expenses"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出"
+          }
+        }
+      }
+    },
+    "insight.card.closed.title %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why %@ went over"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@が予算を超えた理由"
+          }
+        }
+      }
+    },
+    "insight.card.limited": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Comparisons with your usual spending start after your first full month with expenses."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出を記録した月が1か月分そろうと、いつもの支出と比較できます。"
+          }
+        }
+      }
+    },
+    "insight.card.onPace.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heads up"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月のペースに注意"
+          }
+        }
+      }
+    },
+    "insight.card.over.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Why am I over?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を超えた理由は？"
+          }
+        }
+      }
+    },
+    "insight.card.projection %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At this pace, about %@ by the end of the month."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このペースだと、月末には約%@になる見込みです。"
+          }
+        }
+      }
+    },
+    "insight.card.see": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See analysis"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "支出の分析を見る"
+          }
+        }
+      }
+    },
+    "insight.driver.categoryIncrease %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is %2$@ above usual."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@がいつもより%2$@多くなっています。"
+          }
+        }
+      }
+    },
+    "insight.driver.categoryIncrease.closed %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ was %2$@ above usual."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@がいつもより%2$@多くなりました。"
+          }
+        }
+      }
+    },
+    "insight.driver.largeOneOff %@ %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One purchase of %1$@ at %2$@ on %3$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%3$@に%2$@で%1$@の買い物がありました。"
+          }
+        }
+      }
+    },
+    "insight.driver.largeOneOff.noStore %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One purchase of %1$@ on %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%2$@に%1$@の買い物がありました。"
+          }
+        }
+      }
+    },
+    "insight.driver.largeOneOff.typical %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A typical one in this category is %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このカテゴリのいつもの金額は%@です。"
+          }
+        }
+      }
+    },
+    "insight.driver.moreVisits %@ %lld %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$lld visits vs %3$lld usual."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@：%2$lld回（いつもは%3$lld回）。"
+          }
+        }
+      }
+    },
+    "insight.driver.newSpending %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New this month: %1$@, %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月初めての支出：%1$@、%2$@。"
+          }
+        }
+      }
+    },
+    "insight.driver.shareOfBudget %@ %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is %2$lld%% of the %3$@ budget."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@は予算%3$@の%2$lld%%です。"
+          }
+        }
+      }
+    },
+    "insight.driver.spent %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@: %2$@ so far."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@：これまでに%2$@。"
+          }
+        }
+      }
+    },
+    "insight.kind.categoryIncrease": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Above usual"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "いつもより増加"
+          }
+        }
+      }
+    },
+    "insight.kind.largeOneOff": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One larger purchase"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大きな買い物"
+          }
+        }
+      }
+    },
+    "insight.kind.moreVisits": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More visits"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "利用回数の増加"
+          }
+        }
+      }
+    },
+    "insight.kind.newSpending": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New this month"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月初めての支出"
+          }
+        }
+      }
+    },
+    "insight.kind.shareOfBudget": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Share of budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算に占める割合"
+          }
+        }
+      }
+    },
+    "insight.noDrivers": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No single category or store stands out; spending is a little higher across the board."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "特に目立つカテゴリやお店はなく、全体的に少しずつ増えています。"
+          }
+        }
+      }
+    },
+    "insight.suggest.categoryIncrease %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeping it to %@ for the rest of the month brings you back on track."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の残りを%@までに抑えると、いつものペースに戻せます。"
+          }
+        }
+      }
+    },
+    "insight.suggest.categoryIncrease.over %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeping it to %@ for the rest of the month limits further overspending."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の残りを%@までに抑えると、これ以上の超過を抑えられます。"
+          }
+        }
+      }
+    },
+    "insight.suggest.categoryIncrease.reached": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It has already reached a usual month's amount, so spending less here limits further overspending."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "すでにいつもの1か月分に達しています。ここを控えると、これ以上の超過を抑えられます。"
+          }
+        }
+      }
+    },
+    "insight.suggest.largeOneOff.check": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Worth checking whether it will come up again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "また必要になる支出か確認しておくと安心です。"
+          }
+        }
+      }
+    },
+    "insight.suggest.largeOneOff.onTrack": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If it was a one-off, your usual spending is on track."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一時的な出費なら、いつもの支出は予算内のペースです。"
+          }
+        }
+      }
+    },
+    "insight.suggest.moreVisits %lld %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld fewer visits saves about %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld回減らすと約%2$@の節約になります。"
+          }
+        }
+      }
+    },
+    "insight.suggest.moreVisits.one %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One fewer visit saves about %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1回減らすと約%@の節約になります。"
           }
         }
       }

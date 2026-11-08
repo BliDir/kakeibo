@@ -23,6 +23,9 @@ public final class LedgerModel {
     public private(set) var loadFailed = false
     /// The shown month's budget against its spend (v1.1). `.unset` status when there is none.
     public private(set) var budgetSummary: BudgetSummary?
+    /// Why the shown month is over (or on pace to go over) its budget (v1.2, BI-02/BI-04).
+    /// Nil when it has no insight: no budget, under pace, or figures that could not be read.
+    public private(set) var overspend: OverspendAnalysis?
 
     public let repository: ExpenseRepository
     /// Budgets; nil where budgets are not wired in (older tests and previews).
@@ -68,6 +71,16 @@ public final class LedgerModel {
         return try? BudgetForm(repository: budgets, month: month, now: today())
     }
 
+    /// How many months before the shown one are read for the insight baseline. The baseline
+    /// uses the last 3 of them that have an expense, so a few empty months are skipped.
+    public static let insightHistoryMonths = 12
+
+    /// The shown month's expenses in a driver's category or store, newest first (the filtered
+    /// ledger opened from the analysis).
+    public func expenses(for target: InsightTarget) -> [Expense] {
+        expenses.filter { target.matches($0) }
+    }
+
     /// This month against the one before.
     public var comparison: MonthComparison { MonthComparison(current: summary, previous: previousSummary) }
 
@@ -110,7 +123,19 @@ public final class LedgerModel {
             // A failed budget read shows the month without budget figures rather than wrong ones.
             let budget = (try? budgets.budget(for: month, now: today())) ?? .unset
             budgetSummary = BudgetSummary(month: month, budget: budget, items: expenses, now: today())
+            overspend = loadFailed ? nil : analysis(budget: budget)
         }
         days = DayGroup.group(expenses)
+    }
+
+    /// BI-02's analysis of the shown month, or nil when it has no insight card.
+    private func analysis(budget: MonthlyBudget) -> OverspendAnalysis? {
+        // Only a set budget can be over; skip reading the history otherwise.
+        guard case .yen = budget else { return nil }
+        var first = month
+        for _ in 0..<Self.insightHistoryMonths { first = first.previous }
+        guard let history = try? repository.expenses(from: first, before: month) else { return nil }
+        let analysis = OverspendAnalysis(month: month, budget: budget, items: expenses, history: history, now: today())
+        return analysis.insight.state == .none ? nil : analysis
     }
 }

@@ -5,12 +5,12 @@ import KakeiboCore
 @MainActor
 public struct ExpenseExport {
     public let repository: ExpenseRepository
-    /// Where files are written. They are recreated on every export and stay on the device
-    /// until the user shares them.
+    /// Where files are written: a folder of their own with `.complete` protection. Delete a
+    /// file with `remove(_:)` when its share sheet finishes, and everything with `removeAll()`
+    /// when the export screen closes (see `ScratchFiles`).
     public let directory: URL
 
-    public init(repository: ExpenseRepository,
-                directory: URL = FileManager.default.temporaryDirectory.appendingPathComponent("Export", isDirectory: true)) {
+    public init(repository: ExpenseRepository, directory: URL = ScratchFiles.exportDirectory) {
         self.repository = repository
         self.directory = directory
     }
@@ -57,10 +57,20 @@ public struct ExpenseExport {
         ExpenseCSV.document(expenses.reversed().map(\.csvRow))
     }
 
+    /// Deletes one exported file (its share sheet has finished). A missing file is fine.
+    public func remove(_ url: URL) throws {
+        try ScratchFiles.remove(url)
+    }
+
+    /// Deletes every exported file (the export screen has closed).
+    public func removeAll() throws {
+        try ScratchFiles.empty(directory)
+    }
+
     private func write(_ expenses: [Expense], name: String) throws -> URL {
-        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try ScratchFiles.prepare(directory)
         let url = directory.appendingPathComponent(name)
-        try Self.csv(expenses).write(to: url, options: .atomic)
+        try Self.csv(expenses).write(to: url, options: [.atomic, .completeFileProtection])
         return url
     }
 }

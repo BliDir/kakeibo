@@ -543,6 +543,29 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ledger.export"].waitForExistence(timeout: 3))
     }
 
+    /// B-12: Share opens the iOS share sheet; cancelling it deletes the file, and sharing again
+    /// writes it again, so the sheet opens a second time with no error.
+    @MainActor
+    func testShareSheetCanBeCancelledAndOpenedAgain() {
+        let app = launch(seed: true)
+        app.buttons["ledger.export"].tap()
+        XCTAssertTrue(app.buttons["export.choice.month"].waitForExistence(timeout: 5))
+        for attempt in 1...2 {
+            app.buttons["export.share"].tap()
+            let sheet = app.otherElements["ActivityListView"]
+            XCTAssertTrue(sheet.waitForExistence(timeout: 10), "share sheet, attempt \(attempt)")
+            // The share sheet's close button (an X, "Close").
+            let close = sheet.buttons["Close"].exists ? sheet.buttons["Close"] : app.buttons["Close"].firstMatch
+            XCTAssertTrue(close.waitForExistence(timeout: 5))
+            close.tap()
+            XCTAssertTrue(sheet.waitForNonExistence(timeout: 5))
+            XCTAssertFalse(app.descendants(matching: .any)["export.failed"].firstMatch.exists)
+            XCTAssertTrue(app.buttons["export.share"].isEnabled)
+        }
+        app.buttons["export.close"].tap()
+        XCTAssertTrue(app.buttons["ledger.export"].waitForExistence(timeout: 3))
+    }
+
     /// An empty month says so, and there is nothing to share.
     @MainActor
     func testExportOfAnEmptyMonthHasNothingToShare() {

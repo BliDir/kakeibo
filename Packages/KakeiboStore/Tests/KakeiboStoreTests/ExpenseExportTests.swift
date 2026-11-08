@@ -112,4 +112,109 @@ import Testing
         try add("2026-11-02", "New", 500)
         #expect(try rows(try export.file(for: month)).count == 2)
     }
+    // MARK: Protection and clean-up (B-12)
+
+    @Test(.enabled(if: DataProtectionTests.classesSupported)) func exportedFilesAreComplete() throws {
+        try add("2026-11-03", "ローソン", 378)
+        let file = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        #expect(DataProtection.protection(of: file.url) == .complete)
+        #expect(DataProtection.protection(of: directory) == .complete)
+    }
+
+    /// The share sheet finished (shared, saved or cancelled): that file goes, the other stays
+    /// until the export screen closes.
+    @Test func removingASharedFileLeavesTheOther() throws {
+        try add("2026-11-03", "ローソン", 378)
+        let month = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        let year = try export.prepare(year: 2026)
+        try export.remove(month.url)
+        #expect(!FileManager.default.fileExists(atPath: month.url.path))
+        #expect(FileManager.default.fileExists(atPath: year.url.path))
+    }
+
+    @Test func closingTheExportScreenRemovesEverything() throws {
+        try add("2026-11-03", "ローソン", 378)
+        _ = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        _ = try export.prepare(year: 2026)
+        try export.removeAll()
+        #expect(try FileManager.default.contentsOfDirectory(atPath: directory.path).isEmpty)
+    }
+
+    @Test func removingTwiceIsFine() throws {
+        let file = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        try export.remove(file.url)
+        try export.remove(file.url)
+        try export.removeAll()
+        try ExpenseExport(repository: repo, directory: directory.appendingPathComponent("never")).removeAll()
+    }
+
+    /// Sharing again after the file was removed writes the same CSV again.
+    @Test func exportingAfterRemovalWritesTheSameContent() throws {
+        try add("2026-11-03", "ローソン", 378)
+        let first = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        let bytes = try Data(contentsOf: first.url)
+        try export.remove(first.url)
+        let again = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        #expect(again == first)
+        #expect(try Data(contentsOf: again.url) == bytes)
+    }
+
+    /// The file is exactly the CSV document: protection and clean-up change nothing in it.
+    @Test func fileContentIsTheCSVDocument() throws {
+        try add("2026-11-03", "ローソン", 378, items: [LineItemDraft(name: "緑茶", priceYen: 140, isReducedRate: true)])
+        try add("2026-11-01", "=西友", 1_200)
+        let file = try export.prepare(month: LedgerMonth(year: 2026, month: 11))
+        let expected = ExpenseExport.csv(try repo.expenses(inMonth: "2026-11"))
+        #expect(try Data(contentsOf: file.url) == expected)
+        #expect(try rows(file.url).contains { $0.contains("'=西友") }, "formula guard still applied")
+    }
+}
+
+/// Leftover scratch files and their folders (B-12).
+@Suite struct ScratchFilesTests {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("ScratchFiles-\(UUID().uuidString)")
+
+    private func makeFolder(_ name: String, files: [String]) throws -> URL {
+        let folder = root.appendingPathComponent(name)
+        try FileManager.default.createDirectory(at: folder.appendingPathComponent("Scans"), withIntermediateDirectories: true)
+        for file in files { try Data("x".utf8).write(to: folder.appendingPathComponent(file)) }
+        return folder
+    }
+
+    /// After a crash: leftover exports and scanned pages (also in subfolders) are removed at launch.
+    @Test func launchRemovesLeftovers() throws {
+        let export = try makeFolder("Export", files: ["kakeibo-2026-11.csv", "kakeibo-2026.csv"])
+        let camera = try makeFolder("com.apple.DocumentCamera", files: ["Scans/page.jpg"])
+        try ScratchFiles.cleanUp([export, camera])
+        #expect(try FileManager.default.contentsOfDirectory(atPath: export.path).isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: camera.path).isEmpty)
+    }
+
+    @Test func launchCreatesMissingFoldersProtected() throws {
+        let export = root.appendingPathComponent("Export")
+        try ScratchFiles.cleanUp([export])
+        #expect(FileManager.default.fileExists(atPath: export.path))
+        if DataProtectionTests.classesSupported {
+            #expect(DataProtection.protection(of: export) == .complete)
+            // A scanned page written later inherits the folder's class.
+            let page = export.appendingPathComponent("page.jpg")
+            try Data("x".utf8).write(to: page)
+            #expect(DataProtection.protection(of: page) == .complete)
+        }
+    }
+
+    @Test func emptyingKeepsTheFolder() throws {
+        let folder = try makeFolder("Export", files: ["a.csv"])
+        #expect(try ScratchFiles.empty(folder) == 2)   // a.csv and Scans
+        #expect(FileManager.default.fileExists(atPath: folder.path))
+        #expect(try ScratchFiles.empty(root.appendingPathComponent("missing")) == 0)
+    }
+
+    @Test func oneFailingFolderDoesNotStopTheOthers() throws {
+        let export = try makeFolder("Export", files: ["a.csv"])
+        #expect(throws: (any Error).self) {
+            try ScratchFiles.cleanUp([URL(fileURLWithPath: "/dev/null/Export"), export])
+        }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: export.path).isEmpty)
+    }
 }

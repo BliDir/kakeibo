@@ -38,8 +38,9 @@ public final class BudgetRepository {
     public let context: ModelContext
     /// Held so the container outlives its context.
     private let container: ModelContainer?
-    /// Tests: runs right before each save; throwing simulates a failed save.
-    var beforeSave: (() throws -> Void)?
+    /// Tests (and Debug `KAKEIBO_FAIL_BUDGET_SAVES`): runs right before each save; throwing
+    /// simulates a failed save.
+    public var beforeSave: (() throws -> Void)?
 
     public init(context: ModelContext) {
         self.context = context
@@ -71,6 +72,21 @@ public final class BudgetRepository {
         var descriptor = FetchDescriptor<BudgetMonth>(predicate: #Predicate { $0.monthKey == key })
         descriptor.fetchLimit = 1
         return try context.fetch(descriptor).first
+    }
+
+    /// Stored budgets of the months from `first` up to (not including) `end`, for the budget
+    /// review (BI-03's `pastBudgets`). Months without a row are left out. No side effects.
+    public func budgets(from first: LedgerMonth, before end: LedgerMonth) throws -> [LedgerMonth: MonthlyBudget] {
+        let low = first.key, high = end.key
+        let rows = try context.fetch(FetchDescriptor<BudgetMonth>(predicate: #Predicate {
+            $0.monthKey >= low && $0.monthKey < high
+        }))
+        var result: [LedgerMonth: MonthlyBudget] = [:]
+        for row in rows {
+            guard let month = LedgerMonth(dayKey: row.monthKey + "-01") else { continue }
+            result[month] = row.budget
+        }
+        return result
     }
 
     /// The future-month template, if on.

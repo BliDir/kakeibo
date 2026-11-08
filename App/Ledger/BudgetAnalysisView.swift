@@ -5,15 +5,15 @@ import SwiftUI
 /// "Spending analysis" (v1.2, BI-04), opened from the ledger's insight card: the overspend (or
 /// the spend so far when on pace), the month-end estimate, up to 3 drivers with their yen impact
 /// and what share they explain, one suggestion each, the daily and weekly amounts for the rest
-/// of the month, how it is worked out, and "Review budget". A closed month is read only: no
-/// rest-of-month figures, suggestions or budget action. Every figure comes from
+/// of the month, how it is worked out, and "Review budget" (BI-05). A closed month is read only:
+/// no rest-of-month figures or suggestions, and its review opens read only. Every figure comes from
 /// `LedgerModel.overspend` (Core's `OverspendAnalysis`), so it refreshes with the ledger.
 struct BudgetAnalysisView: View {
     let model: LedgerModel
     /// A driver row: the ledger filtered to its category or store for the month.
     let onDriver: (InsightTarget) -> Void
 
-    @State private var budgetForm: BudgetFormItem?
+    @State private var review: ReviewFormItem?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -30,7 +30,7 @@ struct BudgetAnalysisView: View {
             ScrollView {
                 Group {
                     if let analysis = model.overspend {
-                        AnalysisContent(analysis: analysis, canReview: model.canEditBudget,
+                        AnalysisContent(analysis: analysis, canReview: model.budgets != nil,
                                         onDriver: onDriver, onReview: openReview)
                     } else {
                         // The month no longer has an insight (an expense was deleted, or a new day began).
@@ -49,17 +49,22 @@ struct BudgetAnalysisView: View {
         .background(Theme.groundLight.ignoresSafeArea())
         .toolbar(.hidden, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
-        .sheet(item: $budgetForm) { item in
-            BudgetSheet(form: item.form).presentationDetents([.large])
+        .sheet(item: $review) { item in
+            BudgetReviewSheet(form: item.form).presentationDetents([.large])
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("analysis.screen")
     }
 
-    /// Until the budget review sheet (BI-05) lands, "Review budget" opens the budget sheet (B-04).
     private func openReview() {
-        if let form = model.makeBudgetForm() { budgetForm = BudgetFormItem(form: form) }
+        if let form = model.makeBudgetReview() { review = ReviewFormItem(form: form) }
     }
+}
+
+/// Presents the review sheet with `.sheet(item:)`.
+struct ReviewFormItem: Identifiable {
+    let id = UUID()
+    let form: BudgetReviewForm
 }
 
 private struct AnalysisContent: View {
@@ -87,6 +92,12 @@ private struct AnalysisContent: View {
                     .foregroundStyle(Theme.secondaryText)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("analysis.closed")
+                if canReview {
+                    // Read only: the month's budget and what the review would have said.
+                    Button(action: onReview) { Text("analysis.reviewClosed") }
+                        .buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                        .accessibilityIdentifier("analysis.reviewClosed")
+                }
             } else if canReview {
                 Button(action: onReview) { Text("analysis.review") }
                     .buttonStyle(PrimaryButtonStyle(fullWidth: true))

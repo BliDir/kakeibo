@@ -269,6 +269,31 @@ final class ScreenshotTourTests: XCTestCase {
             }
             app.terminate()
         }
+
+        // Budget review (BI-05): each recommendation, no suggestion yet, and a closed month.
+        for (index, state) in ["raise", "lower", "steady", "limited", "closed"].enumerated() {
+            let name = "\(tag)-3\(index)-review-\(state)"
+            app = launch(language: language, size: size, notifications: "denied", extra: ["KAKEIBO_SEED_INSIGHT": state])
+            dismissAlert(app)
+            if state == "closed", app.buttons["ledger.previous"].waitForExistence(timeout: 5) {
+                app.buttons["ledger.previous"].tap()
+            }
+            guard scrollTo(app.buttons["insight.see"], in: app).exists else { app.terminate(); continue }
+            app.buttons["insight.see"].tap()
+            let review = app.buttons[state == "closed" ? "analysis.reviewClosed" : "analysis.review"]
+            guard app.buttons["analysis.back"].waitForExistence(timeout: 3), scrollTo(review, in: app).exists else {
+                app.terminate(); continue
+            }
+            review.tap()
+            if app.descendants(matching: .any)["budgetReview.sheet"].firstMatch.waitForExistence(timeout: 3) {
+                shot(app, name)
+                for page in 1...3 {
+                    app.swipeUp()
+                    shot(app, "\(name)-\(page)")
+                }
+            }
+            app.terminate()
+        }
     }
 
     /// Opens the budget sheet, types a new amount and saves. True when back on the ledger.

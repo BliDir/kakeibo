@@ -86,14 +86,14 @@ final class BudgetInsightUITests: XCTestCase {
         XCTAssertFalse(element(app, "insight.card").exists)
     }
 
-    /// Until BI-05, "Review budget" opens the budget sheet.
+    /// "Review budget" opens the budget review (BI-05; `BudgetReviewUITests`).
     @MainActor
-    func testReviewBudgetOpensTheBudgetSheet() {
+    func testReviewBudgetOpensTheReviewSheet() {
         let app = launch("over")
         scrollToCard(app)
         app.buttons["insight.see"].tap()
         scrollTo(app.buttons["analysis.review"], in: app).tap()
-        XCTAssertTrue(app.textFields["budget.amount"].waitForExistence(timeout: 3))
+        XCTAssertTrue(element(app, "budgetReview.sheet").waitForExistence(timeout: 3))
     }
 
     /// Saving an expense refreshes the card: on pace becomes over budget.

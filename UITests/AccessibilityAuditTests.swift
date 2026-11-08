@@ -133,6 +133,46 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    @MainActor func testBudgetReviewRaise() throws {
+        try auditInBothModes("budget review, raise", extra: ["KAKEIBO_SEED_INSIGHT": "raise"]) { app in
+            self.openReview(app)
+        }
+    }
+
+    /// Keep: the amount field is locked.
+    @MainActor func testBudgetReviewKeep() throws {
+        try auditInBothModes("budget review, keep", extra: ["KAKEIBO_SEED_INSIGHT": "steady"]) { app in
+            self.openReview(app)
+        }
+    }
+
+    @MainActor func testBudgetReviewInvalidAmount() throws {
+        try auditInBothModes("budget review, invalid", extra: ["KAKEIBO_SEED_INSIGHT": "raise"]) { app in
+            self.openReview(app)
+            let field = app.textFields["budgetReview.amount"]
+            field.tap()
+            if let current = field.value as? String {
+                field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+            }
+            field.typeText("0")
+            XCTAssertTrue(app.descendants(matching: .any)["budgetReview.problem"].firstMatch.waitForExistence(timeout: 3))
+        }
+    }
+
+    @MainActor func testBudgetReviewNotEnoughHistory() throws {
+        try auditInBothModes("budget review, not enough history", extra: ["KAKEIBO_SEED_INSIGHT": "limited"]) { app in
+            self.openReview(app)
+        }
+    }
+
+    @MainActor func testBudgetReviewClosedMonth() throws {
+        try auditInBothModes("budget review, closed month", extra: ["KAKEIBO_SEED_INSIGHT": "closed"]) { app in
+            XCTAssertTrue(app.buttons["ledger.previous"].waitForExistence(timeout: 5))
+            app.buttons["ledger.previous"].tap()
+            self.openReview(app, button: "analysis.reviewClosed")
+        }
+    }
+
     @MainActor func testBudgetSheetInvalidAmount() throws {
         try auditInBothModes("budget sheet, invalid") { app in
             app.buttons["budget.cta.button"].tap()
@@ -281,6 +321,17 @@ final class AccessibilityAuditTests: XCTestCase {
         while !see.isHittable, swipes < 8 { app.swipeUp(); swipes += 1 }
         see.tap()
         XCTAssertTrue(app.buttons["analysis.back"].waitForExistence(timeout: 3))
+    }
+
+    /// Opens the analysis, then the budget review sheet.
+    @MainActor
+    private func openReview(_ app: XCUIApplication, button: String = "analysis.review") {
+        openAnalysis(app)
+        let review = app.buttons[button]
+        var swipes = 0
+        while !review.isHittable, swipes < 8 { app.swipeUp(); swipes += 1 }
+        review.tap()
+        XCTAssertTrue(app.descendants(matching: .any)["budgetReview.sheet"].firstMatch.waitForExistence(timeout: 3))
     }
 
     /// Sets this month's budget from the setup prompt and waits for the ledger.

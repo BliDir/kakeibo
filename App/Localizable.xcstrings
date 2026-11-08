@@ -528,6 +528,23 @@
         }
       }
     },
+    "analysis.reviewClosed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See budget review"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算の見直しを見る"
+          }
+        }
+      }
+    },
     "analysis.spentOfBudget %@ %@": {
       "extractionState": "manual",
       "localizations": {
@@ -1471,6 +1488,659 @@
           "stringUnit": {
             "state": "translated",
             "value": "%1$@の予算を使い切りました。次の月は%2$@からです。"
+          }
+        }
+      }
+    },
+    "budgetReview.amount.keepHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a change below to edit the amount."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "金額を変えるには、下で変更の方法を選んでください。"
+          }
+        }
+      }
+    },
+    "budgetReview.amount.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New monthly budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新しい月の予算"
+          }
+        }
+      }
+    },
+    "budgetReview.basis %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on the middle of your totals for %1$@, without large one-offs, rounded up to the next %2$@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の支出合計の中央値から大きな臨時支出を除き、%2$@単位で切り上げています。"
+          }
+        }
+      }
+    },
+    "budgetReview.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キャンセル"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.future": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From this month on"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月以降に適用する"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.future.detail %@ %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes %1$@, and %2$@ onward starts with the same amount."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@の予算を変更し、%2$@以降も同じ金額で始まります。"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.keep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the current budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在の予算を維持する"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.keep.detail %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ stays as it is."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@のまま変更しません。"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.month": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This month only"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月のみ変更する"
+          }
+        }
+      }
+    },
+    "budgetReview.choice.month.detail %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes %@ only. Future months are not changed."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の予算だけを変更します。来月以降は変わりません。"
+          }
+        }
+      }
+    },
+    "budgetReview.close": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        }
+      }
+    },
+    "budgetReview.closed.note %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ has ended, so its budget can't be changed here."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@は終了したため、ここでは予算を変更できません。"
+          }
+        }
+      }
+    },
+    "budgetReview.confirm.change": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm new budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "この予算で確定"
+          }
+        }
+      }
+    },
+    "budgetReview.confirm.keep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep current budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在の予算を維持"
+          }
+        }
+      }
+    },
+    "budgetReview.current": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在の予算"
+          }
+        }
+      }
+    },
+    "budgetReview.failed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The budget couldn't be saved. Your amount is kept; please try again."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算を保存できませんでした。入力した金額はそのままです。もう一度お試しください。"
+          }
+        }
+      }
+    },
+    "budgetReview.headline %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review %@'s budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の予算を見直す"
+          }
+        }
+      }
+    },
+    "budgetReview.headline.closed %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking back at %@'s budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の予算の振り返り"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.daily %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Per day · %lld day left"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Per day · %lld days left"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1日あたり · 残り%lld日"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.invalid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter a valid amount to see what it would mean for this month."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有効な金額を入力すると、今月の目安が表示されます。"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.note": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guides for the rest of the month, not limits. Nothing changes until you confirm."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今月の残りの目安です。確定するまで予算は変わりません。"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.over": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still over by"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "超過額"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.remaining": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remaining"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "残りの予算"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If you confirm"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確定した場合"
+          }
+        }
+      }
+    },
+    "budgetReview.preview.weekly %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This week · %lld day left"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "This week · %lld days left"
+                }
+              }
+            }
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今週 · 残り%lld日"
+          }
+        }
+      }
+    },
+    "budgetReview.reason.limited %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A suggestion needs at least %lld earlier months with expenses. You can still change the budget yourself."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算の提案には、支出を記録した過去の月が%lldか月分必要です。予算は手動で変更できます。"
+          }
+        }
+      }
+    },
+    "budgetReview.reason.lower %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You spent less than 70%% of your budget in each of the last %lld months."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近%lldか月は、どの月も支出が予算の70%%未満でした。"
+          }
+        }
+      }
+    },
+    "budgetReview.reason.noChange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your recent spending doesn't call for a change. The suggested amount is shown for reference."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最近の支出からは、予算を変える必要は見られません。提案額は参考として表示しています。"
+          }
+        }
+      }
+    },
+    "budgetReview.reason.oneOff %@": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Large one-off purchases explain at least half of %@'s extra spending. Temporary spending doesn't need a permanent budget increase."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@に増えた支出の半分以上は、大きな臨時の買い物によるものです。一時的な支出のために予算を増やす必要はありません。"
+          }
+        }
+      }
+    },
+    "budgetReview.reason.raise %@ %lld": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ has been above its usual level in at least 2 of the last %2$lld months."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直近%2$lldか月のうち2か月以上で、%1$@がいつもより増えています。"
+          }
+        }
+      }
+    },
+    "budgetReview.scope.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply to"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "適用範囲"
+          }
+        }
+      }
+    },
+    "budgetReview.suggested": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提案額"
+          }
+        }
+      }
+    },
+    "budgetReview.tag.keep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested: keep budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提案：予算を維持"
+          }
+        }
+      }
+    },
+    "budgetReview.tag.lower": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested: lower budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提案：予算を減らす"
+          }
+        }
+      }
+    },
+    "budgetReview.tag.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No suggestion yet"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提案はまだありません"
+          }
+        }
+      }
+    },
+    "budgetReview.tag.raise": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested: raise budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提案：予算を増やす"
+          }
+        }
+      }
+    },
+    "budgetReview.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review budget"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "予算の見直し"
           }
         }
       }

@@ -73,6 +73,18 @@ final class AppServices {
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
             if let insight = environment["KAKEIBO_SEED_INSIGHT"] { services.seedInsight(insight) }
             services.failSavesIfRequested(environment)
+            if let value = environment["KAKEIBO_FAIL_BUDGET_SAVES"], var remaining = Int(value), remaining > 0 {
+                // The next n saves that change this month's budget amount fail, for the review
+                // sheet's failure and retry. Alert bookkeeping saves (B-07) are not counted.
+                let budgets = services.budgets
+                let month = LedgerMonth(containing: .now)
+                let original = (try? budgets.row(for: month))?.budgetYen
+                budgets.beforeSave = { [unowned budgets] in
+                    guard remaining > 0, (try? budgets.row(for: month))?.budgetYen != original else { return }
+                    remaining -= 1
+                    throw CocoaError(.fileWriteUnknown)
+                }
+            }
             return services
         }
         #endif
@@ -180,9 +192,10 @@ final class AppServices {
     #endif
 
     #if DEBUG
-    /// `KAKEIBO_SEED_INSIGHT=over|onPace|closed|limited`: made-up months for the budget insight
-    /// card and analysis (BI-04). Four usual months before this one (groceries, dining out and
-    /// café visits), then:
+    /// `KAKEIBO_SEED_INSIGHT=over|onPace|closed|limited|raise|lower|steady`: made-up months for the
+    /// budget insight card and analysis (BI-04) and the budget review (BI-05; `raise`, `lower` and
+    /// `steady` give those recommendations, `over` keeps for a one-off, `limited` has no suggestion).
+    /// Four usual months before this one (groceries, dining out and café visits), then:
     /// - `over`: this month ¥37,000 against a ¥30,000 budget (more dining out, a large one-off);
     /// - `onPace`: the same month against ¥40,000 (92%);
     /// - `closed`: last month spent the same ¥37,000 against a ¥30,000 budget; this month has none;
@@ -211,6 +224,39 @@ final class AppServices {
         func setPastBudget(_ yen: Int, _ month: LedgerMonth) {
             container.mainContext.insert(BudgetMonth(monthKey: month.key, budgetYen: yen, createdAt: .now, updatedAt: .now))
             try? container.mainContext.save()
+        }
+        /// Days up to today only, so nothing is in the future.
+        func soFar(_ d: Int) -> String { day(thisMonth, min(d, today)) }
+        let restaurants = ["さくら食堂", "そば処 やまだ", "カフェ こもれび", "ラーメン 一番", "定食 まるや", "すし 海"]
+        // BI-05's recommendations (`BudgetReviewFormTests` has the same shapes).
+        switch kind {
+        case "raise":
+            // Dining out up in the last two months and this one; over a ¥30,000 budget.
+            var month = thisMonth
+            for i in 0..<5 {
+                month = month.previous
+                usual(month)
+                if i < 2 { for (n, name) in restaurants.enumerated() { add(day(month, 2 + n * 4), name, nil, 2_000, .dining) } }
+            }
+            for d in [1, today] { add(soFar(d), "まいばすけっと 架空町店", "My Basket", 10_000, .groceries, .icCard) }
+            for (n, name) in restaurants.enumerated() { add(soFar(1 + n), name, nil, 2_000, .dining) }
+            try? budgets.setBudget(30_000, for: thisMonth, now: .now)
+            return
+        case "lower", "steady":
+            // On pace (90%) after three months well under ¥60,000 (`lower`), or with no past
+            // budgets, so nothing calls for a change (`steady`).
+            var month = thisMonth
+            for _ in 0..<3 {
+                month = month.previous
+                usual(month)
+                if kind == "lower" { setPastBudget(60_000, month) }
+            }
+            for d in 1...5 { add(soFar(d), "まいばすけっと 架空町店", "My Basket", 10_000, .groceries, .icCard) }
+            for d in 1...4 { add(soFar(d), restaurants[d], nil, 1_000, .dining) }
+            try? budgets.setBudget(60_000, for: thisMonth, now: .now)
+            return
+        default:
+            break
         }
         // The four months before the analysed one (this month, or last month for `closed`).
         if kind != "limited" {

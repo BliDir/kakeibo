@@ -71,6 +71,27 @@ public final class LedgerModel {
         return try? BudgetForm(repository: budgets, month: month, now: today())
     }
 
+    /// The budget review for the shown month (BI-05), or nil when it has no budget or its figures
+    /// cannot be read. Uses the same history as `overspend`, plus the stored budgets of those
+    /// months. A past month's review is read only.
+    public func makeBudgetReview() -> BudgetReviewForm? {
+        guard let budgets, !loadFailed, let budget = try? budgets.budget(for: month, now: today()),
+              case .yen = budget else { return nil }
+        let first = historyStart
+        guard let history = try? repository.expenses(from: first, before: month),
+              let pastBudgets = try? budgets.budgets(from: first, before: month) else { return nil }
+        let review = BudgetReview(month: month, budget: budget, items: expenses, history: history,
+                                  pastBudgets: pastBudgets, now: today())
+        return BudgetReviewForm(review: review, repository: budgets, now: today)
+    }
+
+    /// The first month read for the insight history.
+    private var historyStart: LedgerMonth {
+        var first = month
+        for _ in 0..<Self.insightHistoryMonths { first = first.previous }
+        return first
+    }
+
     /// How many months before the shown one are read for the insight baseline. The baseline
     /// uses the last 3 of them that have an expense, so a few empty months are skipped.
     public static let insightHistoryMonths = 12
@@ -132,9 +153,7 @@ public final class LedgerModel {
     private func analysis(budget: MonthlyBudget) -> OverspendAnalysis? {
         // Only a set budget can be over; skip reading the history otherwise.
         guard case .yen = budget else { return nil }
-        var first = month
-        for _ in 0..<Self.insightHistoryMonths { first = first.previous }
-        guard let history = try? repository.expenses(from: first, before: month) else { return nil }
+        guard let history = try? repository.expenses(from: historyStart, before: month) else { return nil }
         let analysis = OverspendAnalysis(month: month, budget: budget, items: expenses, history: history, now: today())
         return analysis.insight.state == .none ? nil : analysis
     }

@@ -122,7 +122,7 @@ public struct OverspendAnalysis: Sendable, Equatable {
         let isCurrent = insight.state == .onPaceToOverspend || insight.state == .overBudget
         let pace = comparison?.pace
         if isCurrent, let pace, let r = insight.summary.remainingYen {
-            dailyAmountYen = max(r, 0) / (pace.daysInMonth - pace.elapsedDays + 1)
+            dailyAmountYen = Self.dailyAmount(remainingYen: r, pace: pace)
             weeklyAmountYen = insight.summary.weeklyAllowance?.yen
         } else {
             dailyAmountYen = nil
@@ -137,7 +137,7 @@ public struct OverspendAnalysis: Sendable, Equatable {
             return
         }
 
-        let context = Context(month: month, budgetYen: budgetYen, spentYen: spent, items: monthItems,
+        let context = DriverRules(month: month, budgetYen: budgetYen, spentYen: spent, items: monthItems,
                               history: history.map { $0 as any InsightItem }, comparison: comparison,
                               isCurrent: isCurrent, now: now, calendar: calendar)
         drivers = isLimitedHistory ? context.shareOfBudgetDrivers() : context.pickDrivers()
@@ -155,9 +155,64 @@ public struct OverspendAnalysis: Sendable, Equatable {
     }
 }
 
+// MARK: - Shared rules (also used by the budget review, BI-03)
+
+extension OverspendAnalysis {
+    /// floor(max(R, 0) ÷ remaining days), today included.
+    static func dailyAmount(remainingYen: Int, pace: MonthPace) -> Int {
+        max(remainingYen, 0) / (pace.daysInMonth - pace.elapsedDays + 1)
+    }
+
+    /// The large one-off rule: ≥ 10% of the budget, or ≥ 3× the category's typical expense.
+    static func isLargeOneOff(amountYen: Int, budgetYen: Int?, typicalYen: Int?) -> Bool {
+        guard amountYen > 0 else { return false }
+        let share = oneOffBudgetShare
+        let forBudget = budgetYen.map { DriverRules.isAtLeast(amountYen, share.numerator, share.denominator, of: $0) } ?? false
+        let forCategory = typicalYen.map { DriverRules.isAtLeast(amountYen, oneOffMedianMultiple, 1, of: $0) } ?? false
+        return forBudget || forCategory
+    }
+
+    /// Median positive expense per category over `months`.
+    static func typicalExpenses(_ history: [any InsightItem], in months: Set<LedgerMonth>) -> [ExpenseCategory: Int] {
+        var amounts: [ExpenseCategory: [Int]] = [:]
+        for item in history where item.totalYen > 0 {
+            guard let m = LedgerMonth(dayKey: item.dayKey), months.contains(m) else { continue }
+            amounts[item.category, default: []].append(item.totalYen)
+        }
+        return amounts.mapValues(DriverRules.median)
+    }
+
+    /// The drivers of `month` against its own baseline, whatever its insight state: what the
+    /// budget review uses to tell an ongoing increase from a one-month blip. Empty in limited
+    /// history (no baseline to compare with) or on overflow.
+    static func drivers(month: LedgerMonth, budgetYen: Int, items: [any InsightItem], history: [any InsightItem],
+                        now: Date, calendar: Calendar) -> [OverspendDriver] {
+        let monthItems = items.filter { LedgerMonth(dayKey: $0.dayKey) == month }
+        guard let comparison = SpendingComparison(month: month, items: monthItems.map(AnyInsightItem.init),
+                                                  history: history.map(AnyInsightItem.init), now: now, calendar: calendar),
+              !comparison.baseline.isLimitedHistory,
+              let spent = MonthSpend.total(monthItems.map(AnyInsightItem.init)) else { return [] }
+        let isCurrent = month == LedgerMonth(containing: now)
+        return DriverRules(month: month, budgetYen: budgetYen, spentYen: spent, items: monthItems, history: history,
+                       comparison: comparison, isCurrent: isCurrent, now: now, calendar: calendar).pickDrivers()
+    }
+}
+
+/// A concrete wrapper, for passing `any InsightItem` arrays to the generic initializers.
+struct AnyInsightItem: InsightItem {
+    let base: any InsightItem
+    init(_ base: any InsightItem) { self.base = base }
+    var dayKey: String { base.dayKey }
+    var totalYen: Int { base.totalYen }
+    var tax10Yen: Int? { base.tax10Yen }
+    var tax8Yen: Int? { base.tax8Yen }
+    var category: ExpenseCategory { base.category }
+    var storeName: String { base.storeName }
+}
+
 // MARK: - Picking drivers
 
-private struct Context {
+struct DriverRules {
     let month: LedgerMonth
     let budgetYen: Int
     let spentYen: Int
@@ -179,13 +234,7 @@ private struct Context {
         self.isCurrent = isCurrent
         self.now = now
         self.calendar = calendar
-        let baselineMonths = Set(comparison.baseline.months)
-        var amounts: [ExpenseCategory: [Int]] = [:]
-        for item in history where item.totalYen > 0 {
-            guard let m = LedgerMonth(dayKey: item.dayKey), baselineMonths.contains(m) else { continue }
-            amounts[item.category, default: []].append(item.totalYen)
-        }
-        medians = amounts.mapValues(Self.median)
+        medians = OverspendAnalysis.typicalExpenses(history, in: Set(comparison.baseline.months))
     }
 
     static func median(_ values: [Int]) -> Int {
@@ -335,11 +384,8 @@ private struct Context {
         let item = items[index]
         let amount = item.totalYen
         guard amount > 0 else { return nil }
-        let share = OverspendAnalysis.oneOffBudgetShare
         let typical = medians[item.category]
-        let largeForBudget = Self.isAtLeast(amount, share.numerator, share.denominator, of: budgetYen)
-        let largeForCategory = typical.map { Self.isAtLeast(amount, OverspendAnalysis.oneOffMedianMultiple, 1, of: $0) } ?? false
-        guard largeForBudget || largeForCategory else { return nil }
+        guard OverspendAnalysis.isLargeOneOff(amountYen: amount, budgetYen: budgetYen, typicalYen: typical) else { return nil }
         let impact = amount - (typical ?? 0)
         guard impact > 0 else { return nil }
         return OverspendDriver(

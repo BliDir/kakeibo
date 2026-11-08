@@ -75,6 +75,7 @@ final class AppServices {
             return services
         }
         #endif
+        protectAppData(environment)
         do {
             return AppServices(
                 container: try KakeiboStore.makeContainer(),
@@ -85,6 +86,36 @@ final class AppServices {
             // A store that cannot open is unrecoverable for a ledger app.
             fatalError("Could not open the expense store: \(error)")
         }
+    }
+
+    /// B-11: gives the store and receipt photos `.complete` protection, upgrading v1.0 files
+    /// on the first launch after the update (and anything left weaker later). Runs before the
+    /// store opens; safe on every launch. A failure never stops the app from opening: the
+    /// files keep their old class and the next launch tries again.
+    private static func protectAppData(_ environment: [String: String]) {
+        #if DEBUG
+        // `KAKEIBO_PROTECTION_REPORT=1`: print each file's class before and after, for the
+        // device check (`xcrun devicectl device process launch --console …`).
+        let report = environment["KAKEIBO_PROTECTION_REPORT"] == "1"
+        if report, let folder = try? DataProtection.appDataDirectory() {
+            print("[protection] before:\n" + DataProtection.report(folder).map(\.description).joined(separator: "\n"))
+        }
+        #endif
+        do {
+            let changed = try DataProtection.protectAppData()
+            #if DEBUG
+            if report { print("[protection] changed \(changed) items") }
+            #endif
+        } catch {
+            #if DEBUG
+            print("[protection] failed: \(error)")
+            #endif
+        }
+        #if DEBUG
+        if report, let folder = try? DataProtection.appDataDirectory() {
+            print("[protection] after:\n" + DataProtection.report(folder).map(\.description).joined(separator: "\n"))
+        }
+        #endif
     }
 
     #if DEBUG

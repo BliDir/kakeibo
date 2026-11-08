@@ -5,8 +5,9 @@ import UniformTypeIdentifiers
 
 /// Keeps the original receipt photo for each scanned expense as a JPEG file.
 ///
-/// Files live in Application Support/Receipts, named `<UUID>.jpg`. They get the default
-/// iOS data protection and are included in device backups (nothing opts them out).
+/// Files live in Application Support/Receipts, named `<UUID>.jpg`. They use
+/// `FileProtectionType.complete` (unreadable while the iPhone is locked; see `DataProtection`)
+/// and are still included in device backups (nothing opts them out).
 /// GPS metadata is removed when a photo is saved; the camera orientation is kept.
 public final class PhotoStore: Sendable {
     public enum Error: Swift.Error, Equatable {
@@ -30,6 +31,8 @@ public final class PhotoStore: Sendable {
     public init(directory: URL) throws {
         self.directory = directory
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        // New photos inherit the folder's class; each write also asks for it explicitly.
+        try? FileManager.default.setAttributes([.protectionKey: DataProtection.protectionClass], ofItemAtPath: directory.path)
     }
 
     /// The app's store: Application Support/Receipts.
@@ -76,8 +79,8 @@ public final class PhotoStore: Sendable {
         guard CGImageDestinationFinalize(destination) else { throw Error.encodingFailed }
 
         let name = UUID().uuidString + ".jpg"
-        // .atomic avoids half-written files; no protection option, so the iOS default applies.
-        try (data as Data).write(to: directory.appendingPathComponent(name), options: .atomic)
+        // .atomic avoids half-written files; unreadable while the iPhone is locked (B-11).
+        try (data as Data).write(to: directory.appendingPathComponent(name), options: [.atomic, .completeFileProtection])
         return name
     }
 

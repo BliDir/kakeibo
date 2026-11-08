@@ -97,6 +97,42 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    // Budget insights (BI-04): the analysis in each state, and a filtered ledger.
+
+    @MainActor func testAnalysisOverBudget() throws {
+        try auditInBothModes("analysis, over budget", extra: ["KAKEIBO_SEED_INSIGHT": "over"]) { app in
+            self.openAnalysis(app)
+        }
+    }
+
+    @MainActor func testAnalysisOnPace() throws {
+        try auditInBothModes("analysis, on pace", extra: ["KAKEIBO_SEED_INSIGHT": "onPace"]) { app in
+            self.openAnalysis(app)
+        }
+    }
+
+    @MainActor func testAnalysisClosedMonth() throws {
+        try auditInBothModes("analysis, closed month", extra: ["KAKEIBO_SEED_INSIGHT": "closed"]) { app in
+            XCTAssertTrue(app.buttons["ledger.previous"].waitForExistence(timeout: 5))
+            app.buttons["ledger.previous"].tap()
+            self.openAnalysis(app)
+        }
+    }
+
+    @MainActor func testAnalysisLimitedHistory() throws {
+        try auditInBothModes("analysis, limited history", extra: ["KAKEIBO_SEED_INSIGHT": "limited"]) { app in
+            self.openAnalysis(app)
+        }
+    }
+
+    @MainActor func testFilteredLedger() throws {
+        try auditInBothModes("filtered ledger", extra: ["KAKEIBO_SEED_INSIGHT": "over"]) { app in
+            self.openAnalysis(app)
+            app.buttons["analysis.driver"].firstMatch.tap()
+            XCTAssertTrue(app.buttons["filtered.back"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testBudgetSheetInvalidAmount() throws {
         try auditInBothModes("budget sheet, invalid") { app in
             app.buttons["budget.cta.button"].tap()
@@ -234,6 +270,17 @@ final class AccessibilityAuditTests: XCTestCase {
         storeField.tap()
         storeField.typeText(store)
         app.buttons["review.save"].tap()
+    }
+
+    /// Scrolls to the insight card and opens the analysis.
+    @MainActor
+    private func openAnalysis(_ app: XCUIApplication) {
+        let see = app.buttons["insight.see"]
+        XCTAssertTrue(app.buttons["ledger.add"].waitForExistence(timeout: 5))
+        var swipes = 0
+        while !see.isHittable, swipes < 8 { app.swipeUp(); swipes += 1 }
+        see.tap()
+        XCTAssertTrue(app.buttons["analysis.back"].waitForExistence(timeout: 3))
     }
 
     /// Sets this month's budget from the setup prompt and waits for the ledger.

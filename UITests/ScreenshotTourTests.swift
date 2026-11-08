@@ -240,6 +240,35 @@ final class ScreenshotTourTests: XCTestCase {
             shot(app, "\(tag)-19-settings-alerts-denied-scrolled")
         }
         app.terminate()
+
+        // Budget insights (BI-04): card, analysis and filtered ledger in each state.
+        for (index, state) in ["onPace", "over", "closed", "limited"].enumerated() {
+            let name = "\(tag)-2\(index)-insight-\(state)"
+            app = launch(language: language, size: size, notifications: "denied", extra: ["KAKEIBO_SEED_INSIGHT": state])
+            dismissAlert(app)
+            if state == "closed", app.buttons["ledger.previous"].waitForExistence(timeout: 5) {
+                app.buttons["ledger.previous"].tap()
+            }
+            guard scrollTo(app.buttons["insight.see"], in: app).exists else { app.terminate(); continue }
+            shot(app, "\(name)-card")
+            app.buttons["insight.see"].tap()
+            if app.buttons["analysis.back"].waitForExistence(timeout: 3) {
+                shot(app, "\(name)-analysis")
+                for page in 1...3 {
+                    app.swipeUp()
+                    shot(app, "\(name)-analysis-\(page)")
+                }
+            }
+            if state == "over" {
+                for _ in 0..<4 { app.swipeDown() }
+                let driver = app.buttons["analysis.driver"].firstMatch
+                if scrollTo(driver, in: app).exists {
+                    driver.tap()
+                    if app.buttons["filtered.back"].waitForExistence(timeout: 3) { shot(app, "\(name)-filtered") }
+                }
+            }
+            app.terminate()
+        }
     }
 
     /// Opens the budget sheet, types a new amount and saves. True when back on the ledger.

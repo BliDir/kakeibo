@@ -342,3 +342,18 @@ private func analysis(_ items: [Item], budget: Int = 50_000, history: [Item] = s
         #expect(oneOff?.impactYen == 3_000)
     }
 }
+
+@Suite struct InsightTargetTests {
+    @Test func categoryMatchesItsExpenses() {
+        #expect(InsightTarget.category(.dining).matches(item("2026-11-02", 1_000, .dining)))
+        #expect(!InsightTarget.category(.dining).matches(item("2026-11-02", 1_000, .groceries)))
+    }
+
+    /// Same grouping as the drivers: trimmed saved names; an unknown store matches nothing.
+    @Test func storeMatchesTrimmedNames() {
+        #expect(InsightTarget.store("西友").matches(item("2026-11-02", 1_000, store: " 西友 ")))
+        #expect(!InsightTarget.store("西友").matches(item("2026-11-02", 1_000, store: "ローソン")))
+        #expect(!InsightTarget.store("").matches(item("2026-11-02", 1_000, store: "")))
+        #expect(!InsightTarget.store(" ").matches(item("2026-11-02", 1_000, store: "")))
+    }
+}

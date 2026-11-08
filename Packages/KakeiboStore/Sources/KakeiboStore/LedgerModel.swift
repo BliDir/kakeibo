@@ -4,6 +4,7 @@ import Observation
 import SwiftData
 
 extension Expense: LedgerItem {}
+extension Expense: InsightItem {}
 
 /// The ledger home screen's state: one month's expenses, grouped by day, with totals.
 ///

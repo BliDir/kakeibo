@@ -5,8 +5,13 @@ import SwiftUI
 /// pace to go over, "Why am I over?" when it is over, and for a closed month that went over, a
 /// look back. Headline, the top driver and "See analysis". Figures come from `OverspendAnalysis`.
 /// Text on the green tint is always `Theme.text`, the contrast-checked pair.
+///
+/// BI-06: where the on-device model wrote a sentence that passed `InsightSentenceCheck`, it
+/// replaces the top driver's template sentence; otherwise the template is shown.
 struct BudgetInsightCard: View {
     let analysis: OverspendAnalysis
+    /// A checked model sentence for this analysis, or nil for the template.
+    var modelSentence: String? = nil
     let onSeeAnalysis: () -> Void
 
     private var state: BudgetInsight.State { analysis.insight.state }
@@ -33,7 +38,8 @@ struct BudgetInsightCard: View {
                         .font(.subheadline)
                         .foregroundStyle(Theme.text)
                 } else if let top = analysis.drivers.first {
-                    Text(verbatim: InsightWording.description(top, closed: isClosed, budgetYen: analysis.insight.summary.budgetYen))
+                    Text(verbatim: modelSentence
+                        ?? InsightWording.description(top, closed: isClosed, budgetYen: analysis.insight.summary.budgetYen))
                         .font(.subheadline)
                         .foregroundStyle(Theme.text)
                 } else {

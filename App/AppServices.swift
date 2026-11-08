@@ -20,12 +20,16 @@ final class AppServices {
     let alerts: BudgetAlertCoordinator
     /// Where a tapped budget notification asks to go.
     let router = NotificationRouter()
+    /// Optional on-device wording for the insight card (BI-06); template only without a model.
+    let insightSummarizer: InsightSummarizer
     /// Kept alive here: the notification center holds its delegate weakly.
     private var notificationDelegate: BudgetNotificationDelegate?
 
     init(container: ModelContainer, photoStore: PhotoStore?, pipeline: ExtractionPipeline,
-         settings: AppSettings = AppSettings(), notificationCenter: (any BudgetNotificationCenter)? = nil) {
+         settings: AppSettings = AppSettings(), notificationCenter: (any BudgetNotificationCenter)? = nil,
+         insightSummarizer: InsightSummarizer = InsightSummarizers.templateOnly()) {
         self.container = container
+        self.insightSummarizer = insightSummarizer
         self.photoStore = photoStore
         self.pipeline = pipeline
         self.settings = settings
@@ -68,7 +72,8 @@ final class AppServices {
                 photoStore: try? PhotoStore(directory: photos),
                 pipeline: makePipeline(environment),
                 settings: AppSettings(defaults: uiTestDefaults()),
-                notificationCenter: uiTestNotificationCenter(environment)
+                notificationCenter: uiTestNotificationCenter(environment),
+                insightSummarizer: uiTestInsightSummarizer(environment)
             )
             if environment["KAKEIBO_SEED_SAMPLE"] == "1" { services.seedSample() }
             if let insight = environment["KAKEIBO_SEED_INSIGHT"] { services.seedInsight(insight) }
@@ -93,7 +98,8 @@ final class AppServices {
             return AppServices(
                 container: try KakeiboStore.makeContainer(),
                 photoStore: try? PhotoStore.appDefault(),
-                pipeline: makePipeline(environment)
+                pipeline: makePipeline(environment),
+                insightSummarizer: InsightSummarizers.automatic()
             )
         } catch {
             // A store that cannot open is unrecoverable for a ledger app.
@@ -132,6 +138,17 @@ final class AppServices {
     }
 
     #if DEBUG
+    /// UI tests: template only, so results do not depend on the machine, unless
+    /// `KAKEIBO_INSIGHT_MODEL_REPLY` gives the model's answer (`{over}`, `{spent}`, `{budget}`,
+    /// `{yen}` and `{name}` for the top driver, formatted for the UI language). The answer still
+    /// goes through `InsightSentenceCheck`, so a wrong number shows the template.
+    private static func uiTestInsightSummarizer(_ environment: [String: String]) -> InsightSummarizer {
+        guard let reply = environment["KAKEIBO_INSIGHT_MODEL_REPLY"] else {
+            return environment["KAKEIBO_NO_REFINER"] == "1" ? InsightSummarizers.templateOnly() : InsightSummarizers.automatic()
+        }
+        return InsightSummarizer(model: ScriptedInsightModel(reply: reply))
+    }
+
     /// Settings that start empty on every UI test launch, so one test's choices never reach another.
     private static func uiTestDefaults() -> UserDefaults {
         let name = "KakeiboUITests"
@@ -325,6 +342,24 @@ final class AppServices {
 #if DEBUG
 import CoreGraphics
 import KakeiboCore
+
+/// The insight model's answer from `KAKEIBO_INSIGHT_MODEL_REPLY`, for UI tests only.
+private struct ScriptedInsightModel: InsightSentenceModel {
+    let reply: String
+
+    func supports(_ language: AppLanguage) -> Bool { true }
+
+    func sentence(for request: InsightSentenceRequest) async throws -> String {
+        let facts = request.facts
+        let yen = { (amount: Int?) in amount.map { Yen.format($0, for: facts.language) } ?? "" }
+        return reply
+            .replacingOccurrences(of: "{over}", with: yen(facts.overYen))
+            .replacingOccurrences(of: "{spent}", with: yen(facts.spentYen))
+            .replacingOccurrences(of: "{budget}", with: yen(facts.budgetYen))
+            .replacingOccurrences(of: "{yen}", with: yen(facts.drivers.first?.yen))
+            .replacingOccurrences(of: "{name}", with: facts.drivers.first?.name ?? "")
+    }
+}
 
 /// Waits before reading, for UI tests only.
 private struct DelayedOCR: OCRService {

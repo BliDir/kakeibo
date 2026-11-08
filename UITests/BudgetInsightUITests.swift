@@ -66,6 +66,40 @@ final class BudgetInsightUITests: XCTestCase {
         XCTAssertFalse(element(app, "analysis.guidance").exists)
     }
 
+    // MARK: Model wording (BI-06)
+
+    /// A model answer whose numbers all come from the figures replaces the template sentence.
+    @MainActor
+    func testCheckedModelSentenceReplacesTheTemplate() {
+        let app = launch("over", modelReply: "You're {over} over budget, mostly from {name} at {yen}.")
+        scrollToCard(app)
+        let sentence = text(app, containing: "over budget, mostly from")
+        XCTAssertTrue(sentence.waitForExistence(timeout: 5), "model sentence")
+        XCTAssertTrue(sentence.label.contains("¥7,000"), sentence.label)
+    }
+
+    /// A number that is not an input figure: the template stays.
+    @MainActor
+    func testModelSentenceWithAWrongNumberKeepsTheTemplate() {
+        let app = launch("over", modelReply: "You're ¥123,457 over budget, mostly from {name}.")
+        let card = scrollToCard(app)
+        let template = card.label
+        sleep(2) // the scripted model answers at once; give the card time to change if it would
+        XCTAssertFalse(text(app, containing: "123,457").exists)
+        XCTAssertEqual(element(app, "insight.card").label, template)
+    }
+
+    /// No model (UI tests, unsupported iPhones): the template sentence.
+    @MainActor
+    func testTemplateWithoutAModel() {
+        let app = launch("over")
+        scrollToCard(app)
+        XCTAssertFalse(text(app, containing: "over budget, mostly from").exists)
+        XCTAssertTrue(text(app, containing: "above usual").exists || text(app, containing: "purchase").exists
+                      || text(app, containing: "visits").exists || text(app, containing: "New this month").exists,
+                      "template driver sentence")
+    }
+
     @MainActor
     func testLimitedHistoryExplainsItself() {
         let app = launch("limited")
@@ -150,9 +184,10 @@ final class BudgetInsightUITests: XCTestCase {
     // MARK: Helpers
 
     @MainActor
-    private func launch(_ insight: String, colorScheme: String? = nil) -> XCUIApplication {
+    private func launch(_ insight: String, colorScheme: String? = nil, modelReply: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KAKEIBO_SEED_INSIGHT"] = insight
+        if let modelReply { app.launchEnvironment["KAKEIBO_INSIGHT_MODEL_REPLY"] = modelReply }
         if let colorScheme { app.launchEnvironment["KAKEIBO_COLOR_SCHEME"] = colorScheme }
         configure(app)
         app.launch()
@@ -184,6 +219,10 @@ final class BudgetInsightUITests: XCTestCase {
             swipes += 1
         }
         return target
+    }
+
+    private func text(_ app: XCUIApplication, containing text: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", text)).firstMatch
     }
 
     private func element(_ app: XCUIApplication, _ id: String) -> XCUIElement {

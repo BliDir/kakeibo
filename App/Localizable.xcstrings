@@ -166,7 +166,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "金額は支出の目安です。"
+            "value": "どちらも上限ではなく目安です。"
           }
         }
       }
@@ -438,7 +438,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今月は予算を超えるペースではなくなりました。"
+            "value": "今月は予算の超過も、超過の見込みもなくなりました。"
           }
         }
       }
@@ -460,23 +460,6 @@
         }
       }
     },
-    "analysis.projection %@": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "At this pace: about %@"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "このペースなら約%@"
-          }
-        }
-      }
-    },
     "analysis.projection.label": {
       "extractionState": "manual",
       "localizations": {
@@ -490,6 +473,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "月末の見込み"
+          }
+        }
+      }
+    },
+    "analysis.projection.lead": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At this pace, about"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このペースなら約"
           }
         }
       }
@@ -1538,7 +1537,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@の支出合計の中央値から大きな臨時支出を除き、%2$@単位で切り上げています。"
+            "value": "大きな臨時支出を除いた%1$@の支出合計の中央値を、%2$@単位で切り上げています。"
           }
         }
       }
@@ -3483,7 +3482,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今月の残りを%@までに抑えると、いつものペースに戻せます。"
+            "value": "今月の残りはこのカテゴリを%@までに抑えると、いつものペースに戻せます。"
           }
         }
       }
@@ -3500,7 +3499,7 @@
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "今月の残りを%@までに抑えると、これ以上の超過を抑えられます。"
+            "value": "今月の残りはこのカテゴリを%@までに抑えると、これ以上の超過を抑えられます。"
           }
         }
       }

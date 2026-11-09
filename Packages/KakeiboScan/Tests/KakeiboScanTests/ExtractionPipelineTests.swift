@@ -132,7 +132,7 @@ private let receiptRows = [
     }
 }
 
-/// Integration: real Vision OCR on three bundled made-up receipts, on the simulator and on macOS.
+/// Integration: real Vision OCR on the bundled made-up receipts, on the simulator and on macOS.
 @Suite struct ExtractionPipelineIntegrationTests {
     struct Case: Sendable, CustomTestStringConvertible {
         var image: String
@@ -141,6 +141,8 @@ private let receiptRows = [
         var payment: PaymentMethod
         var tax10: Int?
         var tax8: Int?
+        /// Item prices to expect, when checked.
+        var items: [Int]? = nil
         var testDescription: String { image }
     }
 
@@ -148,6 +150,9 @@ private let receiptRows = [
         Case(image: "sample-receipt", total: 754, dayKey: "2026-11-03", payment: .cash, tax10: 67, tax8: nil),
         Case(image: "konbini-receipt", total: 378, dayKey: "2026-11-02", payment: .icCard, tax10: nil, tax8: 28),
         Case(image: "supermarket-skewed-receipt", total: 841, dayKey: "2026-10-28", payment: .credit, tax10: 32, tax8: 35),
+        // B-15: tight rows photographed 4° crooked; the price column drifts about a row.
+        Case(image: "familymart-tilted-receipt", total: 1_469, dayKey: "2026-11-07", payment: .credit, tax10: 0, tax8: 108,
+             items: [170, 150, 210, 236, 5, 498, 200]),
     ]
 
     @Test(arguments: cases)
@@ -168,7 +173,11 @@ private let receiptRows = [
         #expect(result.draft.payment == expected.payment)
         #expect(result.draft.tax10Yen == expected.tax10)
         #expect(result.draft.tax8Yen == expected.tax8)
-        #expect(result.lines.contains { $0.hasPrefix("合計") && $0.contains("\(expected.total)") },
+        if let items = expected.items {
+            #expect(result.draft.items.map(\.priceYen) == items)
+            #expect(result.draft.confidence(for: .items) == .high)
+        }
+        #expect(result.lines.contains { $0.hasPrefix("合計") && $0.filter(\.isNumber).contains("\(expected.total)") },
                 "合計 and its amount should be on one rebuilt line")
     }
 }

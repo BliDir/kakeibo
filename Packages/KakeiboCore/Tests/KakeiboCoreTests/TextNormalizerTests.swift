@@ -147,4 +147,10 @@ import KakeiboCore
         ]
         #expect(TextNormalizer.normalize(text: raw) == expected)
     }
+
+    /// B-15: large, letter-spaced 合計 as OCR reads it.
+    @Test(arguments: [("合 言十 ¥1,469", "合計 ¥1,469"), ("台計 ¥500", "合計 ¥500"), ("台 言十 ¥500", "合計 ¥500"), ("小 言十 ¥754", "小計 ¥754")])
+    func totalMisreadsAreRepaired(raw: String, expected: String) {
+        #expect(TextNormalizer.normalizeLine(raw).unicodeScalars.elementsEqual(expected.unicodeScalars))
+    }
 }

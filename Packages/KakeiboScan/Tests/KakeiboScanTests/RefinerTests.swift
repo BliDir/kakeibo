@@ -150,6 +150,35 @@ private let today = Date(timeIntervalSince1970: 1_793_674_800)
         #expect(RefinementMerger.merge(draft: d, model: model).items.map(\.nameEn) == ["Milk", "Hot coffee (L)"])
     }
 
+    /// B-15: the parser's items were a row off (they did not add up); the model's add up exactly.
+    @Test func modelItemsWinWhenOnlyTheyAddUp() {
+        var d = ReceiptDraft(totalYen: 530, confidences: [.totalYen: .high, .items: .low])
+        d.items = [LineItemDraft(name: "大きいウインナー", priceYen: 150), LineItemDraft(name: "和風ツナパン", priceYen: 210)]
+        let model = ModelReceipt(items: [
+            LineItemDraft(name: "大きいウインナー", nameEn: "Big sausage", priceYen: 170, isReducedRate: true),
+            LineItemDraft(name: "和風ツナパン", nameEn: "Tuna bread", priceYen: 150, isReducedRate: true),
+            LineItemDraft(name: "フランクロール", nameEn: "Frank roll", priceYen: 210, isReducedRate: true),
+            LineItemDraft(name: "合計", priceYen: 530),
+        ])
+        let merged = RefinementMerger.merge(draft: d, model: model)
+        #expect(merged.items.map(\.priceYen) == [170, 150, 210])
+        #expect(merged.items.map(\.nameEn) == ["Big sausage", "Tuna bread", "Frank roll"])
+        #expect(merged.confidence(for: .items) == .medium)
+    }
+
+    /// The parser's items stay when the model's do not add up either, or when the parser's do.
+    @Test func parserItemsStayUnlessOnlyTheModelAddsUp() {
+        var low = ReceiptDraft(totalYen: 530, confidences: [.totalYen: .high, .items: .low])
+        low.items = [LineItemDraft(name: "パン", priceYen: 150)]
+        let wrong = ModelReceipt(items: [LineItemDraft(name: "パン", priceYen: 150), LineItemDraft(name: "牛乳", priceYen: 200)])
+        #expect(RefinementMerger.merge(draft: low, model: wrong).items.map(\.priceYen) == [150])
+
+        var high = ReceiptDraft(totalYen: 350, confidences: [.totalYen: .high, .items: .high])
+        high.items = [LineItemDraft(name: "パン", priceYen: 150), LineItemDraft(name: "牛乳", priceYen: 200)]
+        let other = ModelReceipt(items: [LineItemDraft(name: "パン", priceYen: 350)])
+        #expect(RefinementMerger.merge(draft: high, model: other).items.map(\.priceYen) == [150, 200])
+    }
+
     @Test func emptyModelAnswerChangesNothing() {
         let d = draft(total: 754, totalConfidence: .medium)
         #expect(RefinementMerger.merge(draft: d, model: ModelReceipt()) == d)

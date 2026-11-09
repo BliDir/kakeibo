@@ -10,8 +10,10 @@ import KakeiboCore
 ///   (a payment the parser merely defaulted to cash counts as not found). Filled fields are `medium`.
 /// - Category: when the model supplies the store and the parser had no category match,
 ///   the model's store name is run through the chain dictionary.
-/// - Items: the model's items are used when the parser has none; otherwise the parser's
-///   items are kept and the model only adds missing English names.
+/// - Items: the model's items are used when the parser has none, or when the parser's items do
+///   not add up (`items` is `low`) but the model's add up exactly to the total (B-15); they are
+///   then `medium`. Otherwise the parser's items are kept and the model only adds missing
+///   English names.
 /// - Model values that make no sense (bad dates, non-positive totals, zero tax, tax at or above
 ///   the total) are ignored, and so are "items" that are really summary lines (小計, 合計, お預り,
 ///   お釣り, tax, points): the model sometimes lists them.
@@ -74,7 +76,11 @@ public enum RefinementMerger {
             let name = item.name.trimmingCharacters(in: .whitespaces)
             return !name.isEmpty && !summaryWords.contains { name.contains($0) }
         }
-        if draft.items.isEmpty {
+        let modelItemsAddUp = !modelItems.isEmpty && total != nil
+            && modelItems.allSatisfy { $0.priceYen != 0 }
+            && modelItems.reduce(0, { $0 + $1.priceYen }) == total
+        let parserItemsAddUp = draft.confidence(for: .items) != .low
+        if draft.items.isEmpty || (!parserItemsAddUp && modelItemsAddUp) {
             if !modelItems.isEmpty {
                 result.items = modelItems
                 result.confidences[.items] = .medium

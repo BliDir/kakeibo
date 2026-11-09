@@ -11,6 +11,8 @@ import Foundation
 ///    Only thousands commas join, so `1,000, 2` keeps its space.
 /// 5. The letter `O`/`o` between digits becomes `0`: `1O0` → `100`, `1,O00` → `1,000`.
 /// 6. Spaces between Japanese characters go: `合 計` → `合計`.
+/// 7. OCR misreads of large, letter-spaced 合計 and 小計 are repaired: `合 言十` and `台言十`
+///    (計 split into 言 and 十) and `台計` become `合計`; `小言十` becomes `小計` (B-15).
 ///
 /// Line order is kept and lines that end up empty are dropped.
 public enum TextNormalizer {
@@ -37,8 +39,12 @@ public enum TextNormalizer {
         s = replace(spaceAfterYen, in: s, with: "¥")
         s = replaceLetterOBetweenDigits(in: s)
         s = replace(spaceBetweenJapanese, in: s, with: "")
+        for (misread, word) in totalMisreads { s = s.replacingOccurrences(of: misread, with: word) }
         return s
     }
+
+    /// Large print of 合計 / 小計 as OCR sometimes reads it.
+    private static let totalMisreads = [("合言十", "合計"), ("台言十", "合計"), ("台計", "合計"), ("小言十", "小計")]
 
     // MARK: - Patterns
 

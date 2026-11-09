@@ -71,9 +71,10 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["review.check.count"].exists)
         let hint = scrollTo(app.staticTexts["Items don't add up to the subtotal"], in: app)
         XCTAssertTrue(hint.exists, "the items open with the hint")
-        let kept = app.descendants(matching: .any).matching(identifier: "review.item")
-            .matching(NSPredicate(format: "label CONTAINS %@", "天然水"))
-        XCTAssertEqual(kept.count, 1, "the name without a price is kept")
+        // B-15: the name without a price is not kept as a ¥0 item; the hint flags the gap.
+        let items = app.descendants(matching: .any).matching(identifier: "review.item")
+        XCTAssertEqual(items.count, 2)
+        XCTAssertEqual(items.matching(NSPredicate(format: "label CONTAINS %@", "天然水")).count, 0)
     }
 
     @MainActor

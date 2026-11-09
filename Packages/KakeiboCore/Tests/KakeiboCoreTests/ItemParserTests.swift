@@ -107,6 +107,81 @@ import Testing
     }
 }
 
+/// B-13: Seiyu prints a letter after each price (`¥199C`) and a department code before names.
+@Suite struct ItemParserMarkTests {
+    private func items(_ text: String) -> [LineItemDraft] {
+        ItemParser.parse(lines: TextNormalizer.normalize(text: text))
+    }
+
+    @Test(arguments: [
+        ("ポッキー極細 ¥199C", 199), ("ゼイタクギョウザ ¥349 E", 349), ("パン ¥1,200T", 1_200),
+        ("ジュース ¥98x", 98), ("ガム 120*", 120), ("ガム ¥120 *", 120),
+    ])
+    func priceWithMark(line: String, yen: Int) {
+        let result = items(line)
+        #expect(result.map(\.priceYen) == [yen])
+        let name = result.first?.name ?? ""
+        #expect(!name.contains { "CETXx*¥".contains($0) }, "\(name)")
+    }
+
+    @Test func markIsNotPartOfTheName() {
+        #expect(items("※01 ポッキー極細 ¥199C").map(\.name) == ["ポッキー極細"])
+        #expect(items("MOカケルチーズ ¥399C").map(\.name) == ["MOカケルチーズ"])
+    }
+
+    /// Without ¥ a letter after the number is a unit or a code.
+    @Test(arguments: ["ポテト 350g", "おにぎり 2P", "ボルト M8 10A"])
+    func letterAfterBareNumberIsNotAPrice(line: String) {
+        #expect(items(line).isEmpty)
+    }
+
+    @Test(arguments: [
+        ("※01 テンネンスイ ¥170", "テンネンスイ"), ("90 サンショクダンゴ ¥278", "サンショクダンゴ"),
+        ("※91 ゼイタクギョウザ ¥349C", "ゼイタクギョウザ"),
+        ("7UP ¥150", "7UP"), ("3個入り プリン ¥198", "3個入りプリン"), ("1 リンゴ ¥120", "1 リンゴ"),
+    ])
+    func departmentCode(line: String, name: String) {
+        #expect(items(line).map(\.name) == [name])
+    }
+
+    @Test func seiyuReceipt() {
+        let result = items("""
+        担当:00566
+        ※01 テンネンスイ
+        ¥85 x 2 ¥170C
+        ※01 ファンタ グレープ
+        ¥75 x 2 ¥150C
+        ※01 ポッキー極細 ¥199C
+        ※90 サンショクダンゴ
+        ¥139 x 2 ¥278C
+        ※91 ゼイタクギョウザ ¥349C
+        ※90 MOカケルチーズ ¥399C
+        小計 9点 ¥1,545
+        """)
+        #expect(result.map(\.priceYen) == [170, 150, 199, 278, 349, 399])
+        #expect(result.allSatisfy { $0.isReducedRate })
+        #expect(result.map(\.name).first == "テンネンスイ")
+    }
+
+    /// A name waiting for its quantity line is kept (price 0) when the next name arrives first.
+    @Test func waitingNameIsKeptNotOverwritten() {
+        let result = items("""
+        牛乳 ¥198
+        ※01 テンネンスイ
+        ※01 ファンタ グレープ
+        ¥75 x 2 ¥150
+        """)
+        #expect(result.map(\.priceYen) == [198, 0, 150])
+        #expect(result[1].name == "テンネンスイ")
+        #expect(result[1].isReducedRate)
+    }
+
+    /// Above the first item, a line without a price is the store's name, not an item.
+    @Test func storeNameAboveItemsIsNotKept() {
+        #expect(items("マツモトキヨシ\n新宿東口店\n化粧水 ¥1,320").map(\.name) == ["化粧水"])
+    }
+}
+
 @Suite struct ReceiptParserItemTests {
     @Test func itemSumMakesTheTotalHighConfidence() {
         // No change line and no external tax: only the item sum can confirm the total.
@@ -122,9 +197,33 @@ import Testing
         #expect(draft.confidence(for: .items) == .high)
     }
 
-    @Test func itemsThatDoNotAddUpAreMedium() {
+    /// B-13: the review screen asks the user to check items that do not add up.
+    @Test func itemsThatDoNotAddUpAreLow() {
         let draft = ReceiptParser.parse(text: "化粧水 ¥1,320\n合計 ¥1,536", today: .now)
         #expect(draft.confidence(for: .totalYen) == .medium)
-        #expect(draft.confidence(for: .items) == .medium)
+        #expect(draft.confidence(for: .items) == .low)
+    }
+
+    /// Tax added on top (外税): the items add up to the subtotal, not the total.
+    @Test func seiyuItemsMatchTheSubtotal() {
+        let draft = ReceiptParser.parse(text: """
+        SEIYU
+        ※01 ポッキー極細 ¥199C
+        ※91 ゼイタクギョウザ ¥349C
+        小計 2点 ¥548
+        消費税額
+        8% 2点 ¥43
+        合計 ¥591
+        """, today: .now)
+        #expect(draft.items.map(\.priceYen) == [199, 349])
+        #expect(draft.totalYen == 591)
+        #expect(draft.tax8Yen == 43)
+        #expect(draft.confidence(for: .items) == .high)
+    }
+
+    @Test func unpricedItemIsLow() {
+        let draft = ReceiptParser.parse(text: "牛乳 ¥198\n※01 テンネンスイ\nパン ¥100\n合計 ¥298", today: .now)
+        #expect(draft.items.map(\.priceYen) == [198, 0, 100])
+        #expect(draft.confidence(for: .items) == .low)
     }
 }

@@ -76,6 +76,31 @@ private func lines(_ text: String) -> [String] { TextNormalizer.normalize(text: 
     func ignoresNonTaxLines(line: String) {
         #expect(tax(line) == nil)
     }
+
+    /// B-13, Seiyu: the tax word on its own line, the rate and amount on the lines below.
+    @Test func taxHeadingAboveRateLines() {
+        let result = tax("""
+        税抜金額対象
+        8% 9点 ¥1,545
+        消費税額
+        8% 9点 ¥123
+        合計 ¥1,668
+        """, total: 1_668)
+        #expect(result?.tax8Yen == 123)
+        #expect(result?.tax10Yen == nil)
+        #expect(result?.confidence == .high)
+    }
+
+    @Test func taxHeadingWithBothRates() {
+        let result = tax("消費税等\n10% ¥90\n8% ¥37\n合計 ¥1,527", total: 1_527)
+        #expect(result?.tax10Yen == 90)
+        #expect(result?.tax8Yen == 37)
+    }
+
+    /// A rate line after something else (a taxable base) is not a tax amount.
+    @Test func rateLineWithoutHeadingIsNotTax() {
+        #expect(tax("10% ¥1,000\n合計 ¥1,100", total: 1_100) == nil)
+    }
 }
 
 @Suite struct InvoiceNumberParserTests {

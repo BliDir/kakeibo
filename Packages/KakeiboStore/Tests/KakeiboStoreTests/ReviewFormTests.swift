@@ -51,6 +51,24 @@ import Testing
         #expect(form.fieldsToCheck.isEmpty)
     }
 
+    /// B-13: items that do not add up are a field to check until the user changes them.
+    @Test func itemsThatDoNotAddUpNeedChecking() {
+        var draft = Self.scanDraft()
+        draft.confidences[.items] = .low
+        let form = scanForm(draft)
+        #expect(form.fieldsToCheck == [.storeName, .items])
+        form.draft.items.append(LineItemDraft(name: "パン", priceYen: 158))
+        #expect(!form.needsCheck(.items))
+    }
+
+    @Test func itemsWithoutAConfidenceAreNotChecked() {
+        var draft = Self.scanDraft()
+        draft.items = []
+        draft.confidences[.items] = .low
+        #expect(!scanForm(draft).needsCheck(.items))
+        #expect(!scanForm().needsCheck(.items))
+    }
+
     @Test func editingTheTotalDropsVerified() {
         let form = scanForm()
         form.amountText = "1300"

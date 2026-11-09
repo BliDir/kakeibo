@@ -41,10 +41,12 @@ public enum ReceiptParser {
         }
         if !items.isEmpty {
             draft.items = items
-            // Items that add up to the total or the subtotal were read completely.
+            // Items that add up to the total (tax included) or the subtotal (tax added on top)
+            // were read completely. Otherwise one was missed or misread: the review screen asks
+            // the user to check them. An item with no price (0) never adds up.
             let sum = items.reduce(0) { $0 + $1.priceYen }
             let adds = sum == total?.totalYen || sum == total?.subtotalYen
-            confidences[.items] = adds ? .high : .medium
+            confidences[.items] = adds && !items.contains { $0.priceYen == 0 } ? .high : .low
         }
 
         if let tax = TaxExtractor.extract(lines: lines, totalYen: total?.totalYen) {

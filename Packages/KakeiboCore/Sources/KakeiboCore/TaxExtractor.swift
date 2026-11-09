@@ -9,6 +9,9 @@ import Foundation
 /// Rate: 10% or 標準 → `tax10Yen`; 8% or 軽減 → `tax8Yen`. A line with no rate goes to
 /// `tax10Yen`, but only when no line names a rate (such lines are usually a grand tax total).
 /// A line naming both rates (`内税 10% ¥90 8% ¥37`) is split at each rate.
+///
+/// A tax word alone on its line (`消費税額`, Seiyu) heads the rate lines below it
+/// (`8% 9点 ¥123`): each gives the last amount on the line, until a line without a rate.
 public enum TaxExtractor {
     public struct Result: Sendable, Equatable {
         public var tax10Yen: Int?
@@ -27,10 +30,23 @@ public enum TaxExtractor {
             amount >= 0 && (totalYen.map { amount < $0 } ?? true)
         }
 
+        /// True after a tax word with no amount, while the lines below name a rate.
+        var underHeading = false
+
         for line in lines {
-            guard let keyword = taxKeywordStart(in: line) else { continue }
-            let afterKeyword = String(line[keyword...])
             let markers = rateMarkers(in: line)
+            guard let keyword = taxKeywordStart(in: line) else {
+                if underHeading, markers.count == 1, let marker = markers.first {
+                    if let amount = TotalExtractor.amounts(in: String(line[marker.end...])).last, accept(amount) {
+                        marker.rate == .ten ? rated10.append(amount) : rated8.append(amount)
+                    }
+                } else {
+                    underHeading = false
+                }
+                continue
+            }
+            let afterKeyword = String(line[keyword...])
+            underHeading = markers.isEmpty && TotalExtractor.amounts(in: afterKeyword).isEmpty
 
             if markers.contains(where: { $0.rate == .ten }), markers.contains(where: { $0.rate == .eight }) {
                 // Both rates on one line: the first amount after each rate marker.

@@ -1,0 +1,20 @@
+{
+  "storeName": "西友",
+  "dayKey": "2026-11-08",
+  "time": "15:10",
+  "totalYen": 1668,
+  "tax10Yen": null,
+  "tax8Yen": 123,
+  "payment": "cash",
+  "category": "groceries",
+  "invoiceNumber": "T4290001110641",
+  "receiptNumber": "21/004272",
+  "items": [
+    { "name": "テンネンスイ", "priceYen": 170, "isReducedRate": true },
+    { "name": "ファンタ グレープ", "priceYen": 150, "isReducedRate": true },
+    { "name": "ポッキー極細", "priceYen": 199, "isReducedRate": true },
+    { "name": "サンショクダンゴ", "priceYen": 278, "isReducedRate": true },
+    { "name": "ゼイタクギョウザ", "priceYen": 349, "isReducedRate": true },
+    { "name": "MOカケルチーズ", "priceYen": 399, "isReducedRate": true }
+  ]
+}

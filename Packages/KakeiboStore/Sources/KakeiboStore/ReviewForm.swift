@@ -119,14 +119,17 @@ public final class ReviewForm {
     public var fieldsToCheck: [ReceiptField] {
         guard isScan else { return [] }
         return Self.checkedFields.filter { field in
-            !isEdited(field) && draft.confidence(for: field) == .low
+            // Items only when the parser said they do not add up (B-13), never just because no
+            // confidence was recorded.
+            if field == .items { return !isEdited(field) && !draft.items.isEmpty && draft.confidences[.items] == .low }
+            return !isEdited(field) && draft.confidence(for: field) == .low
         }
     }
 
     public func needsCheck(_ field: ReceiptField) -> Bool { fieldsToCheck.contains(field) }
 
     /// Fields that get a "check" hint when uncertain.
-    static let checkedFields: [ReceiptField] = [.totalYen, .storeName, .dayKey, .payment, .category]
+    static let checkedFields: [ReceiptField] = [.totalYen, .storeName, .dayKey, .payment, .category, .items]
 
     /// True when the total was confirmed by arithmetic (change, subtotal + tax, or items).
     public var isTotalVerified: Bool {

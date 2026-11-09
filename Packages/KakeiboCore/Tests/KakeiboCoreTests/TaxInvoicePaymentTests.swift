@@ -97,6 +97,41 @@ private func lines(_ text: String) -> [String] { TextNormalizer.normalize(text: 
         #expect(result?.tax8Yen == 37)
     }
 
+    /// B-14, FamilyMart: the tax line has no rate; the 対象 line above it has.
+    @Test func taxTakesTheRateOfTheTaxableLineAbove() {
+        let result = tax("""
+        合 計 ¥1,260
+        (10%対象 ¥5)
+        (内消費税等 ¥0)
+        ( 8%対象 ¥1,255)
+        (内消費税等 ¥92)
+        """, total: 1_260)
+        #expect(result?.tax10Yen == 0)
+        #expect(result?.tax8Yen == 92)
+        #expect(result?.confidence == .high)
+    }
+
+    /// B-14, Life: `外10% ¥284` is a tax line; its taxable line says 対象.
+    @Test func lifeExternalRateLine() {
+        let result = tax("(外10% 対象 ¥2,846)\n外10% ¥284\n合計 ¥3,130", total: 3_130)
+        #expect(result?.tax10Yen == 284)
+        #expect(result?.tax8Yen == nil)
+    }
+
+    /// B-14, 7-Eleven: the closing 内消費税等 summary (¥74) includes tax inside `490込` items;
+    /// the earlier 消費税等(10%) (¥30) is only the tax added on top.
+    @Test func lastTaxLinePerRateWins() {
+        let result = tax("""
+        消費税等( 8%) ¥21
+        消費税等(10%) ¥30
+        合 計 ¥1,161
+        (内消費税等 8% ¥21)
+        (内消費税等10% ¥74)
+        """, total: 1_161)
+        #expect(result?.tax8Yen == 21)
+        #expect(result?.tax10Yen == 74)
+    }
+
     /// A rate line after something else (a taxable base) is not a tax amount.
     @Test func rateLineWithoutHeadingIsNotTax() {
         #expect(tax("10% ¥1,000\n合計 ¥1,100", total: 1_100) == nil)

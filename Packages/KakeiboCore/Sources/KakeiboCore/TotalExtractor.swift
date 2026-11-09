@@ -26,6 +26,9 @@ public enum TotalExtractor {
         /// The arithmetic check that confirmed the total, if any.
         public var check: Check?
         public var subtotalYen: Int?
+        /// Every subtotal line, for receipts with one per rate (7-Eleven: 税抜 8%, 税抜10%,
+        /// 税込10%, 非課税), whose items add up to their sum.
+        public var subtotalLinesYen: [Int] = []
         public var tenderedYen: Int?
         public var changeYen: Int?
     }
@@ -80,6 +83,7 @@ public enum TotalExtractor {
                 source: source,
                 check: check,
                 subtotalYen: subtotal,
+                subtotalLinesYen: scan.subtotals,
                 tenderedYen: scan.tendered.first,
                 changeYen: scan.change.first
             )

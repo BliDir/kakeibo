@@ -221,9 +221,99 @@ import Testing
         #expect(draft.confidence(for: .items) == .high)
     }
 
+    /// B-14, 7-Eleven: one subtotal per rate and none for the whole receipt.
+    @Test func itemsMatchThePerRateSubtotals() {
+        let draft = ReceiptParser.parse(text: """
+        セブン-イレブン
+        手巻おにぎり辛子明太子 *130
+        メビウスワン 490込
+        小 計(税抜 8%) ¥130
+        消費税等( 8%) ¥10
+        小 計(税込10%) ¥490
+        合 計 ¥630
+        """, today: .now)
+        #expect(draft.items.map(\.priceYen) == [130, 490])
+        #expect(draft.totalYen == 630)
+        #expect(draft.confidence(for: .items) == .high)
+    }
+
     @Test func unpricedItemIsLow() {
         let draft = ReceiptParser.parse(text: "牛乳 ¥198\n※01 テンネンスイ\nパン ¥100\n合計 ¥298", today: .now)
         #expect(draft.items.map(\.priceYen) == [198, 0, 100])
         #expect(draft.confidence(for: .items) == .low)
+    }
+}
+
+/// B-14: layouts from real chain receipts.
+@Suite struct ItemParserChainLayoutTests {
+    private func items(_ text: String) -> [LineItemDraft] {
+        ItemParser.parse(lines: TextNormalizer.normalize(text: text))
+    }
+
+    /// 7-Eleven: `*` right before the price marks 8%.
+    @Test(arguments: ["手巻おにぎり辛子明太子 *130", "手巻おにぎり辛子明太子 * 130", "手巻おにぎり辛子明太子 *¥130"])
+    func sevenElevenStar(line: String) {
+        let result = items(line)
+        #expect(result.map(\.priceYen) == [130])
+        #expect(result.map(\.name) == ["手巻おにぎり辛子明太子"])
+        #expect(result.first?.isReducedRate == true)
+    }
+
+    @Test func starAsMultiplierIsStillAQuantity() {
+        let result = items("牛乳\n2*158")
+        #expect(result.map(\.priceYen) == [316])
+        #expect(result.first?.isReducedRate == false)
+    }
+
+    /// 7-Eleven `490込`, non-taxable `50非`, AEON `▽`: marks, not names.
+    @Test(arguments: [
+        ("メビウスワン 490込", "メビウスワン", 490), ("切手 50非", "切手", 50),
+        ("ティッシュ 328外", "ティッシュ", 328), ("お茶 150内", "お茶", 150), ("パン 198▽", "パン", 198),
+        ("▽パン 198", "パン", 198),
+    ])
+    func trailingTaxMarks(line: String, name: String, yen: Int) {
+        let result = items(line)
+        #expect(result.map(\.name) == [name])
+        #expect(result.map(\.priceYen) == [yen])
+    }
+
+    /// AEON `(7個×単98)` and Life `2コX単1080 ¥2,160`.
+    @Test func aeonQuantityUnderTheItem() {
+        #expect(items("ヤクルト ※ 686\n(7個×単98)").map(\.priceYen) == [686])
+        #expect(items("ヤクルト ※\n(7個×単98)").map(\.priceYen) == [686])
+        #expect(items("お茶\n(2個 X 単58)").map(\.priceYen) == [116])
+        #expect(items("お茶\n7個 × 単 98").map(\.priceYen) == [686])
+    }
+
+    @Test func lifeQuantityCompletesTheName() {
+        let result = items("サインペン\n2コX単1080 ¥2,160\n超熟睡G420 10コ ¥428")
+        #expect(result.map(\.name) == ["サインペン", "超熟睡G420 10コ"])
+        #expect(result.map(\.priceYen) == [2_160, 428])
+    }
+
+    /// `1点※ ¥270` under a name gives that name its price, never an item called 1点.
+    @Test func countLineCompletesTheName() {
+        let result = items("焼きそばパン\n1点※ ¥270\nお茶 ¥150\nジャンボフランク\n2点 ¥396")
+        #expect(result.map(\.name) == ["焼きそばパン", "お茶", "ジャンボフランク"])
+        #expect(result.map(\.priceYen) == [270, 150, 396])
+        #expect(result.map(\.isReducedRate) == [true, false, false])
+    }
+
+    @Test(arguments: [("半額 -199", -199), ("20%引 -60", -60), ("50円引 -50", -50), ("OFF -30", -30), ("ﾈﾋﾞｷ -20", -20)])
+    func discountWords(line: String, yen: Int) {
+        let result = items("お弁当 ※ ¥398\n\(line)")
+        #expect(result.map(\.priceYen) == [398, yen])
+        #expect(result.last?.isReducedRate == true, "a discount takes the rate of the item above")
+    }
+
+    @Test func coffeeIsNotADiscount() {
+        #expect(items("COFFEE ¥300").map(\.priceYen) == [300])
+    }
+
+    /// FamilyMart: `◎` and other leading marks are not part of the name; `軽` right after the price.
+    @Test func familyMartMarks() {
+        let result = items("◎ミルクホイップクリー ¥235軽\n●おにぎり ¥120\n○パン ¥98\n◆お茶 ¥140\n☆ガム ¥110")
+        #expect(result.map(\.name) == ["ミルクホイップクリー", "おにぎり", "パン", "お茶", "ガム"])
+        #expect(result.first?.isReducedRate == true)
     }
 }

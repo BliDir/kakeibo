@@ -1,0 +1,29 @@
+{
+  "source": "real (owner, 2026-11-05)",
+  "storeName": "ライフ",
+  "dayKey": "2026-11-05",
+  "time": "19:24",
+  "totalYen": 3130,
+  "tax10Yen": 284,
+  "tax8Yen": null,
+  "payment": "credit",
+  "category": "groceries",
+  "invoiceNumber": "T9010001060208",
+  "items": [
+    {
+      "name": "サインペン",
+      "priceYen": 2160,
+      "isReducedRate": false
+    },
+    {
+      "name": "超熟睡G420 10コ",
+      "priceYen": 428,
+      "isReducedRate": false
+    },
+    {
+      "name": "セロテープ18mmN41",
+      "priceYen": 258,
+      "isReducedRate": false
+    }
+  ]
+}

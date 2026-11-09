@@ -5,10 +5,13 @@ import Foundation
 /// - Item rows are the lines above 小計/合計 that end in a price (`おにぎり鮭 ※ ¥160`).
 ///   Header lines that also end in digits (dates, times, TEL, レジ No., addresses, 登録番号,
 ///   unit prices) are skipped.
-/// - Quantity lines (`2コ × 198`, `3点 × @98 ¥294`) fold into the item above. A name printed
-///   without a price takes its price from the quantity line below it.
-/// - Discounts (値引, 割引, クーポン) become negative items right after the item they reduce,
-///   with that item's tax rate.
+/// - Quantity lines (`2コ × 198`, `3点 × @98 ¥294`, AEON `(7個×単98)`, Life `2コX単1080 ¥2,160`)
+///   fold into the item above. A name printed without a price takes its price from the quantity
+///   line below it, or from a count line (`1点※ ¥270`).
+/// - Discounts (値引, 割引, クーポン, 半額, 20%引, 50円引, OFF) become negative items right after
+///   the item they reduce, with that item's tax rate.
+/// - 7-Eleven marks the reduced rate with `*` right before the price (`*130`). Marks after a
+///   price (`490込`, `50非`, `外`, `内`, `▽`) are dropped, and so are leading `◎ ● ○ ◆ ☆` and `▽`.
 /// - A price may end in a one-letter tax or category mark after a ¥ (`¥199C` at Seiyu) or in
 ///   `*`; the mark is dropped. Leading 2–3 digit department codes (`01 テンネンスイ`) are
 ///   dropped from names.
@@ -52,6 +55,19 @@ public enum ItemParser {
                 continue
             }
 
+            // A count with the price, under a name printed on its own line (`1点※ ¥270`).
+            if isCountLine(line), let price = trailingPrice(line), price.value > 0 {
+                if let pending = pendingName {
+                    items.append(LineItemDraft(name: pending.name, priceYen: price.value,
+                                               isReducedRate: pending.reduced || reduced))
+                    pendingName = nil
+                } else if var last = items.last, last.priceYen > 0 {
+                    last.priceYen = max(last.priceYen, price.value)
+                    items[items.count - 1] = last
+                }
+                continue
+            }
+
             if isDiscount(line) {
                 guard let amount = trailingPrice(line)?.value, amount != 0 else { continue }
                 let above = items.last
@@ -74,8 +90,8 @@ public enum ItemParser {
             }
             guard price.value > 0, let name = cleanName(line, removing: price.range) else { continue }
             keepPending()
-            items.append(LineItemDraft(name: name, priceYen: price.value, isReducedRate: reduced))
-            pendingName = nil
+            items.append(LineItemDraft(name: name, priceYen: price.value,
+                                       isReducedRate: reduced || hasStarBeforePrice(line)))
         }
         return items
     }
@@ -118,10 +134,30 @@ public enum ItemParser {
         return headerPatterns.contains { $0.firstMatch(in: line, range: range) != nil }
     }
 
-    private static let discountWords = ["値引", "割引", "クーポン", "ネビキ"]
+    private static let discountWords = ["値引", "割引", "クーポン", "ネビキ", "半額", "%引", "円引"]
+    /// OFF as a word, not inside COFFEE.
+    private static let off = try! NSRegularExpression(pattern: #"(?<![A-Z])OFF(?![A-Z])"#, options: .caseInsensitive)
 
     static func isDiscount(_ line: String) -> Bool {
         discountWords.contains(where: line.contains)
+            || off.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil
+    }
+
+    /// `1点※ ¥270`, `2点 ¥396`: a count and the line's price, no name.
+    private static let countLine = try! NSRegularExpression(pattern: #"^\s*\d+\s*点\s*[※★軽]?\s*¥?\s*\d"#)
+
+    static func isCountLine(_ line: String) -> Bool {
+        countLine.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil
+    }
+
+    /// 7-Eleven's reduced-rate `*` right before the price (`手巻おにぎり *130`). Only on item
+    /// lines: in a quantity line (`2*158`) the `*` is a multiplication sign.
+    private static let starBeforePrice = try! NSRegularExpression(
+        pattern: #"(?:^|\s)\*\s*¥?\s*(?:\d{1,3}(?:,\d{3})+|\d+)\s*[^\d\s]?\s*$"#
+    )
+
+    static func hasStarBeforePrice(_ line: String) -> Bool {
+        starBeforePrice.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil
     }
 
     static func isReducedRate(_ line: String) -> Bool {
@@ -150,8 +186,8 @@ public enum ItemParser {
     }
 
     /// The price at the end of the line: `¥1,320`, `198`, `-100`, `▲30`, `450円`,
-    /// optionally followed by a rate mark (`198 ※`, `198軽`), a `*`, or after a ¥ price a single
-    /// letter tax or category mark (`¥199C`, `¥349 E`).
+    /// optionally followed by a rate mark (`198 ※`, `198軽`), a tax mark (`490込`, `50非`, `外`,
+    /// `内`, `▽`), a `*`, or after a ¥ price a single letter tax or category mark (`¥199C`, `¥349 E`).
     ///
     /// Digits right after `:` `/` `-` `.` belong to a time, date or code, not a price.
     /// Without ¥ or 円, values under 10 are counts (`人数 2`), not prices.
@@ -172,7 +208,7 @@ public enum ItemParser {
 
     /// Groups: 1 sign, 2 ¥, 3 digits, 4 円, 5 letter mark.
     private static let pricePattern = try! NSRegularExpression(
-        pattern: #"(?<![\d:/\-.,])\s*([-▲△]\s*)?(¥\s*)?(?<![:/.\d,])(\d{1,3}(?:,\d{3})+|\d+)\s*(円)?\s*(?:[※★軽*]|外|内|(?<=\d|\d\s)([A-Za-z]))?\s*$"#
+        pattern: #"(?<![\d:/\-.,])\s*([-▲△]\s*)?(¥\s*)?(?<![:/.\d,])(\d{1,3}(?:,\d{3})+|\d+)\s*(円)?\s*(?:[※★軽*込非▽]|外|内|(?<=\d|\d\s)([A-Za-z]))?\s*$"#
     )
 
     // MARK: - Names
@@ -181,9 +217,15 @@ public enum ItemParser {
     static func cleanName(_ line: String, removing priceRange: Range<String.Index>?) -> String? {
         var name = line
         let markedBeforePrice = keiBeforePrice.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)) != nil
-        if let priceRange { name.removeSubrange(priceRange) }
+        if let priceRange {
+            name.removeSubrange(priceRange)
+            // 7-Eleven's `*` before the price.
+            while let last = name.last, last == "*" || last == " " { name.removeLast() }
+        }
         if markedBeforePrice, name.hasSuffix("軽") { name.removeLast() }
-        name = name.replacingOccurrences(of: "※", with: "").replacingOccurrences(of: "★", with: "")
+        for mark in ["※", "★", "▽"] { name = name.replacingOccurrences(of: mark, with: "") }
+        name = name.trimmingCharacters(in: .whitespaces)
+        while let first = name.first, "◎●○◆☆".contains(first) { name.removeFirst() }
         let range = NSRange(name.startIndex..., in: name)
         name = kei.stringByReplacingMatches(in: name, range: range, withTemplate: "")
         name = name.trimmingCharacters(in: .whitespaces)
@@ -230,7 +272,7 @@ public enum ItemParser {
         }
 
         private static let countFirst = try! NSRegularExpression(
-            pattern: #"(\d+)\s*(?:コ|個|点|本|袋|枚|P|ケ)?\s*[x×*]\s*@?\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)"#,
+            pattern: #"(\d+)\s*(?:コ|個|点|本|袋|枚|P|ケ)?\s*[x×*]\s*(?:@|単)?\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)"#,
             options: .caseInsensitive
         )
         private static let unitFirst = try! NSRegularExpression(

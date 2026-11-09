@@ -1,0 +1,39 @@
+{
+  "source": "official sample (sej.co.jp, 2019 layout); header lines and the non-taxable item name invented",
+  "storeName": "セブン-イレブン",
+  "dayKey": "2019-10-01",
+  "time": "10:00",
+  "totalYen": 1161,
+  "tax10Yen": 74,
+  "tax8Yen": 21,
+  "payment": "icCard",
+  "category": "groceries",
+  "invoiceNumber": "T0000000000000",
+  "items": [
+    {
+      "name": "手巻おにぎり辛子明太子",
+      "priceYen": 130,
+      "isReducedRate": true
+    },
+    {
+      "name": "コカコーラ 500ml",
+      "priceYen": 140,
+      "isReducedRate": true
+    },
+    {
+      "name": "パラドゥ ミニネイル PK03",
+      "priceYen": 300,
+      "isReducedRate": false
+    },
+    {
+      "name": "メビウスワン",
+      "priceYen": 490,
+      "isReducedRate": false
+    },
+    {
+      "name": "切手",
+      "priceYen": 50,
+      "isReducedRate": false
+    }
+  ]
+}

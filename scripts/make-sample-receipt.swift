@@ -1,6 +1,8 @@
 // Renders the made-up receipts used by KakeiboScan's OCR and pipeline integration tests.
 // Usage: swift scripts/make-sample-receipt.swift <preset> <output.png>
-//   presets: sample, konbini, supermarket-skewed, items-missing (UI test: one item has no price)
+//   presets: sample, konbini, supermarket-skewed, items-missing (UI test: one item has no price),
+//   familymart-tilted (B-15: tightly printed rows, photographed 4° crooked)
+// A tab in a line puts the text after it right-aligned, as receipts print prices.
 // Example: swift scripts/make-sample-receipt.swift sample Packages/KakeiboScan/Tests/KakeiboScanTests/SampleImages/sample-receipt.png
 // Every store, address and number is fictional.
 import CoreGraphics
@@ -67,7 +69,35 @@ let presets: [String: (lines: [(String, CGFloat)], rotationDegrees: CGFloat)] = 
         ("お預り          ¥1,000", 40),
         ("お釣り           ¥559", 40),
     ], 0),
+    // Laid out like the FamilyMart 六本木ヒルズ receipt (B-15); the shop details are made up.
+    "familymart-tilted": ([
+        ("FamilyMart", 48),
+        ("架空ヒルズ店", 34),
+        ("2026年11月7日(土) 18:00", 34),
+        ("==========", 40),
+        ("領 収 証", 40),
+        ("==========", 40),
+        ("◎大きいウインナー\t¥170軽", 40),
+        ("◎和風ツナパン\t¥150軽", 40),
+        ("◎フランクロール\t¥210軽", 40),
+        ("◎天然水新潟県津南60", 40),
+        ("    @118× 2点\t¥236軽", 40),
+        ("レジ袋20号バイオマス\t¥5", 40),
+        ("メキシカンサラダラップ\t¥498軽", 40),
+        ("チョコクリームたい焼き\t¥200軽", 40),
+        ("合 計\t¥1,469", 48),
+        ("(10%対象\t¥5)", 40),
+        ("(内消費税等\t¥0)", 40),
+        ("( 8%対象\t¥1,464)", 40),
+        ("(内消費税等\t¥108)", 40),
+        ("クレジット支払\t¥1,469", 40),
+        ("会社名 MASTER", 40),
+        ("支払金額\t¥1,469", 40),
+    ], -4),
 ]
+
+/// Line pitch as a multiple of the font size; FamilyMart prints its rows tightly.
+let lineSpacing: [String: CGFloat] = ["familymart-tilted": 1.15]
 
 let args = CommandLine.arguments
 guard args.count == 3, let preset = presets[args[1]] else {
@@ -76,7 +106,8 @@ guard args.count == 3, let preset = presets[args[1]] else {
 
 let width = 900
 let margin: CGFloat = 60
-let height = Int(preset.lines.reduce(CGFloat(2 * margin)) { $0 + $1.1 * 1.5 })
+let spacing = lineSpacing[args[1]] ?? 1.5
+let height = Int(preset.lines.reduce(CGFloat(2 * margin)) { $0 + $1.1 * spacing })
 
 let context = CGContext(
     data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
@@ -94,16 +125,23 @@ if preset.rotationDegrees != 0 {
 
 var y = CGFloat(height) - margin
 for (text, size) in preset.lines {
-    y -= size * 1.5
+    y -= size * spacing
     guard !text.isEmpty else { continue }
     let font = CTFontCreateWithName("HiraginoSans-W3" as CFString, size, nil)
     let attributes: [NSAttributedString.Key: Any] = [
         NSAttributedString.Key(kCTFontAttributeName as String): font,
         NSAttributedString.Key(kCTForegroundColorAttributeName as String): CGColor(red: 0, green: 0, blue: 0, alpha: 1),
     ]
-    let line = CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attributes))
+    let parts = text.components(separatedBy: "\t")
+    let line = CTLineCreateWithAttributedString(NSAttributedString(string: parts[0], attributes: attributes))
     context.textPosition = CGPoint(x: margin, y: y)
     CTLineDraw(line, context)
+    if parts.count > 1 {
+        let price = CTLineCreateWithAttributedString(NSAttributedString(string: parts[1], attributes: attributes))
+        let priceWidth = CGFloat(CTLineGetTypographicBounds(price, nil, nil, nil))
+        context.textPosition = CGPoint(x: CGFloat(width) - margin - priceWidth, y: y)
+        CTLineDraw(price, context)
+    }
 }
 
 let url = URL(fileURLWithPath: args[2])

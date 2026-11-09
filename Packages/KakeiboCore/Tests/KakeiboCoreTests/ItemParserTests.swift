@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import KakeiboCore
 
@@ -163,17 +164,17 @@ import Testing
         #expect(result.map(\.name).first == "テンネンスイ")
     }
 
-    /// A name waiting for its quantity line is kept (price 0) when the next name arrives first.
-    @Test func waitingNameIsKeptNotOverwritten() {
+    /// A name whose quantity line never comes is dropped, not kept at ¥0 (B-15 replaces B-13's
+    /// ¥0 row); the item-sum check flags the items instead.
+    @Test func waitingNameWithoutAPriceIsDropped() {
         let result = items("""
         牛乳 ¥198
         ※01 テンネンスイ
         ※01 ファンタ グレープ
         ¥75 x 2 ¥150
         """)
-        #expect(result.map(\.priceYen) == [198, 0, 150])
-        #expect(result[1].name == "テンネンスイ")
-        #expect(result[1].isReducedRate)
+        #expect(result.map(\.priceYen) == [198, 150])
+        #expect(result.map(\.name) == ["牛乳", "ファンタグレープ"])
     }
 
     /// Above the first item, a line without a price is the store's name, not an item.
@@ -237,9 +238,10 @@ import Testing
         #expect(draft.confidence(for: .items) == .high)
     }
 
+    /// A name whose price was not read: the items fall short of the total and are flagged.
     @Test func unpricedItemIsLow() {
-        let draft = ReceiptParser.parse(text: "牛乳 ¥198\n※01 テンネンスイ\nパン ¥100\n合計 ¥298", today: .now)
-        #expect(draft.items.map(\.priceYen) == [198, 0, 100])
+        let draft = ReceiptParser.parse(text: "牛乳 ¥198\n※01 テンネンスイ\nパン ¥100\n合計 ¥468", today: .now)
+        #expect(draft.items.map(\.priceYen) == [198, 100])
         #expect(draft.confidence(for: .items) == .low)
     }
 }
@@ -315,5 +317,175 @@ import Testing
         let result = items("◎ミルクホイップクリー ¥235軽\n●おにぎり ¥120\n○パン ¥98\n◆お茶 ¥140\n☆ガム ¥110")
         #expect(result.map(\.name) == ["ミルクホイップクリー", "おにぎり", "パン", "お茶", "ガム"])
         #expect(result.first?.isReducedRate == true)
+    }
+}
+
+/// B-15: a real FamilyMart photo (prices a row off, card slip read as items).
+@Suite struct ItemParserRealPhotoTests {
+    private func items(_ text: String, total: Int? = nil) -> [LineItemDraft] {
+        ItemParser.parse(lines: TextNormalizer.normalize(text: text), totalYen: total)
+    }
+
+    private func parse(_ text: String) -> ReceiptDraft {
+        ReceiptParser.parse(text: text, today: Date(timeIntervalSince1970: 1_793_674_800))
+    }
+
+    @Test(arguments: ["==========", "----------", "**********", "ニーニニニニニニニ", "ーーーーー", "= = = = =", "========== ¥170軽"])
+    func separatorsAreNeverItems(line: String) {
+        let normalized = TextNormalizer.normalizeLine(line)
+        #expect(ItemParser.isSeparator(normalized))
+        #expect(items("\(line)\n牛乳 ¥198").map(\.name) == ["牛乳"])
+    }
+
+    @Test(arguments: ["コーヒー", "ーニ", "牛乳 ¥198", "=== 特売 ==="])
+    func wordsAreNotSeparators(line: String) {
+        #expect(!ItemParser.isSeparator(TextNormalizer.normalizeLine(line)))
+    }
+
+    @Test(arguments: ["合 計 ¥1,469", "合 言十 ¥1,469", "台計 ¥1,469", "合言十 ¥1,469"])
+    func largeTotalReadsStillEndTheItems(line: String) {
+        #expect(items("パン ¥150\nおにぎり ¥120\n\(line)\nクレジット支払 ¥270").map(\.priceYen) == [150, 120])
+        #expect(TextNormalizer.normalizeLine(line).hasPrefix("合計"))
+    }
+
+    @Test(arguments: [
+        "(10%対象 ¥5)", "(内消費税等 ¥0)", "クレジット支払 ¥270", "支払金額 ¥270", "支払合計 ¥270",
+        "現金 ¥1,000", "電子マネー ¥270", "お預り ¥1,000", "お釣り ¥730", "取引日 2026年11月7日",
+        "伝票番号 12345", "会員番号 ****1234", "会社名 MASTER", "承認番号 540661", "支払区分 一括",
+        "AID A0000000041010", "お客様控え", "売上票",
+    ])
+    func paymentAndCardSlipLinesEndTheItems(line: String) {
+        // No 合計: OCR lost it.
+        #expect(items("パン ¥150\nおにぎり ¥120\n\(line)\nガム ¥110\n会社名 VISA").map(\.priceYen) == [150, 120])
+    }
+
+    /// Card-slip words above the first item (a restaurant's 伝票番号) do not end the list.
+    @Test func slipWordsAboveTheItemsAreHeaders() {
+        #expect(items("サイゼリヤ\n伝票番号 0123\nドリア ¥300\n合計 ¥300").map(\.priceYen) == [300])
+    }
+
+    @Test func aLineShowingTheTotalEndsTheItems() {
+        let text = "パン ¥150\nおにぎり ¥120\nVISA ¥270\nガム ¥110"
+        #expect(items(text, total: 270).map(\.priceYen) == [150, 120])
+        // A single item that costs the whole total is still an item.
+        #expect(items("ラーメン ¥900\nクレジット ¥900", total: 900).map(\.priceYen) == [900])
+    }
+
+    @Test func noItemCostsMoreThanTheTotal() {
+        #expect(items("パン ¥150\n承認 ¥540,661\nおにぎり ¥120", total: 270).map(\.priceYen) == [150, 120])
+    }
+
+    /// No ¥0 item unless... never: a printed ¥0 adds nothing, and a name without a price is dropped.
+    @Test func noZeroPricedItems() {
+        #expect(items("運賃 ¥3,280\n迎車料金 ¥0").map(\.priceYen) == [3_280])
+        #expect(items("パン ¥150\nフランクロール\nおにぎり ¥120").map(\.priceYen) == [150, 120])
+    }
+
+    @Test func quantityStuckToTheNameIsTakenOff() {
+        let result = items("◎天然水新潟県津南60 @118× 2点 ¥236軽")
+        #expect(result.map(\.name) == ["天然水新潟県津南60"])
+        #expect(result.map(\.priceYen) == [236])
+        #expect(result.first?.isReducedRate == true)
+        // No printed total: count × unit.
+        #expect(items("牛乳 2個 x 158").map(\.priceYen) == [316])
+        #expect(items("牛乳 2個 x 158").map(\.name) == ["牛乳"])
+    }
+
+    @Test func unitPriceWithAtIsReadUnitFirst() {
+        let quantity = ItemParser.Quantity("@118× 2点 ¥236軽")
+        #expect(quantity?.count == 2)
+        #expect(quantity?.unitYen == 118)
+        #expect(quantity?.lineTotal == 236)
+        #expect(quantity?.name == nil)
+        #expect(ItemParser.Quantity("@118x 2点")?.lineTotal == 236)
+    }
+
+    @Test func numberGluedToANameIsNotAPrice() {
+        #expect(ItemParser.trailingPrice("天然水新潟県津南60") == nil)
+        #expect(ItemParser.trailingPrice("お茶 140")?.value == 140)
+        #expect(ItemParser.trailingPrice("お茶¥140")?.value == 140)
+        #expect(ItemParser.trailingPrice("お茶※140")?.value == 140)
+    }
+
+    // MARK: Shifted prices
+
+    static let shiftedUp = """
+    FamilyMart
+    ==========
+    領 収 証
+    ニーニニニニニニニ ¥170軽
+    ◎大きいウインナー ¥150軽
+    ◎和風ツナパン ¥210軽
+    ◎フランクロール
+    レジ袋20号バイオマス ¥5
+    合 計 ¥535
+    """
+
+    @Test func pricesARowTooHighAreMovedBack() {
+        let draft = parse(Self.shiftedUp)
+        #expect(draft.items.map(\.name) == ["大きいウインナー", "和風ツナパン", "フランクロール", "レジ袋20号バイオマス"])
+        #expect(draft.items.map(\.priceYen) == [170, 150, 210, 5])
+        #expect(draft.confidence(for: .items) == .high)
+    }
+
+    @Test func pricesARowTooLowAreMovedBack() {
+        let draft = parse("""
+        FamilyMart
+        ◎大きいウインナー
+        ◎和風ツナパン ¥170軽
+        ◎フランクロール ¥150軽
+        ニーニニニニニニニ ¥210軽
+        合 計 ¥530
+        """)
+        #expect(draft.items.map(\.priceYen) == [170, 150, 210])
+        #expect(draft.items.map(\.name) == ["大きいウインナー", "和風ツナパン", "フランクロール"])
+    }
+
+    /// Moving prices is only for an exact sum: otherwise the items stay as read, flagged.
+    @Test func noMoveWithoutAnExactSum() {
+        let draft = parse(Self.shiftedUp.replacingOccurrences(of: "¥535", with: "¥540"))
+        #expect(draft.items.map(\.priceYen) == [150, 210, 5])
+        #expect(draft.confidence(for: .items) == .low)
+    }
+
+    /// A price never moves onto a header or separator line.
+    @Test func noPriceMovesOntoAHeader() {
+        let lines = TextNormalizer.normalize(text: "領 収 証\nパン ¥150\nおにぎり\n合計 ¥150")
+        // Moving 150 down to おにぎり would add up, but leaves パン without a price: that is fine;
+        // moving it up onto 領収証 never happens.
+        let repaired = ItemParser.repairShiftedPrices(lines: lines, totalYen: 150) { _ in true }
+        #expect(repaired?.map(\.name) == ["おにぎり"])
+        let headerOnly = TextNormalizer.normalize(text: "==========\nパン ¥150\n合計 ¥150")
+        #expect(ItemParser.repairShiftedPrices(lines: headerOnly, totalYen: 150) { _ in true } == nil)
+    }
+
+    @Test func roppongiReceiptAsThePhotoGaveIt() {
+        let draft = parse("""
+        FamilyMart
+        六本木ヒルズ店
+        2026年11月 7日(土) 18:00
+        ==========
+        領 収 証
+        ニーニニニニニニニ ¥170軽
+        ◎大きいウインナー ¥150軽
+        ◎和風ツナパン ¥210軽
+        ◎フランクロール
+        ◎天然水新潟県津南60 @118× 2点 ¥236軽
+        レジ袋20号バイオマス ¥5
+        メキシカンサラダラップ ¥498軽
+        チョコクリームたい焼き ¥200軽
+        合 言十 ¥1,469
+        (10%対象 ¥5)
+        クレジット支払 ¥1,469
+        会社名 MASTER
+        承認番号
+        支払区分 一括
+        支払金額 ¥1.
+        AID A
+        """)
+        #expect(draft.totalYen == 1_469)
+        #expect(draft.items.map(\.priceYen) == [170, 150, 210, 236, 5, 498, 200])
+        #expect(draft.items.count == 7)
+        #expect(draft.confidence(for: .items) == .high)
     }
 }

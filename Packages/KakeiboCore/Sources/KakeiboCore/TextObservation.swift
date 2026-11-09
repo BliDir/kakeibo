@@ -10,11 +10,16 @@ public struct TextObservation: Sendable, Codable, Equatable {
     public var boundingBox: BoundingBox
     /// OCR confidence, 0–1.
     public var confidence: Double
+    /// The text's baseline slope (dy/dx in the same normalized, top-left units), from the
+    /// corners Vision reports. Positive when the text runs down to the right. Nil when unknown
+    /// (older recordings); `LineBuilder` then estimates the page's slope itself.
+    public var slope: Double?
 
-    public init(text: String, boundingBox: BoundingBox, confidence: Double) {
+    public init(text: String, boundingBox: BoundingBox, confidence: Double, slope: Double? = nil) {
         self.text = text
         self.boundingBox = boundingBox
         self.confidence = confidence
+        self.slope = slope
     }
 }
 

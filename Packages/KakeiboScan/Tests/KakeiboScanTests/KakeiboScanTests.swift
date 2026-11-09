@@ -95,3 +95,12 @@ enum ScanTestImages {
         #expect(observations.isEmpty)
     }
 }
+
+@Suite struct VisionBaselineSlopeTests {
+    /// Vision's points are bottom-left: a right corner lower on the page has a smaller y.
+    @Test func slopeIsInTopLeftCoordinates() {
+        let slope = VisionOCRService.slope(from: NormalizedPoint(x: 0.1, y: 0.5), to: NormalizedPoint(x: 0.6, y: 0.45))
+        #expect(abs(slope! - 0.1) < 1e-9)
+        #expect(VisionOCRService.slope(from: NormalizedPoint(x: 0.5, y: 0.5), to: NormalizedPoint(x: 0.5, y: 0.4)) == nil)
+    }
+}

@@ -33,21 +33,37 @@ public enum ReceiptParser {
             confidences[.time] = .medium
         }
 
-        let items = ItemParser.parse(lines: lines)
-        let total = TotalExtractor.extract(lines: lines, itemPrices: items.map(\.priceYen))
+        var items = ItemParser.parse(lines: lines)
+        var total = TotalExtractor.extract(lines: lines, itemPrices: items.map(\.priceYen))
+        if let totalYen = total?.totalYen {
+            // With the total known, the items also stop at a line showing it (B-15).
+            let bounded = ItemParser.parse(lines: lines, totalYen: totalYen)
+            if bounded != items {
+                items = bounded
+                total = TotalExtractor.extract(lines: lines, itemPrices: items.map(\.priceYen)) ?? total
+            }
+        }
         if let total {
             draft.totalYen = total.totalYen
             confidences[.totalYen] = total.confidence
         }
-        if !items.isEmpty {
-            draft.items = items
-            // Items that add up to the total (tax included), the subtotal (tax added on top) or
-            // the per-rate subtotals together (7-Eleven) were read completely. Otherwise one was missed or misread: the review screen asks
-            // the user to check them. An item with no price (0) never adds up.
+        // Items that add up to the total (tax included), the subtotal (tax added on top) or
+        // the per-rate subtotals together (7-Eleven) were read completely. Otherwise one was
+        // missed or misread: the review screen asks the user to check them.
+        func addUp(_ items: [LineItemDraft]) -> Bool {
+            guard !items.isEmpty else { return false }
             let sum = items.reduce(0) { $0 + $1.priceYen }
             let perRateSubtotals = total.map { $0.subtotalLinesYen.count > 1 ? $0.subtotalLinesYen.reduce(0, +) : nil } ?? nil
-            let adds = sum == total?.totalYen || sum == total?.subtotalYen || sum == perRateSubtotals
-            confidences[.items] = adds && !items.contains { $0.priceYen == 0 } ? .high : .low
+            return sum == total?.totalYen || sum == total?.subtotalYen || sum == perRateSubtotals
+        }
+        if !items.isEmpty, !addUp(items), total != nil,
+           let repaired = ItemParser.repairShiftedPrices(lines: lines, totalYen: total?.totalYen, accepts: addUp) {
+            // Prices one row off on a tilted photo (B-15), put back because only then do they add up.
+            items = repaired
+        }
+        if !items.isEmpty {
+            draft.items = items
+            confidences[.items] = addUp(items) ? .high : .low
         }
 
         if let tax = TaxExtractor.extract(lines: lines, totalYen: total?.totalYen) {

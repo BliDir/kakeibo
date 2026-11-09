@@ -2,7 +2,7 @@ import Foundation
 
 /// Reads item lines from normalized receipt lines, for iPhones without the on-device model.
 ///
-/// - Item rows are the lines above 小計/合計 that end in a price (`おにぎり鮭 ※ ¥160`).
+/// - Item rows are the lines above the end of the list (see below) that end in a price (`おにぎり鮭 ※ ¥160`).
 ///   Header lines that also end in digits (dates, times, TEL, レジ No., addresses, 登録番号,
 ///   unit prices) are skipped.
 /// - Quantity lines (`2コ × 198`, `3点 × @98 ¥294`, AEON `(7個×単98)`, Life `2コX単1080 ¥2,160`)
@@ -15,35 +15,39 @@ import Foundation
 /// - A price may end in a one-letter tax or category mark after a ¥ (`¥199C` at Seiyu) or in
 ///   `*`; the mark is dropped. Leading 2–3 digit department codes (`01 テンネンスイ`) are
 ///   dropped from names.
-/// - A name still waiting for its price when the next item starts is kept with price 0 (once
-///   items have started, or when it has a rate mark), so the item-sum check flags the items
-///   instead of losing one silently.
+/// - A name that never gets a price is dropped, and so is a printed ¥0 line: no item is ever ¥0.
+///   The item-sum check then flags the items (B-15; B-13 kept such names at ¥0).
+/// - A quantity stuck to the end of a name (`天然水新潟県津南60 @118× 2点 ¥236軽`) is taken off
+///   the name; the printed total is the price. A bare number glued to a name (`津南60`) is part
+///   of it. Separator rows (`=====`, OCR's `ニーニニニ`) are never items.
+/// - The list ends at 小計/合計 (and OCR misreads of large 合計, repaired by `TextNormalizer`),
+///   and, once an item has been read, at tax, payment and card-slip lines or a line showing the
+///   total. No item costs more than the total. `repairShiftedPrices` puts back prices a tilted
+///   photo moved one row (B-15).
 /// - ※, ★ or a standalone 軽 mark the 8% reduced rate. A leading 軽 joined to the name by the
 ///   normalizer (`軽牛乳`) is not recognised, because it cannot be told apart from words like 軽食.
 public enum ItemParser {
-    public static func parse(lines: [String]) -> [LineItemDraft] {
+    /// - Parameter totalYen: the receipt total when known. The item list then also ends at a line
+    ///   whose amount is the total (`クレジット支払 ¥1,469`), once an item has been read.
+    public static func parse(lines: [String], totalYen: Int? = nil) -> [LineItemDraft] {
         var items: [LineItemDraft] = []
-        /// A name printed on its own line, waiting for a quantity line with its price.
+        /// A name printed on its own line, waiting for a quantity line with its price. A name that
+        /// never gets one is dropped (B-15: no ¥0 items); the item-sum check then flags the items.
         var pendingName: (name: String, reduced: Bool)?
 
-        /// Keeps a waiting name that never got its price, with price 0. Above the first item a
-        /// line without a price is usually the store's name or branch, so it is kept only when it
-        /// carries a rate mark.
-        func keepPending() {
-            defer { pendingName = nil }
-            guard let pending = pendingName, !items.isEmpty || pending.reduced else { return }
-            items.append(LineItemDraft(name: pending.name, priceYen: 0, isReducedRate: pending.reduced))
-        }
-
-        for line in itemRegion(lines) {
-            if isHeaderLine(line) {
+        for line in itemRegion(lines, totalYen: totalYen) {
+            if isHeaderLine(line) || isSeparator(line) {
                 pendingName = nil
                 continue
             }
             let reduced = isReducedRate(line)
 
             if let quantity = Quantity(line) {
-                if let pending = pendingName {
+                if let name = quantity.name {
+                    // The name and its quantity on one row (`天然水新潟県津南60 @118× 2点 ¥236軽`).
+                    items.append(LineItemDraft(name: name, priceYen: quantity.lineTotal, isReducedRate: reduced))
+                    pendingName = nil
+                } else if let pending = pendingName {
                     items.append(LineItemDraft(name: pending.name, priceYen: quantity.lineTotal,
                                                isReducedRate: pending.reduced || reduced))
                     pendingName = nil
@@ -83,31 +87,135 @@ public enum ItemParser {
             guard let price = trailingPrice(line) else {
                 // Letters but no price: maybe a name whose price is on the next line.
                 if let name = cleanName(line, removing: nil), name.unicodeScalars.contains(where: CharacterSet.letters.contains) {
-                    keepPending()
                     pendingName = (name, reduced)
                 }
                 continue
             }
+            // A ¥0 line (`迎車料金 ¥0`) adds nothing, and an unpriced name is never given ¥0.
             guard price.value > 0, let name = cleanName(line, removing: price.range) else { continue }
-            keepPending()
+            pendingName = nil
             items.append(LineItemDraft(name: name, priceYen: price.value,
                                        isReducedRate: reduced || hasStarBeforePrice(line)))
         }
+        if let totalYen {
+            // No single item costs more than the whole receipt.
+            items.removeAll { $0.priceYen > totalYen }
+        }
         return items
+    }
+
+    // MARK: - Shifted prices
+
+    /// B-15: on a tilted photo of tightly printed rows, a run of right-column prices can land one
+    /// row up or down from their names. When the items do not add up, this tries moving the prices
+    /// of each such run back by one row: the run lies between a name without a price and the row
+    /// that took the extra price. A pairing is used only when `accepts` says its items add up
+    /// exactly and no price moves onto a header or separator line. Shortest run first.
+    public static func repairShiftedPrices(lines: [String], totalYen: Int?,
+                                           accepts: ([LineItemDraft]) -> Bool) -> [LineItemDraft]? {
+        let regionEnd = itemRegion(lines, totalYen: totalYen).endIndex
+        let region = Array(lines[..<regionEnd])
+        struct Row { var name: String; var price: Substring? }
+        let rows: [Row] = region.map { line in
+            guard let price = trailingPrice(line) else { return Row(name: line, price: nil) }
+            var name = line
+            name.removeSubrange(price.range)
+            return Row(name: name.trimmingCharacters(in: .whitespaces), price: line[price.range])
+        }
+        /// Rows a price can move between: plain item rows (no quantity, count or discount line).
+        func movable(_ i: Int) -> Bool {
+            let line = region[i]
+            return Quantity(line) == nil && !isCountLine(line) && !isDiscount(line)
+        }
+        func receives(_ i: Int) -> Bool { !isHeaderLine(rows[i].name) && !isSeparator(rows[i].name) && movable(i) }
+        func waitingName(_ i: Int) -> Bool {
+            rows[i].price == nil && receives(i)
+                && rows[i].name.unicodeScalars.contains(where: CharacterSet.letters.contains)
+        }
+
+        var candidates: [(length: Int, lines: [String])] = []
+        for b in rows.indices where waitingName(b) {
+            // Prices one row too high: row i's price printed on row i − 1, for rows a+1 … b.
+            var a = b - 1
+            while a >= 0, rows[a].price != nil, movable(a) {
+                if (a + 1...b).allSatisfy(receives) {
+                    var shifted = region
+                    shifted[a] = rows[a].name
+                    for i in a + 1...b { shifted[i] = rows[i].name + " " + rows[i - 1].price! }
+                    candidates.append((b - a, shifted))
+                }
+                a -= 1
+            }
+            // Prices one row too low: row i's price printed on row i + 1, for rows b … c−1.
+            var c = b + 1
+            while c < rows.count, rows[c].price != nil, movable(c) {
+                if (b...c - 1).allSatisfy(receives) {
+                    var shifted = region
+                    shifted[c] = rows[c].name
+                    for i in b...c - 1 { shifted[i] = rows[i].name + " " + rows[i + 1].price! }
+                    candidates.append((c - b, shifted))
+                }
+                c += 1
+            }
+        }
+        let tail = Array(lines[regionEnd...])
+        for candidate in candidates.sorted(by: { $0.length < $1.length }) {
+            let items = parse(lines: candidate.lines + tail, totalYen: totalYen)
+            if accepts(items) { return items }
+        }
+        return nil
     }
 
     // MARK: - Region
 
     /// Lines above the first subtotal or total line; all lines when there is none.
-    static func itemRegion(_ lines: [String]) -> ArraySlice<String> {
-        let end = lines.firstIndex { line in
+    ///
+    /// Once an item has been read, the list also ends at tax, payment and card-slip lines
+    /// (`対象`, `支払`, `会社名`, …) and at a line whose amount is `totalYen`: OCR can miss or
+    /// garble a large 合計 (B-15).
+    static func itemRegion(_ lines: [String], totalYen: Int? = nil) -> ArraySlice<String> {
+        var itemsStarted = false
+        let end = lines.indices.first { index in
+            let line = lines[index]
             let upper = line.uppercased()
-            return endWords.contains { upper.contains($0) }
+            if endWords.contains(where: upper.contains) { return true }
+            if itemsStarted {
+                if endWordsAfterItems.contains(where: upper.contains) { return true }
+                if cardSlipCode.firstMatch(in: upper, range: NSRange(upper.startIndex..., in: upper)) != nil { return true }
+                if let totalYen, Quantity(line) == nil, trailingPrice(line)?.value == totalYen { return true }
+            }
+            if !isHeaderLine(line), !isSeparator(line), let price = trailingPrice(line), price.value > 0 {
+                itemsStarted = true
+            }
+            return false
         }
         return lines[..<(end ?? lines.endIndex)]
     }
 
     private static let endWords = ["小計", "合計", "お買上", "御買上", "ご請求", "TOTAL", "お預", "預り", "お釣"]
+
+    /// End words that can also appear in a header above the items (伝票番号, 会員番号).
+    private static let endWordsAfterItems = [
+        "対象", "内消費税", "支払", "現金", "電子マネー",
+        "取引日", "伝票番号", "会員番号", "会社名", "承認番号", "お客様控", "売上票",
+    ]
+
+    /// A card slip's AID line, not inside a word (`MAID`).
+    private static let cardSlipCode = try! NSRegularExpression(pattern: #"(?<![A-Z])AID(?![A-Z])"#)
+
+    // MARK: - Separators
+
+    /// Characters printed in a row as a separator, and what OCR makes of `====` (`ニーニニ`).
+    private static let separatorCharacters = Set("=-_*~.・ー―‐─━−ニ二〜")
+
+    /// A line of one repeated separator character (`==========`, `-----`, `ニーニニニ`), maybe with
+    /// a price OCR attached to it. Never an item.
+    static func isSeparator(_ line: String) -> Bool {
+        var text = line
+        if let price = trailingPrice(line) { text.removeSubrange(price.range) }
+        let marks = text.filter { !$0.isWhitespace }
+        return marks.count >= 4 && marks.allSatisfy(separatorCharacters.contains)
+    }
 
     // MARK: - Line kinds
 
@@ -189,7 +297,8 @@ public enum ItemParser {
     /// optionally followed by a rate mark (`198 ※`, `198軽`), a tax mark (`490込`, `50非`, `外`,
     /// `内`, `▽`), a `*`, or after a ¥ price a single letter tax or category mark (`¥199C`, `¥349 E`).
     ///
-    /// Digits right after `:` `/` `-` `.` belong to a time, date or code, not a price.
+    /// Digits right after `:` `/` `-` `.` belong to a time, date or code, not a price, and so do
+    /// digits without ¥ or 円 right after a letter (`津南60`, B-15).
     /// Without ¥ or 円, values under 10 are counts (`人数 2`), not prices.
     static func trailingPrice(_ line: String) -> Price? {
         let range = NSRange(line.startIndex..., in: line)
@@ -200,6 +309,9 @@ public enum ItemParser {
         else { return nil }
         let hasYen = match.range(at: 2).length > 0 || match.range(at: 4).length > 0
         guard hasYen || value >= 10, value <= 1_000_000 else { return nil }
+        // A bare number glued to a name is part of it (`天然水新潟県津南60`), not a price.
+        if !hasYen, match.range(at: 1).length == 0, digitsRange.lowerBound > line.startIndex,
+           let before = line[..<digitsRange.lowerBound].last, before.isLetter { return nil }
         // A letter after a bare number is a unit or code (`350g`, `2P`), not a mark.
         if match.range(at: 5).length > 0, match.range(at: 2).length == 0 { return nil }
         let negative = match.range(at: 1).length > 0
@@ -248,35 +360,48 @@ public enum ItemParser {
         var unitYen: Int
         /// The printed line total, or count × unit when none is printed.
         var lineTotal: Int
+        /// An item name printed before the quantity on the same row, if any.
+        var name: String?
 
         init?(_ line: String) {
             let range = NSRange(line.startIndex..., in: line)
             var count: Int?
             var unit: Int?
+            var start = 0
             var end = 0
-            if let m = Quantity.countFirst.firstMatch(in: line, range: range) {
-                count = Range(m.range(at: 1), in: line).flatMap { Int(line[$0]) }
-                unit = Range(m.range(at: 2), in: line).flatMap { Int(line[$0].filter(\.isNumber)) }
-                end = m.range.upperBound
-            } else if let m = Quantity.unitFirst.firstMatch(in: line, range: range) {
+            // `@` marks the unit price, so read `@118× 2点` unit first: count first would take
+            // 118 as the count.
+            if let m = Quantity.unitFirst.firstMatch(in: line, range: range) {
                 unit = Range(m.range(at: 1), in: line).flatMap { Int(line[$0].filter(\.isNumber)) }
                 count = Range(m.range(at: 2), in: line).flatMap { Int(line[$0]) }
-                end = m.range.upperBound
+                (start, end) = (m.range.lowerBound, m.range.upperBound)
+            } else if let m = Quantity.countFirst.firstMatch(in: line, range: range) {
+                count = Range(m.range(at: 1), in: line).flatMap { Int(line[$0]) }
+                unit = Range(m.range(at: 2), in: line).flatMap { Int(line[$0].filter(\.isNumber)) }
+                (start, end) = (m.range.lowerBound, m.range.upperBound)
             }
             guard let count, let unit, count > 0, count < 1_000, unit > 0 else { return nil }
             self.count = count
             unitYen = unit
-            // A total printed after the quantity: "3点 × @98 ¥294".
+            // A total printed after the quantity: "3点 × @98 ¥294". When it disagrees with
+            // count × unit, the printed total wins: the item-sum check then catches a misread.
             let rest = String(line[String.Index(utf16Offset: end, in: line)...])
             lineTotal = ItemParser.trailingPrice(rest)?.value ?? count * unit
+            // A name before the quantity (`天然水新潟県津南60 @118× 2点`), not just brackets or marks.
+            let before = String(line[..<String.Index(utf16Offset: start, in: line)])
+                .trimmingCharacters(in: CharacterSet(charactersIn: " ([（"))
+            if let cleaned = ItemParser.cleanName(before, removing: nil),
+               cleaned.unicodeScalars.filter(CharacterSet.letters.contains).count >= 2 {
+                name = cleaned
+            }
         }
 
         private static let countFirst = try! NSRegularExpression(
-            pattern: #"(\d+)\s*(?:コ|個|点|本|袋|枚|P|ケ)?\s*[x×*]\s*(?:@|単)?\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)"#,
+            pattern: #"(\d+)\s*(?:コ|個|点|本|袋|枚|P|ケ)?\s*[x×*✕✖х]\s*(?:@|単)?\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)"#,
             options: .caseInsensitive
         )
         private static let unitFirst = try! NSRegularExpression(
-            pattern: #"@\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)\s*[x×*]\s*(\d+)"#,
+            pattern: #"@\s*¥?\s*(\d{1,3}(?:,\d{3})+|\d+)\s*[x×*✕✖х]\s*(\d+)"#,
             options: .caseInsensitive
         )
     }

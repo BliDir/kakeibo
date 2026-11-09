@@ -138,3 +138,116 @@ private func obs(_ text: String, x: Double, y: Double, w: Double = 0.2, h: Doubl
         #expect(draft.invoiceNumber == "T1234567890123")
     }
 }
+
+/// B-15: a photo of a tightly printed receipt, tilted, as Vision reports it: axis-aligned boxes
+/// around each rotated piece of text, each with its baseline slope.
+@Suite struct LineBuilderTiltTests {
+    /// The FamilyMart 六本木ヒルズ receipt: (left text, its x and width in pixels, price).
+    static let rows: [(text: String, x: Double, width: Double, price: String?)] = [
+        ("==========", 500, 1500, nil),
+        ("領 収 証", 900, 600, nil),
+        ("==========", 500, 1500, nil),
+        ("◎大きいウインナー", 500, 1000, "¥170軽"),
+        ("◎和風ツナパン", 500, 760, "¥150軽"),
+        ("◎フランクロール", 500, 880, "¥210軽"),
+        ("◎天然水新潟県津南60", 500, 1100, nil),
+        ("@118× 2点", 700, 560, "¥236軽"),
+        ("レジ袋20号バイオマス", 500, 1150, "¥5"),
+        ("メキシカンサラダラップ", 500, 1200, "¥498軽"),
+        ("チョコクリームたい焼き", 500, 1200, "¥200軽"),
+        ("合 計", 500, 300, "¥1,469"),
+        ("(10%対象", 500, 520, "¥5)"),
+        ("(内消費税等", 500, 600, "¥0)"),
+        ("( 8%対象", 500, 520, "¥1,464)"),
+        ("(内消費税等", 500, 600, "¥108)"),
+        ("クレジット支払", 500, 700, "¥1,469"),
+    ]
+
+    static let expected = rows.map { row in row.price.map { "\(row.text) \($0)" } ?? row.text }
+
+    /// A 3024 × 4032 photo. Rows are `pitch` × the text height apart; prices are printed
+    /// `raise` × the text height above the name's baseline; the paper is turned `degrees`
+    /// (positive: clockwise, rows run down to the right).
+    static func photo(degrees: Double, pitch: Double = 1.15, raise: Double = 0.25,
+                      baselines: Bool = true) -> [TextObservation] {
+        let (w, h) = (3024.0, 4032.0)
+        let textHeight = 62.0
+        let angle = degrees * .pi / 180
+        let (cx, cy) = (w / 2, h / 2)
+        func observation(_ text: String, x: Double, top: Double, width: Double) -> TextObservation {
+            // Rotate the text's centre about the page centre; the box encloses the turned text.
+            let (mx, my) = (x + width / 2 - cx, top + textHeight / 2 - cy)
+            let rx = cx + mx * cos(angle) - my * sin(angle)
+            let ry = cy + mx * sin(angle) + my * cos(angle)
+            let boxW = width * abs(cos(angle)) + textHeight * abs(sin(angle))
+            let boxH = width * abs(sin(angle)) + textHeight * abs(cos(angle))
+            return TextObservation(
+                text: text,
+                boundingBox: BoundingBox(x: (rx - boxW / 2) / w, y: (ry - boxH / 2) / h, width: boxW / w, height: boxH / h),
+                confidence: 0.9,
+                slope: baselines ? tan(angle) * w / h : nil
+            )
+        }
+        var result: [TextObservation] = []
+        for (index, row) in rows.enumerated() {
+            let top = 1200 + Double(index) * pitch * textHeight
+            result.append(observation(row.text, x: row.x, top: top, width: row.width))
+            if let price = row.price {
+                let width = Double(price.count) * 55
+                result.append(observation(price, x: 2600 - width, top: top - raise * textHeight, width: width))
+            }
+        }
+        // Vision often lists every name first, then every price.
+        return result.sorted { ($0.boundingBox.midX > 0.6 ? 1 : 0, $0.boundingBox.minY) < ($1.boundingBox.midX > 0.6 ? 1 : 0, $1.boundingBox.minY) }
+    }
+
+    @Test(arguments: [0.0, 2, -2, 4, -4])
+    func tightRowsOnATiltedPhoto(degrees: Double) {
+        #expect(LineBuilder.lines(from: Self.photo(degrees: degrees)) == Self.expected)
+    }
+
+    @Test(arguments: [2.0, 4])
+    func tighterRowsAndHigherPrices(degrees: Double) {
+        #expect(LineBuilder.lines(from: Self.photo(degrees: degrees, pitch: 1.1, raise: 0.35)) == Self.expected)
+    }
+
+    /// The old grouping put each price on the row above at this tilt (the bug).
+    @Test func driftOfMoreThanOneRow() {
+        let observations = Self.photo(degrees: 4)
+        let first = observations.min { $0.boundingBox.minY < $1.boundingBox.minY }!
+        // Across the page the right column runs more than a row lower than the left.
+        #expect(LineBuilder.baselineSlope(observations)! * 0.5 > 1.15 * 62 / 4032)
+        #expect(first.text == "==========")
+    }
+
+    @Test func separatorRowsGetNoPrice() {
+        let lines = LineBuilder.lines(from: Self.photo(degrees: 4))
+        #expect(lines.filter { $0.hasPrefix("==") } == ["==========", "=========="])
+    }
+
+    /// Without baselines (older recordings) the side-by-side estimate still handles half a line.
+    @Test func withoutBaselinesSmallTilt() {
+        #expect(LineBuilder.lines(from: Self.photo(degrees: 0.7, baselines: false)) == Self.expected)
+    }
+
+    @Test(arguments: [2.0, 4, -4])
+    func tiltedPhotoParsesToTheReceiptsItems(degrees: Double) {
+        let lines = ["FamilyMart", "六本木ヒルズ店", "2026年11月 7日(土) 18:00"] + LineBuilder.lines(from: Self.photo(degrees: degrees))
+        let draft = ReceiptParser.parse(lines: lines, today: Date(timeIntervalSince1970: 1_793_674_800))
+        #expect(draft.totalYen == 1_469)
+        #expect(draft.items.map(\.priceYen) == [170, 150, 210, 236, 5, 498, 200])
+        #expect(draft.items.map(\.priceYen).reduce(0, +) == 1_469)
+        #expect(draft.items[3].name == "天然水新潟県津南60")
+        #expect(draft.confidence(for: .items) == .high)
+    }
+
+    @Test func baselineSlopeFavoursLongText() {
+        let items = [
+            TextObservation(text: "long name", boundingBox: BoundingBox(x: 0.1, y: 0.1, width: 0.5, height: 0.02), confidence: 1, slope: 0.05),
+            TextObservation(text: "¥1", boundingBox: BoundingBox(x: 0.7, y: 0.1, width: 0.06, height: 0.02), confidence: 1, slope: -0.2),
+            TextObservation(text: "¥2", boundingBox: BoundingBox(x: 0.7, y: 0.2, width: 0.06, height: 0.02), confidence: 1, slope: -0.2),
+        ]
+        #expect(LineBuilder.baselineSlope(items) == 0.05)
+        #expect(LineBuilder.baselineSlope([]) == nil)
+    }
+}

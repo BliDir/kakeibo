@@ -22,9 +22,17 @@ public struct VisionOCRService: OCRService {
                     x: Double(box.origin.x), y: Double(box.origin.y),
                     width: Double(box.width), height: Double(box.height)
                 ),
-                confidence: Double(candidate.confidence)
+                confidence: Double(candidate.confidence),
+                slope: Self.slope(from: observation.topLeft, to: observation.topRight)
             )
         }
+    }
+
+    /// The slope of a text's top edge in top-left coordinates (Vision's points are bottom-left).
+    static func slope(from left: NormalizedPoint, to right: NormalizedPoint) -> Double? {
+        let dx = Double(right.x - left.x)
+        guard dx > 0.01 else { return nil }
+        return -Double(right.y - left.y) / dx
     }
 
     /// The configured request. Exposed for tests.

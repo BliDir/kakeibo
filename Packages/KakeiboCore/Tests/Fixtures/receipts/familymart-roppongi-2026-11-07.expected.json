@@ -1,0 +1,21 @@
+{
+  "source": "real (owner, 2026-11-07)",
+  "storeName": "ファミリーマート",
+  "dayKey": "2026-11-07",
+  "time": "18:00",
+  "totalYen": 1469,
+  "tax10Yen": 0,
+  "tax8Yen": 108,
+  "payment": "credit",
+  "category": "groceries",
+  "invoiceNumber": "T4011601002009",
+  "items": [
+    { "name": "大きいウインナー", "priceYen": 170, "isReducedRate": true },
+    { "name": "和風ツナパン", "priceYen": 150, "isReducedRate": true },
+    { "name": "フランクロール", "priceYen": 210, "isReducedRate": true },
+    { "name": "天然水新潟県津南60", "priceYen": 236, "isReducedRate": true },
+    { "name": "レジ袋20号バイオマス", "priceYen": 5, "isReducedRate": false },
+    { "name": "メキシカンサラダラップ", "priceYen": 498, "isReducedRate": true },
+    { "name": "チョコクリームたい焼き", "priceYen": 200, "isReducedRate": true }
+  ]
+}

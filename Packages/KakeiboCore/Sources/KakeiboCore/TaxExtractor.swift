@@ -12,6 +12,13 @@ import Foundation
 ///
 /// A tax word alone on its line (`消費税額`, Seiyu) heads the rate lines below it
 /// (`8% 9点 ¥123`): each gives the last amount on the line, until a line without a rate.
+///
+/// A tax line without a rate takes the rate of the 対象 line right above it (FamilyMart:
+/// `( 8%対象 ¥1,255)` then `(内消費税等 ¥92)`). Life's `外10% ¥284` is a tax line.
+///
+/// When a rate has several tax lines, the last one wins: receipts end with the
+/// `(内消費税等10% ¥74)` summary, which also covers tax-included items (7-Eleven's `490込`),
+/// while the earlier `消費税等(10%) ¥30` is only the tax added on top.
 public enum TaxExtractor {
     public struct Result: Sendable, Equatable {
         public var tax10Yen: Int?
@@ -32,9 +39,13 @@ public enum TaxExtractor {
 
         /// True after a tax word with no amount, while the lines below name a rate.
         var underHeading = false
+        /// The rate of the line above when it is a 対象 (taxable amount) line with one rate.
+        var rateAbove: Rate?
 
         for line in lines {
             let markers = rateMarkers(in: line)
+            let taxableRateAbove = rateAbove
+            rateAbove = line.contains("対象") && markers.count == 1 ? markers[0].rate : nil
             guard let keyword = taxKeywordStart(in: line) else {
                 if underHeading, markers.count == 1, let marker = markers.first {
                     if let amount = TotalExtractor.amounts(in: String(line[marker.end...])).last, accept(amount) {
@@ -59,7 +70,7 @@ public enum TaxExtractor {
             }
 
             guard let amount = TotalExtractor.amounts(in: afterKeyword).first, accept(amount) else { continue }
-            switch markers.first?.rate {
+            switch markers.first?.rate ?? taxableRateAbove {
             case .ten: rated10.append(amount)
             case .eight: rated8.append(amount)
             case nil: unrated.append(amount)
@@ -67,7 +78,7 @@ public enum TaxExtractor {
         }
 
         if !rated10.isEmpty || !rated8.isEmpty {
-            return Result(tax10Yen: rated10.first, tax8Yen: rated8.first, confidence: .high)
+            return Result(tax10Yen: rated10.last, tax8Yen: rated8.last, confidence: .high)
         }
         if let amount = unrated.first {
             return Result(tax10Yen: amount, tax8Yen: nil, confidence: .medium)
@@ -89,6 +100,12 @@ public enum TaxExtractor {
         let searchStart = line.ranges(of: "対象").last?.upperBound ?? line.startIndex
         let explicit = taxWords.compactMap { line[searchStart...].range(of: $0)?.lowerBound }.min()
         if let explicit { return explicit }
+        // Life's `外10% ¥284` (its taxable amount line says 対象).
+        if !line.contains("対象"),
+           let outside = externalRate.firstMatch(in: line, range: NSRange(line.startIndex..., in: line)),
+           let range = Range(outside.range, in: line) {
+            return range.lowerBound
+        }
 
         var masked = line
         for word in notTaxWords {
@@ -112,6 +129,8 @@ public enum TaxExtractor {
             return (rate, r.upperBound)
         }
     }
+
+    private static let externalRate = try! NSRegularExpression(pattern: #"外\s*(?:10|8)\s*%"#)
 
     private static let ratePattern = try! NSRegularExpression(pattern: #"(?<!\d)(?:10|8)\s*%|標準|軽減"#)
 }

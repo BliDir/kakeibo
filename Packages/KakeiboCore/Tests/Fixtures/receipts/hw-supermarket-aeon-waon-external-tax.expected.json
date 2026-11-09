@@ -1,10 +1,11 @@
 {
+  "source": "hand-written",
   "storeName": "イオン",
   "dayKey": "2026-10-25",
   "time": "18:10",
-  "totalYen": 1003,
+  "totalYen": 1530,
   "tax10Yen": 32,
-  "tax8Yen": 47,
+  "tax8Yen": 86,
   "payment": "icCard",
   "category": "groceries",
   "invoiceNumber": "T8888888888888",
@@ -21,8 +22,8 @@
       "isReducedRate": true
     },
     {
-      "name": "キャベツ",
-      "priceYen": 198,
+      "name": "ヤクルト",
+      "priceYen": 686,
       "isReducedRate": true
     },
     {

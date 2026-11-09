@@ -1,0 +1,44 @@
+{
+  "source": "real (owner, 2026-11-06)",
+  "storeName": "ファミリーマート",
+  "dayKey": "2026-11-06",
+  "time": "12:21",
+  "totalYen": 1260,
+  "tax10Yen": 0,
+  "tax8Yen": 92,
+  "payment": "credit",
+  "category": "groceries",
+  "invoiceNumber": "T6810280136756",
+  "items": [
+    {
+      "name": "レジ袋20号バイオマス",
+      "priceYen": 5,
+      "isReducedRate": false
+    },
+    {
+      "name": "からアゲ串",
+      "priceYen": 180,
+      "isReducedRate": true
+    },
+    {
+      "name": "ジャンボフランク",
+      "priceYen": 396,
+      "isReducedRate": true
+    },
+    {
+      "name": "ミルクホイップクリー",
+      "priceYen": 235,
+      "isReducedRate": true
+    },
+    {
+      "name": "発酵バター香るチョコ",
+      "priceYen": 176,
+      "isReducedRate": true
+    },
+    {
+      "name": "たっぷりサイズパタピ",
+      "priceYen": 268,
+      "isReducedRate": true
+    }
+  ]
+}

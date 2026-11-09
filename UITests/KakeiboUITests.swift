@@ -61,6 +61,21 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["review.check.count"].exists)
     }
 
+    /// B-13: a name without a price is kept, the items no longer add up, and the review screen
+    /// opens the items with a hint.
+    @MainActor
+    func testItemsThatDoNotAddUpAreFlagged() {
+        let app = launch(scan: true, image: "receipt-items-missing")
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "441")
+        XCTAssertTrue(app.staticTexts["review.check.count"].exists)
+        let hint = scrollTo(app.staticTexts["Items don't add up to the subtotal"], in: app)
+        XCTAssertTrue(hint.exists, "the items open with the hint")
+        let kept = app.descendants(matching: .any).matching(identifier: "review.item")
+            .matching(NSPredicate(format: "label CONTAINS %@", "天然水"))
+        XCTAssertEqual(kept.count, 1, "the name without a price is kept")
+    }
+
     @MainActor
     func testOCRTextAndPhotoZoom() {
         let app = launch(scan: true)
@@ -635,6 +650,7 @@ final class KakeiboUITests: XCTestCase {
     /// starts with four made-up expenses this month and one last month.
     @MainActor
     private func launch(scan: Bool = false, ocrDelay: Double? = nil, seed: Bool = false,
+                        image: String = "sample-receipt",
                         extra: [String: String] = [:]) -> XCUIApplication {
         let app = XCUIApplication()
         for (key, value) in extra { app.launchEnvironment[key] = value }
@@ -643,8 +659,8 @@ final class KakeiboUITests: XCTestCase {
         app.launchEnvironment["KAKEIBO_NO_REFINER"] = "1"
         app.launchArguments += ["-AppleLanguages", "(en)", "-AppleLocale", "en_JP"]
         if scan {
-            let path = Bundle(for: Self.self).path(forResource: "sample-receipt", ofType: "png")
-            XCTAssertNotNil(path, "sample-receipt.png missing from the UI test bundle")
+            let path = Bundle(for: Self.self).path(forResource: image, ofType: "png")
+            XCTAssertNotNil(path, "\(image).png missing from the UI test bundle")
             app.launchEnvironment["KAKEIBO_SCAN_IMAGE_PATH"] = path
         }
         if let ocrDelay { app.launchEnvironment["KAKEIBO_SCAN_OCR_DELAY"] = String(ocrDelay) }

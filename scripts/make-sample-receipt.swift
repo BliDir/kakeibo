@@ -1,6 +1,6 @@
 // Renders the made-up receipts used by KakeiboScan's OCR and pipeline integration tests.
 // Usage: swift scripts/make-sample-receipt.swift <preset> <output.png>
-//   presets: sample, konbini, supermarket-skewed
+//   presets: sample, konbini, supermarket-skewed, items-missing (UI test: one item has no price)
 // Example: swift scripts/make-sample-receipt.swift sample Packages/KakeiboScan/Tests/KakeiboScanTests/SampleImages/sample-receipt.png
 // Every store, address and number is fictional.
 import CoreGraphics
@@ -54,6 +54,19 @@ let presets: [String: (lines: [(String, CGFloat)], rotationDegrees: CGFloat)] = 
         ("合計             ¥841", 56),
         ("クレジット       ¥841", 40),
     ], 2),
+    "items-missing": ([
+        ("サンプルマート 中野店", 52),
+        ("2026年11月3日(火) 18:42", 34),
+        ("", 20),
+        ("牛乳 ※            ¥198", 40),
+        ("天然水 ※", 40),
+        ("食パン ※          ¥158", 40),
+        ("", 20),
+        ("小計             ¥441", 40),
+        ("合計             ¥441", 56),
+        ("お預り          ¥1,000", 40),
+        ("お釣り           ¥559", 40),
+    ], 0),
 ]
 
 let args = CommandLine.arguments

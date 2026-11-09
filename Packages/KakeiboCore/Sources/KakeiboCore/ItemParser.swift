@@ -9,6 +9,12 @@ import Foundation
 ///   without a price takes its price from the quantity line below it.
 /// - Discounts (値引, 割引, クーポン) become negative items right after the item they reduce,
 ///   with that item's tax rate.
+/// - A price may end in a one-letter tax or category mark after a ¥ (`¥199C` at Seiyu) or in
+///   `*`; the mark is dropped. Leading 2–3 digit department codes (`01 テンネンスイ`) are
+///   dropped from names.
+/// - A name still waiting for its price when the next item starts is kept with price 0 (once
+///   items have started, or when it has a rate mark), so the item-sum check flags the items
+///   instead of losing one silently.
 /// - ※, ★ or a standalone 軽 mark the 8% reduced rate. A leading 軽 joined to the name by the
 ///   normalizer (`軽牛乳`) is not recognised, because it cannot be told apart from words like 軽食.
 public enum ItemParser {
@@ -16,6 +22,15 @@ public enum ItemParser {
         var items: [LineItemDraft] = []
         /// A name printed on its own line, waiting for a quantity line with its price.
         var pendingName: (name: String, reduced: Bool)?
+
+        /// Keeps a waiting name that never got its price, with price 0. Above the first item a
+        /// line without a price is usually the store's name or branch, so it is kept only when it
+        /// carries a rate mark.
+        func keepPending() {
+            defer { pendingName = nil }
+            guard let pending = pendingName, !items.isEmpty || pending.reduced else { return }
+            items.append(LineItemDraft(name: pending.name, priceYen: 0, isReducedRate: pending.reduced))
+        }
 
         for line in itemRegion(lines) {
             if isHeaderLine(line) {
@@ -52,11 +67,13 @@ public enum ItemParser {
             guard let price = trailingPrice(line) else {
                 // Letters but no price: maybe a name whose price is on the next line.
                 if let name = cleanName(line, removing: nil), name.unicodeScalars.contains(where: CharacterSet.letters.contains) {
+                    keepPending()
                     pendingName = (name, reduced)
                 }
                 continue
             }
             guard price.value > 0, let name = cleanName(line, removing: price.range) else { continue }
+            keepPending()
             items.append(LineItemDraft(name: name, priceYen: price.value, isReducedRate: reduced))
             pendingName = nil
         }
@@ -133,7 +150,8 @@ public enum ItemParser {
     }
 
     /// The price at the end of the line: `¥1,320`, `198`, `-100`, `▲30`, `450円`,
-    /// optionally followed by a rate mark (`198 ※`, `198軽`).
+    /// optionally followed by a rate mark (`198 ※`, `198軽`), a `*`, or after a ¥ price a single
+    /// letter tax or category mark (`¥199C`, `¥349 E`).
     ///
     /// Digits right after `:` `/` `-` `.` belong to a time, date or code, not a price.
     /// Without ¥ or 円, values under 10 are counts (`人数 2`), not prices.
@@ -146,13 +164,15 @@ public enum ItemParser {
         else { return nil }
         let hasYen = match.range(at: 2).length > 0 || match.range(at: 4).length > 0
         guard hasYen || value >= 10, value <= 1_000_000 else { return nil }
+        // A letter after a bare number is a unit or code (`350g`, `2P`), not a mark.
+        if match.range(at: 5).length > 0, match.range(at: 2).length == 0 { return nil }
         let negative = match.range(at: 1).length > 0
         return Price(value: negative ? -value : value, range: whole)
     }
 
-    /// Groups: 1 sign, 2 ¥, 3 digits, 4 円.
+    /// Groups: 1 sign, 2 ¥, 3 digits, 4 円, 5 letter mark.
     private static let pricePattern = try! NSRegularExpression(
-        pattern: #"(?<![\d:/\-.,])\s*([-▲△]\s*)?(¥\s*)?(?<![:/.\d,])(\d{1,3}(?:,\d{3})+|\d+)\s*(円)?\s*(?:[※★軽]|外|内)?\s*$"#
+        pattern: #"(?<![\d:/\-.,])\s*([-▲△]\s*)?(¥\s*)?(?<![:/.\d,])(\d{1,3}(?:,\d{3})+|\d+)\s*(円)?\s*(?:[※★軽*]|外|内|(?<=\d|\d\s)([A-Za-z]))?\s*$"#
     )
 
     // MARK: - Names
@@ -167,8 +187,14 @@ public enum ItemParser {
         let range = NSRange(name.startIndex..., in: name)
         name = kei.stringByReplacingMatches(in: name, range: range, withTemplate: "")
         name = name.trimmingCharacters(in: .whitespaces)
+        let codeRange = NSRange(name.startIndex..., in: name)
+        name = departmentCode.stringByReplacingMatches(in: name, range: codeRange, withTemplate: "")
         return name.isEmpty ? nil : name
     }
+
+    /// A 2–3 digit department code before the name (`01 テンネンスイ`). One digit or digits joined
+    /// to the name (`7UP`, `3個入り`) are part of the name.
+    private static let departmentCode = try! NSRegularExpression(pattern: #"^\d{2,3}\s+(?=\S)"#)
 
     private static let kei = try! NSRegularExpression(pattern: #"(?:^|\s)軽(?=$|\s)"#)
 

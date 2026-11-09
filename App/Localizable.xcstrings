@@ -4157,6 +4157,22 @@
         }
       }
     },
+    "review.hint.items": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Items don't add up to the subtotal"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "品目の合計が小計と一致しません"
+          }
+        }
+      }
+    },
     "review.hint.payment": {
       "extractionState": "manual",
       "localizations": {

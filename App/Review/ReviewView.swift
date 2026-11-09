@@ -19,12 +19,21 @@ struct ReviewView: View {
     @State private var confirm: ConfirmKind?
     @State private var showPhoto = false
     @State private var saveFailed = false
-    @State private var showMore = false
+    /// Opens with the items when they need checking, so their hint is not hidden (B-13).
+    @State private var showMore: Bool
     /// The receipt row's small preview, made in the background (see `ReceiptPhotos`).
     @State private var photoPreview: UIImage?
     /// True while Save writes the photo and the expense, so a second tap does nothing.
     @State private var isSaving = false
     @State private var duplicate: ExpenseRepository.PossibleDuplicate?
+
+    init(form: ReviewForm, services: AppServices, onFinish: @escaping (Outcome) -> Void) {
+        self.form = form
+        self.services = services
+        self.onFinish = onFinish
+        _showMore = State(initialValue: form.needsCheck(.items))
+    }
+
     #if DEBUG
     @State private var fixtureFiles: FixtureFiles?
     struct FixtureFiles: Identifiable { let id = UUID(); let urls: [URL] }
@@ -341,6 +350,9 @@ struct ReviewView: View {
                         .font(.caption)
                         .foregroundStyle(Theme.secondaryText)
                         .padding(.top, 10)
+                        if form.needsCheck(.items) {
+                            Hint("review.hint.items").padding(.top, 4)
+                        }
                         ForEach(Array(form.draft.items.enumerated()), id: \.offset) { index, item in
                             if index > 0 { Divider().overlay(Theme.divider) }
                             ItemRow(item: item)

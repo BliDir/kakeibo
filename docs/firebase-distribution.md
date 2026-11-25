@@ -52,6 +52,8 @@ The script refuses a tree with uncommitted changes, so each test build matches a
 
 ## When it fails
 
+- **"No Accounts: Add a new account in Accounts settings":** Xcode is not signed in to an Apple account. Add it in Xcode > Settings > Accounts; `-allowProvisioningUpdates` uses that account to create certificates and profiles.
+- **"Signing for 'Kakeibo' requires a development team":** the script passes `DEVELOPMENT_TEAM` (default `A75X4JPQUW`); set `KAKEIBO_TEAM` to use another team.
 - **"No profiles for 'com.blidir.kakeibo' were found" / "requires a provisioning profile with … devices":** there is no registered device in the team. Register at least one iPhone (above).
 - **"No signing certificate 'iOS Distribution' found":** sign in to the team in Xcode > Settings > Accounts, then run again. Xcode creates the certificate.
 - **Tester sees "Unable to install":** their iPhone was not registered when the build was made. Register it and make a new build.

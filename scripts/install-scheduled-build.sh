@@ -14,17 +14,19 @@ LABEL=com.blidir.kakeibo.firebase-build
 PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
 SUPPORT="$HOME/Library/Application Support/KakeiboBuild"
 DOMAIN="gui/$(id -u)"
-REPO=$(cd "$(dirname "$0")/.." && git rev-parse --path-format=absolute --git-common-dir)
-REPO=$(dirname "$REPO")
+# The job keeps its own clone (a background job cannot read ~/Documents), fetched from this remote.
+REMOTE=$(git -C "$(dirname "$0")/.." remote get-url origin)
 
 launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
 if [ "${1:-}" = --uninstall ]; then
     rm -f "$PLIST" "$SUPPORT/scheduled-firebase-build.sh"
+    rm -rf "$SUPPORT/repo"
     echo "Removed the scheduled Firebase build."
     exit 0
 fi
 
 # The job runs a copy of the wrapper, so it works whatever branch the checkout is on.
+# The job's clone lives here too: $SUPPORT/repo.
 mkdir -p "$SUPPORT" "$HOME/Library/LaunchAgents" "$HOME/Library/Logs/KakeiboBuild"
 cp "$(dirname "$0")/scheduled-firebase-build.sh" "$SUPPORT/"
 chmod +x "$SUPPORT/scheduled-firebase-build.sh"
@@ -43,8 +45,9 @@ cat > "$PLIST" <<EOF
     <array>
         <string>/bin/sh</string>
         <string>$SUPPORT/scheduled-firebase-build.sh</string>
-        <string>$REPO</string>
+        <string>$REMOTE</string>
     </array>
+    <key>WorkingDirectory</key><string>$SUPPORT</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key><string>$JOB_PATH</string>
@@ -61,7 +64,7 @@ cat > "$PLIST" <<EOF
 EOF
 
 launchctl bootstrap "$DOMAIN" "$PLIST"
-echo "Scheduled Firebase build installed: Monday and Thursday 10:00, building origin/main of $REPO."
+echo "Scheduled Firebase build installed: Monday and Thursday 10:00, building origin/main of $REMOTE."
 echo "Logs: ~/Library/Logs/KakeiboBuild. Remove with: scripts/install-scheduled-build.sh --uninstall"
 
 if [ "${1:-}" = --run-now ]; then

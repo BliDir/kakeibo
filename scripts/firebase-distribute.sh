@@ -19,7 +19,7 @@ set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 OUT="$ROOT/build/firebase"
-TEAM=A75X4JPQUW
+TEAM=${KAKEIBO_TEAM:-A75X4JPQUW}
 TESTERS=${FIREBASE_TESTERS:-}
 TESTER_GROUPS=${FIREBASE_GROUPS:-}
 NOTES=""
@@ -71,7 +71,7 @@ xcodebuild archive -scheme Kakeibo -configuration Release \
     -destination 'generic/platform=iOS' \
     -archivePath "$OUT/Kakeibo.xcarchive" \
     -allowProvisioningUpdates \
-    CURRENT_PROJECT_VERSION="$BUILD_NUMBER" -quiet
+    DEVELOPMENT_TEAM="$TEAM" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" -quiet
 
 echo "Exporting Ad Hoc .ipa…"
 xcodebuild -exportArchive \

@@ -244,6 +244,32 @@ public final class ReviewForm {
         }
     }
 
+    /// True when the duplicate warning can offer "Replace saved entry": only for a new scan or
+    /// manual entry. An edit is already a saved expense.
+    public var canReplace: Bool { !isEditing }
+
+    /// Replaces `expense` (the saved entry the duplicate warning showed) with this form, in
+    /// place (B-16). A scan's photo is written first and becomes the expense's photo; the old
+    /// file is deleted after the save. If the save fails, the new file is deleted and the saved
+    /// expense and its photo are unchanged.
+    public func replace(_ expense: Expense, repository: ExpenseRepository, photoStore: PhotoStore?,
+                        now: Date = .now) async throws {
+        precondition(canReplace, "only a new entry can replace a saved one")
+        var photoName: String?
+        if isScan, let pendingPhoto, let photoStore {
+            photoName = try await Task.detached(priority: .userInitiated) {
+                try pendingPhoto.save(to: photoStore)
+            }.value
+        }
+        do {
+            try repository.replace(expense, from: draft, source: isScan ? .scan : .manual, note: note,
+                                   ocrText: isScan ? ocrText : nil, photoFileName: photoName, now: now)
+        } catch {
+            if let photoName { try? photoStore?.delete(photoName) }
+            throw error
+        }
+    }
+
     /// Deletes the expense being edited, with its photo. Does nothing for a new entry.
     public func delete(repository: ExpenseRepository) throws {
         guard case .edit(let expense) = mode else { return }

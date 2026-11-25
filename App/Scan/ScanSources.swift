@@ -26,6 +26,16 @@ struct ScanSources: ViewModifier {
 
     private enum AfterDenied { case photo, manual }
 
+    #if DEBUG
+    /// UI tests (B-16): with `KAKEIBO_NEXT_SCAN_IMAGE_PATH`, Photo scans that file instead of
+    /// opening the picker, so a test can scan a second receipt after the launch scan.
+    private static let nextScanImage: Data? = ProcessInfo.processInfo.environment["KAKEIBO_NEXT_SCAN_IMAGE_PATH"]
+        .flatMap { FileManager.default.contents(atPath: $0) }
+    private var pickerShown: Binding<Bool> { Self.nextScanImage == nil ? $photoRequested : .constant(false) }
+    #else
+    private var pickerShown: Binding<Bool> { $photoRequested }
+    #endif
+
     func body(content: Content) -> some View {
         content
             .onChange(of: cameraRequested) { _, requested in
@@ -33,7 +43,14 @@ struct ScanSources: ViewModifier {
                 cameraRequested = false
                 Task { await openCamera() }
             }
-            .photosPicker(isPresented: $photoRequested, selection: $photoItem, matching: .images)
+            .photosPicker(isPresented: pickerShown, selection: $photoItem, matching: .images)
+            #if DEBUG
+            .onChange(of: photoRequested) { _, requested in
+                guard requested, let data = Self.nextScanImage else { return }
+                photoRequested = false
+                session.start(imageData: data)
+            }
+            #endif
             .onChange(of: photoItem) { _, item in
                 guard let item else { return }
                 photoItem = nil

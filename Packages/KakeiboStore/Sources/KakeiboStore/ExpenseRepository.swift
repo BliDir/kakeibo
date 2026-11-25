@@ -110,6 +110,62 @@ public final class ExpenseRepository {
         try save()
     }
 
+    // MARK: - Replace
+
+    /// Replaces a saved expense with a new scan or manual entry of the same receipt (B-16), in
+    /// place: same expense and ID, `createdAt` kept, `updatedAt` = `now`.
+    ///
+    /// - Every field, the items and the confidence come from `draft` (`source`'s rules, as in
+    ///   `create`).
+    /// - `note` replaces the saved note only when it is not empty.
+    /// - With a `photoFileName` (a scan), the new photo, OCR text and source replace the old ones,
+    ///   and the old photo file is deleted only after the save succeeded. Without one (a manual
+    ///   entry), the saved photo and its OCR text stay.
+    /// - All or nothing: when the save fails the context rolls back, the old photo is untouched,
+    ///   and the caller deletes the new photo file.
+    public func replace(
+        _ expense: Expense,
+        from draft: ReceiptDraft,
+        source: ExpenseSource,
+        note: String = "",
+        ocrText: String? = nil,
+        photoFileName: String? = nil,
+        now: Date = .now
+    ) throws {
+        let (dayKey, totalYen) = try Self.validate(draft)
+        let oldPhoto = expense.photoFileName
+        expense.dayKey = dayKey
+        expense.time = draft.time
+        expense.storeName = draft.storeName ?? ""
+        expense.storeNameEn = draft.storeNameEn
+        expense.totalYen = totalYen
+        expense.tax10Yen = draft.tax10Yen
+        expense.tax8Yen = draft.tax8Yen
+        expense.payment = draft.payment ?? .cash
+        expense.category = draft.category ?? .other
+        expense.invoiceNumber = draft.invoiceNumber
+        expense.receiptNumber = draft.receiptNumber
+        if !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { expense.note = note }
+        if let photoFileName {
+            expense.photoFileName = photoFileName
+            expense.ocrText = ocrText
+            expense.source = source
+        } else if source == .scan {
+            // A scan saved without a photo: its text and source still replace the old ones.
+            expense.ocrText = ocrText
+            expense.source = source
+        }
+        expense.confidence = Self.overallConfidence(of: draft, source: source)
+        for item in expense.items { context.delete(item) }
+        expense.items = Self.makeItems(draft.items)
+        expense.updatedAt = now
+        try save()
+        if let oldPhoto, let photoFileName, oldPhoto != photoFileName, let photoStore {
+            // An orphan if this fails; removeOrphanPhotos() cleans it up at launch.
+            try? photoStore.delete(oldPhoto)
+        }
+    }
+
     /// Applies a change made directly to the model and saves it, bumping `updatedAt`.
     public func update(_ expense: Expense, now: Date = .now, _ change: (Expense) -> Void) throws {
         change(expense)

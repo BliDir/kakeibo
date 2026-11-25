@@ -2433,6 +2433,102 @@
         }
       }
     },
+    "confirm.replace.action": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "置き換える"
+          }
+        }
+      }
+    },
+    "confirm.replace.back": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "戻る"
+          }
+        }
+      }
+    },
+    "confirm.replace.message.manual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The saved photo is kept."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みの写真はそのまま残ります。"
+          }
+        }
+      }
+    },
+    "confirm.replace.message.scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The saved photo will be replaced."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みの写真も置き換わります。"
+          }
+        }
+      }
+    },
+    "confirm.replace.title.manual": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace the saved entry with this one?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みの記録をこの入力で置き換えますか？"
+          }
+        }
+      }
+    },
+    "confirm.replace.title.scan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace the saved entry with this scan?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みのレシートをこのスキャンで置き換えますか？"
+          }
+        }
+      }
+    },
     "detail.back": {
       "extractionState": "manual",
       "localizations": {
@@ -2603,6 +2699,22 @@
         }
       }
     },
+    "duplicate.message.likely.replace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An entry with the same store, date, time and amount is already in your ledger. If it's the same receipt, you can replace the saved entry. If it's a different purchase, save it as new."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同じお店・日付・時刻・金額の記録がすでにあります。同じレシートなら保存済みを置き換え、別の買い物なら新規で保存できます。"
+          }
+        }
+      }
+    },
     "duplicate.message.strong": {
       "extractionState": "manual",
       "localizations": {
@@ -2620,19 +2732,52 @@
         }
       }
     },
-    "duplicate.saveAnyway": {
-      "extractionState": "manual",
+    "duplicate.message.strong.replace": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Save anyway"
+            "value": "A receipt with the same number from this store and day is already in your ledger. If you scanned it again, replace the saved entry. If it's a different purchase, save it as new."
           }
         },
         "ja": {
           "stringUnit": {
             "state": "translated",
-            "value": "このまま保存"
+            "value": "同じお店・同じ日・同じレシート番号の記録がすでにあります。読み直した場合は保存済みを置き換え、別の買い物なら新規で保存できます。"
+          }
+        }
+      }
+    },
+    "duplicate.replace": {
+      "comment": "Duplicate warning: replace the saved expense with this scan or entry (B-16).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace saved entry"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存済みを置き換える"
+          }
+        }
+      }
+    },
+    "duplicate.saveAsNew": {
+      "comment": "Duplicate warning: save this as a separate expense (B-16).",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save as new"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新規で保存"
           }
         }
       }
@@ -6102,6 +6247,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "支出を削除しました"
+          }
+        }
+      }
+    },
+    "toast.replaced %@": {
+      "comment": "Shown on the ledger after a rescan replaced a saved expense (B-16). %@ is the amount.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replaced · %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@の支出を置き換えました"
           }
         }
       }

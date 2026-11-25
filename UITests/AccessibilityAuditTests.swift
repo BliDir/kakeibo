@@ -233,6 +233,17 @@ final class AccessibilityAuditTests: XCTestCase {
         }
     }
 
+    /// B-16: "Replace the saved entry with this one?"
+    @MainActor func testReplaceConfirmation() throws {
+        try auditInBothModes("replace confirmation", seed: true) { app in
+            self.typeManualEntry(app, amount: "1078", store: "スターバックス")
+            let replace = app.buttons["duplicate.replace"]
+            XCTAssertTrue(replace.waitForExistence(timeout: 3))
+            replace.tap()
+            XCTAssertTrue(app.buttons["confirm.action"].waitForExistence(timeout: 3))
+        }
+    }
+
     @MainActor func testSaveFailure() throws {
         try auditInBothModes("save failure", extra: ["KAKEIBO_FAIL_SAVES": "1"]) { app in
             self.typeManualEntry(app, amount: "640", store: "Soba Stand")

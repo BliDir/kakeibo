@@ -154,7 +154,12 @@ final class ScreenshotTourTests: XCTestCase {
         app.buttons["review.save"].tap()
         if app.buttons["duplicate.cancel"].waitForExistence(timeout: 3) {
             shot(app, "\(tag)-12-duplicate")
-            app.buttons["duplicate.cancel"].tap()
+            // B-16: the Replace confirmation.
+            scrollTo(app.buttons["duplicate.replace"], in: app).tap()
+            if app.buttons["confirm.cancel"].waitForExistence(timeout: 3) {
+                shot(app, "\(tag)-12b-replace-confirm")
+                app.buttons["confirm.cancel"].tap()
+            }
         }
         app.terminate()
 

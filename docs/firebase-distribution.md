@@ -58,7 +58,7 @@ scripts/install-scheduled-build.sh --run-now  # install and build at once
 scripts/install-scheduled-build.sh --uninstall
 ```
 
-The launchd job `com.blidir.kakeibo.firebase-build` runs **Monday and Thursday at 10:00**: at most 4 days apart, so a build never expires before the next one even if a run is late. It fetches `origin/main`, builds it in a temporary worktree (the checkout, its branch and uncommitted work are not touched) and uploads it to `blidir-team`. A macOS notification says when it is done or failed; logs are in `~/Library/Logs/KakeiboBuild`. Then open App Tester on the iPhone and install the update.
+The launchd job `com.blidir.kakeibo.firebase-build` runs **Monday and Thursday at 10:00**: at most 4 days apart, so a build never expires before the next one even if a run is late. It keeps its own clone of the repository in `~/Library/Application Support/KakeiboBuild/repo` (macOS does not let a background job read `~/Documents`; cloning there avoids giving the shell Full Disk Access), resets it to `origin/main`, builds it and uploads it to `blidir-team`. Your checkout, its branch and uncommitted work are never touched; only pushed commits on `main` are built. A macOS notification says when it is done or failed; logs are in `~/Library/Logs/KakeiboBuild`. Then open App Tester on the iPhone and install the update.
 
 Why not in the cloud: Xcode Cloud needs the paid program, and a free team's profiles can only be made by Xcode on a Mac signed in to the account, so a hosted runner cannot sign. The job therefore needs this Mac to be on (or wake) and logged in. A run missed while the Mac sleeps starts when it wakes; a run missed while it is off is skipped, so make a build by hand after a long trip.
 
@@ -78,5 +78,6 @@ With the free team, other people's iPhones cannot be added.
 - **"No profiles for 'com.blidir.kakeibo' were found":** no registered iPhone in the team. Connect the iPhone and open it in Xcode's Devices window.
 - **"failed to distribute to testers/groups … 404":** the group alias is wrong. `npx firebase-tools appdistribution:groups:list` shows the aliases (first column).
 - **"Authentication Error" from Firebase:** the CLI login expired. Run `npx firebase-tools login` again.
+- **"Unable to read current working directory: Operation not permitted" in the log:** the job was installed by an older installer that built from the checkout in `~/Documents`. Run `scripts/install-scheduled-build.sh` again.
 - **The app does not open on the iPhone:** the build expired, or (development) the iPhone was not registered when it was made. Install the latest build from App Tester, or make one.
 - **The app needs iOS 26.** Older iPhones cannot install it.

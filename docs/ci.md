@@ -42,6 +42,10 @@ These steps need the Apple Developer account and cannot be done from the repo.
 6. Open a test pull request and confirm the Xcode Cloud check runs and passes. Merge it and confirm a build shows up in TestFlight.
 7. Optional: in GitHub branch protection for `main`, require the Xcode Cloud check.
 
+## Firebase App Distribution
+
+Test builds for testers outside TestFlight are made by hand with `scripts/firebase-distribute.sh`; see `docs/firebase-distribution.md`.
+
 ## Running the same checks locally
 
 ```

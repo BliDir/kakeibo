@@ -111,6 +111,8 @@ Xcode Cloud runs two workflows (details and owner setup in `docs/ci.md`):
 
 Once the owner has connected Xcode Cloud, a PR is ready to merge only when the Xcode Cloud check is green. To run the same checks locally, run `ci_scripts/test_packages.sh` and the `xcodebuild test` command above. When you add a package test target, add it to `Kakeibo.xctestplan` and to the scheme's build entries, or CI will skip it silently.
 
+Test builds for Firebase App Distribution come from `scripts/firebase-distribute.sh` (settings in `Config/firebase-distribution.env`; development-signed, because the owner's Apple team is a free Personal Team and builds expire after 7 days). A launchd job on the owner's Mac (`scripts/install-scheduled-build.sh`) builds `origin/main` every Monday and Thursday. Setup in `docs/firebase-distribution.md`. Firebase only receives the `.ipa`: never add the Firebase SDK or `GoogleService-Info.plist` to the app.
+
 ## Parser fixtures
 
 Receipt fixtures live in `Packages/KakeiboCore/Tests/Fixtures/receipts/`:

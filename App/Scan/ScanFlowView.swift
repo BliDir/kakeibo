@@ -7,7 +7,7 @@ import SwiftUI
 struct ScanFlowView: View {
     let session: ScanSession
     let services: AppServices
-    let onSaved: (Int) -> Void
+    let onSaved: (Banner) -> Void
     /// The duplicate warning's "View saved entry": the scan is dropped and the saved expense opened.
     let onViewSaved: (Expense) -> Void
     /// The read error's "Enter manually": the scan is dropped and an empty manual form opens.
@@ -42,13 +42,13 @@ private struct ScanReviewHost: View {
     let session: ScanSession
     let result: ExtractionResult
     let services: AppServices
-    let onSaved: (Int) -> Void
+    let onSaved: (Banner) -> Void
     let onViewSaved: (Expense) -> Void
 
     @State private var form: ReviewForm
 
     init(session: ScanSession, result: ExtractionResult, services: AppServices,
-         onSaved: @escaping (Int) -> Void, onViewSaved: @escaping (Expense) -> Void) {
+         onSaved: @escaping (Banner) -> Void, onViewSaved: @escaping (Expense) -> Void) {
         self.session = session
         self.result = result
         self.services = services
@@ -65,7 +65,10 @@ private struct ScanReviewHost: View {
             switch outcome {
             case .saved(let total):
                 session.reset()
-                onSaved(total)
+                onSaved(.saved(total))
+            case .replaced(let total):
+                session.reset()
+                onSaved(.replaced(total))
             case .discarded:
                 session.cancel()
             case .viewSaved(let expense):

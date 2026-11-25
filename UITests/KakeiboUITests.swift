@@ -298,7 +298,7 @@ final class KakeiboUITests: XCTestCase {
 
     // MARK: Duplicates
 
-    /// Saving the same entry twice warns first; Cancel keeps the form, Save anyway saves.
+    /// Saving the same entry twice warns first; Cancel keeps the form, Save as new saves.
     @MainActor
     func testSavingTheSameEntryTwiceWarns() {
         let app = launch()
@@ -313,16 +313,64 @@ final class KakeiboUITests: XCTestCase {
         XCTAssertTrue(entry.label.contains("Cafe Poem"), entry.label)
         XCTAssertTrue(entry.label.contains("880 yen"), entry.label)
         XCTAssertTrue(app.buttons["duplicate.view"].exists)
+        // A likely match (no receipt number): View saved entry first, then Replace (B-16).
+        XCTAssertLessThan(app.buttons["duplicate.view"].frame.minY, app.buttons["duplicate.replace"].frame.minY)
+        XCTAssertLessThan(app.buttons["duplicate.replace"].frame.minY, app.buttons["duplicate.saveAsNew"].frame.minY)
 
         app.buttons["duplicate.cancel"].tap()
         XCTAssertFalse(app.staticTexts["Already saved?"].exists)
         XCTAssertTrue(app.staticTexts["Add expense"].exists, "Cancel stays on the form")
 
         app.buttons["review.save"].tap()
-        XCTAssertTrue(app.buttons["duplicate.saveAnyway"].waitForExistence(timeout: 3))
-        app.buttons["duplicate.saveAnyway"].tap()
+        XCTAssertTrue(app.buttons["duplicate.saveAsNew"].waitForExistence(timeout: 3))
+        app.buttons["duplicate.saveAsNew"].tap()
         XCTAssertTrue(app.staticTexts["Saved 880 yen"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 2)
+    }
+
+    /// B-16: rescanning a receipt (same receipt number) and choosing Replace leaves one entry
+    /// with the new amount.
+    @MainActor
+    func testRescanReplacesTheSavedEntry() {
+        let second = Bundle(for: Self.self).path(forResource: "receipt-rescan-second", ofType: "png")
+        XCTAssertNotNil(second)
+        let app = launch(scan: true, image: "receipt-rescan-first", extra: ["KAKEIBO_NEXT_SCAN_IMAGE_PATH": second ?? ""])
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "356")
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(app.staticTexts["Saved 356 yen"].waitForExistence(timeout: 5))
+
+        // The same receipt again, read in full this time.
+        app.buttons["scan.photo"].tap()
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 30))
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "754")
+        app.buttons["review.save"].tap()
+
+        // Strong match (same receipt number): Replace comes first.
+        let replace = app.buttons["duplicate.replace"]
+        XCTAssertTrue(replace.waitForExistence(timeout: 3))
+        XCTAssertLessThan(replace.frame.minY, app.buttons["duplicate.view"].frame.minY)
+        XCTAssertLessThan(app.buttons["duplicate.view"].frame.minY, app.buttons["duplicate.saveAsNew"].frame.minY)
+        XCTAssertEqual(replace.label, "Replace saved entry")
+
+        // One in-app confirmation; Back returns to the warning's form untouched.
+        replace.tap()
+        XCTAssertTrue(app.staticTexts["Replace the saved entry with this scan?"].waitForExistence(timeout: 3))
+        app.buttons["confirm.cancel"].tap()
+        XCTAssertTrue(app.textFields["review.amount"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.textFields["review.amount"].value as? String, "754", "still on the review screen")
+        XCTAssertTrue(app.buttons["review.save"].exists, "still on the review screen")
+        XCTAssertFalse(app.staticTexts["Replaced · 754 yen"].exists, "Back replaces nothing")
+
+        app.buttons["review.save"].tap()
+        XCTAssertTrue(replace.waitForExistence(timeout: 3))
+        replace.tap()
+        XCTAssertTrue(app.buttons["confirm.action"].waitForExistence(timeout: 3))
+        app.buttons["confirm.action"].tap()
+
+        XCTAssertTrue(app.staticTexts["Replaced · 754 yen"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons.matching(identifier: "ledger.row").count, 1, "one entry, not two")
+        XCTAssertTrue(app.descendants(matching: .any)["ledger.total"].firstMatch.label.contains("754"))
     }
 
     /// "View saved entry" drops the new entry and opens the saved one.

@@ -7,6 +7,8 @@ import SwiftUI
 struct ReviewView: View {
     enum Outcome {
         case saved(totalYen: Int)
+        /// "Replace saved entry" on the duplicate warning updated that entry in place (B-16).
+        case replaced(totalYen: Int)
         case discarded
         /// The user chose "View saved entry" on the duplicate warning; nothing was saved.
         case viewSaved(Expense)
@@ -26,6 +28,8 @@ struct ReviewView: View {
     /// True while Save writes the photo and the expense, so a second tap does nothing.
     @State private var isSaving = false
     @State private var duplicate: ExpenseRepository.PossibleDuplicate?
+    /// The saved entry a failed Replace was for, so "Try saving again" replaces it again.
+    @State private var replacing: Expense?
 
     init(form: ReviewForm, services: AppServices, onFinish: @escaping (Outcome) -> Void) {
         self.form = form
@@ -41,7 +45,11 @@ struct ReviewView: View {
     @FocusState private var amountFocused: Bool
     @Environment(\.isAccessibilityTextSize) private var isAccessibilityTextSize
 
-    enum ConfirmKind { case discard }
+    enum ConfirmKind {
+        case discard
+        /// "Replace the saved entry with this scan?" (B-16).
+        case replace(Expense)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -66,7 +74,7 @@ struct ReviewView: View {
             if let confirm { confirmPanel(confirm) }
             if let duplicate { duplicatePanel(duplicate) }
             if saveFailed {
-                FailurePanel(kind: .save, summary: .draft(form.draft), onRetry: saveNow, onBack: { saveFailed = false })
+                FailurePanel(kind: .save, summary: .draft(form.draft), onRetry: retry, onBack: { saveFailed = false })
             }
         }
         .animation(.easeOut(duration: 0.2), value: confirm != nil)
@@ -465,10 +473,11 @@ struct ReviewView: View {
         saveNow()
     }
 
-    /// Saves without the duplicate check (after "Save anyway", or "Try saving again").
+    /// Saves without the duplicate check (after "Save as new", or "Try saving again").
     /// A failure keeps the form as it is and shows the failure panel over it.
     private func saveNow() {
         duplicate = nil
+        replacing = nil
         saveFailed = false
         guard form.canSave, !isSaving else { return }
         isSaving = true
@@ -485,25 +494,73 @@ struct ReviewView: View {
         }
     }
 
+    /// Replaces the saved entry with this form, in place (B-16). A failure keeps the form and
+    /// the saved entry as they were and shows the failure panel; trying again replaces again.
+    private func replaceNow(_ expense: Expense) {
+        confirm = nil
+        duplicate = nil
+        saveFailed = false
+        guard form.canSave, form.canReplace, !isSaving else { return }
+        replacing = expense
+        isSaving = true
+        Task {
+            defer { isSaving = false }
+            do {
+                try await form.replace(expense, repository: services.repository, photoStore: services.photoStore)
+                replacing = nil
+                onFinish(.replaced(totalYen: expense.totalYen))
+            } catch {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                saveFailed = true
+            }
+        }
+    }
+
+    /// "Try saving again" on the failure panel: whatever failed, again.
+    private func retry() {
+        if let replacing { replaceNow(replacing) } else { saveNow() }
+    }
+
     private func duplicatePanel(_ match: ExpenseRepository.PossibleDuplicate) -> some View {
         DuplicatePanel(
             match: match,
             onView: { onFinish(.viewSaved(match.expense)) },
-            onSaveAnyway: saveNow,
+            onReplace: form.canReplace ? {
+                duplicate = nil
+                confirm = .replace(match.expense)
+            } : nil,
+            onSaveAsNew: saveNow,
             onCancel: { duplicate = nil }
         )
     }
 
+    @ViewBuilder
     private func confirmPanel(_ kind: ConfirmKind) -> some View {
-        ConfirmPanel(
-            systemImage: "arrow.uturn.backward",
-            title: form.isScan ? "confirm.discard.title.scan" : "confirm.discard.title.changes",
-            message: form.isScan ? "confirm.discard.message.scan" : "confirm.discard.message",
-            confirmTitle: form.isScan ? "confirm.discard.action.scan" : "confirm.discard.action",
-            keepFirst: true,
-            onConfirm: { onFinish(.discarded) },
-            onCancel: { confirm = nil }
-        )
+        switch kind {
+        case .discard:
+            ConfirmPanel(
+                systemImage: "arrow.uturn.backward",
+                title: form.isScan ? "confirm.discard.title.scan" : "confirm.discard.title.changes",
+                message: form.isScan ? "confirm.discard.message.scan" : "confirm.discard.message",
+                confirmTitle: form.isScan ? "confirm.discard.action.scan" : "confirm.discard.action",
+                keepFirst: true,
+                onConfirm: { onFinish(.discarded) },
+                onCancel: { confirm = nil }
+            )
+        case .replace(let expense):
+            // A scan brings a new photo; a manual entry keeps the saved one.
+            ConfirmPanel(
+                systemImage: "arrow.triangle.2.circlepath",
+                title: form.isScan ? "confirm.replace.title.scan" : "confirm.replace.title.manual",
+                message: form.isScan ? "confirm.replace.message.scan" : "confirm.replace.message.manual",
+                confirmTitle: "confirm.replace.action",
+                keepTitle: "confirm.replace.back",
+                onConfirm: { replaceNow(expense) },
+                onCancel: { confirm = nil }
+            ) {
+                EntrySummary.saved(expense)
+            }
+        }
     }
 }
 

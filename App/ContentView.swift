@@ -73,7 +73,7 @@ struct ContentView: View {
             ScanFlowView(
                 session: session,
                 services: services,
-                onSaved: { total in show(.saved(total)) },
+                onSaved: { banner in show(banner) },
                 onViewSaved: { expense in openAfterDismiss = expense },
                 onManual: { manualAfterDismiss = true }
             )
@@ -83,6 +83,7 @@ struct ContentView: View {
                 editor = nil
                 switch outcome {
                 case .saved(let total): show(.saved(total))
+                case .replaced(let total): show(.replaced(total))
                 case .discarded: break
                 case .viewSaved(let expense): openAfterDismiss = expense
                 }
@@ -236,6 +237,8 @@ private struct EditorItem: Identifiable {
 
 enum Banner: Equatable {
     case saved(Int)
+    /// A rescan replaced a saved entry (B-16).
+    case replaced(Int)
     case deleted
 }
 
@@ -249,6 +252,9 @@ private struct BannerView: View {
             case .saved(let total):
                 Text("toast.saved \(LedgerFormat.yen(total))")
                     .accessibilityLabel(Text("toast.saved \(LedgerFormat.spokenYen(total))"))
+            case .replaced(let total):
+                Text("toast.replaced \(LedgerFormat.yen(total))")
+                    .accessibilityLabel(Text("toast.replaced \(LedgerFormat.spokenYen(total))"))
             case .deleted: Text("toast.deleted")
             }
         } icon: {

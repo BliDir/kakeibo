@@ -4,10 +4,16 @@ import SwiftUI
 
 /// "Already saved?": shown when Save finds a saved expense that looks like this one.
 /// Warns but never blocks: the same purchase twice in a day is real.
+///
+/// B-16: a new scan or manual entry can also replace the saved entry (a rescan of a poor
+/// first scan). With a strong match (same receipt number) Replace is the main action; with a
+/// likely match, viewing the saved entry is.
 struct DuplicatePanel: View {
     let match: ExpenseRepository.PossibleDuplicate
     let onView: () -> Void
-    let onSaveAnyway: () -> Void
+    /// Nil when this form cannot replace (editing a saved expense).
+    let onReplace: (() -> Void)?
+    let onSaveAsNew: () -> Void
     let onCancel: () -> Void
 
     var body: some View {
@@ -15,23 +21,48 @@ struct DuplicatePanel: View {
             systemImage: "doc.on.doc",
             tone: .warning,
             title: "duplicate.title",
-            message: match.strength == .strong ? "duplicate.message.strong" : "duplicate.message.likely",
+            message: message,
             onDismiss: onCancel
         ) {
             EntrySummary.saved(match.expense)
                 .accessibilityIdentifier("duplicate.entry")
         } actions: {
-            Button(action: onView) { Text("duplicate.view") }
-                .buttonStyle(PrimaryButtonStyle(fullWidth: true))
-                .accessibilityIdentifier("duplicate.view")
-            Button(action: onSaveAnyway) { Text("duplicate.saveAnyway") }
+            if let onReplace, match.strength == .strong {
+                replaceButton(onReplace).buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                viewButton.buttonStyle(SecondaryButtonStyle(fullWidth: true))
+            } else {
+                viewButton.buttonStyle(PrimaryButtonStyle(fullWidth: true))
+                if let onReplace {
+                    replaceButton(onReplace).buttonStyle(SecondaryButtonStyle(fullWidth: true))
+                }
+            }
+            Button(action: onSaveAsNew) { Text("duplicate.saveAsNew") }
                 .buttonStyle(SecondaryButtonStyle(fullWidth: true))
-                .accessibilityIdentifier("duplicate.saveAnyway")
+                .accessibilityIdentifier("duplicate.saveAsNew")
             Button(action: onCancel) { Text("duplicate.cancel") }
                 .buttonStyle(TextButtonStyle())
                 .accessibilityIdentifier("duplicate.cancel")
         }
         .accessibilityIdentifier("duplicate")
+    }
+
+    private var message: LocalizedStringKey {
+        switch (match.strength, onReplace != nil) {
+        case (.strong, true): "duplicate.message.strong.replace"
+        case (.strong, false): "duplicate.message.strong"
+        case (.likely, true): "duplicate.message.likely.replace"
+        case (.likely, false): "duplicate.message.likely"
+        }
+    }
+
+    private var viewButton: some View {
+        Button(action: onView) { Text("duplicate.view") }
+            .accessibilityIdentifier("duplicate.view")
+    }
+
+    private func replaceButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) { Text("duplicate.replace") }
+            .accessibilityIdentifier("duplicate.replace")
     }
 }
 

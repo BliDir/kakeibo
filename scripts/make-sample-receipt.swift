@@ -1,7 +1,8 @@
 // Renders the made-up receipts used by KakeiboScan's OCR and pipeline integration tests.
 // Usage: swift scripts/make-sample-receipt.swift <preset> <output.png>
 //   presets: sample, konbini, supermarket-skewed, items-missing (UI test: one item has no price),
-//   familymart-tilted (B-15: tightly printed rows, photographed 4° crooked)
+//   familymart-tilted (B-15: tightly printed rows, photographed 4° crooked),
+//   rescan-first / rescan-second (B-16 UI test: one receipt number, a short first read and the full receipt)
 // A tab in a line puts the text after it right-aligned, as receipts print prices.
 // Example: swift scripts/make-sample-receipt.swift sample Packages/KakeiboScan/Tests/KakeiboScanTests/SampleImages/sample-receipt.png
 // Every store, address and number is fictional.
@@ -68,6 +69,33 @@ let presets: [String: (lines: [(String, CGFloat)], rotationDegrees: CGFloat)] = 
         ("合計             ¥441", 56),
         ("お預り          ¥1,000", 40),
         ("お釣り           ¥559", 40),
+    ], 0),
+    // B-16: the same receipt (same store, day and receipt number) read twice: the first read
+    // missed an item, the second has them all.
+    "rescan-first": ([
+        ("サンプルマート 中野店", 52),
+        ("2026年11月3日(火) 18:42", 34),
+        ("レシートNo.0042", 34),
+        ("", 20),
+        ("牛乳 ※            ¥198", 40),
+        ("食パン ※          ¥158", 40),
+        ("", 20),
+        ("合計             ¥356", 56),
+        ("お預り          ¥1,000", 40),
+        ("お釣り           ¥644", 40),
+    ], 0),
+    "rescan-second": ([
+        ("サンプルマート 中野店", 52),
+        ("2026年11月3日(火) 18:42", 34),
+        ("レシートNo.0042", 34),
+        ("", 20),
+        ("牛乳 ※            ¥198", 40),
+        ("食パン ※          ¥158", 40),
+        ("洗剤              ¥398", 40),
+        ("", 20),
+        ("合計             ¥754", 56),
+        ("お預り          ¥1,000", 40),
+        ("お釣り           ¥246", 40),
     ], 0),
     // Laid out like the FamilyMart 六本木ヒルズ receipt (B-15); the shop details are made up.
     "familymart-tilted": ([

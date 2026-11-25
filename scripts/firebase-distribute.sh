@@ -8,6 +8,8 @@
 #   --groups  "internal"          tester group aliases (or FIREBASE_GROUPS)
 #   --notes   "What to test"      release notes (default: the last commit subject)
 #   --build-only                  archive and export, do not upload
+#   --development                 export development-signed instead of Ad Hoc (free Personal
+#                                 Team: own registered iPhones only, profile expires in 7 days)
 #
 # Builds the committed HEAD of this checkout and refuses a dirty tree, so a test build always
 # matches a commit. The build number is the commit count (always increasing on main); the
@@ -24,6 +26,7 @@ TESTERS=${FIREBASE_TESTERS:-}
 TESTER_GROUPS=${FIREBASE_GROUPS:-}
 NOTES=""
 UPLOAD=1
+METHOD=release-testing
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -31,7 +34,8 @@ while [ $# -gt 0 ]; do
         --groups) TESTER_GROUPS=$2; shift 2 ;;
         --notes) NOTES=$2; shift 2 ;;
         --build-only) UPLOAD=0; shift ;;
-        -h|--help) sed -n '2,17p' "$0"; exit 0 ;;
+        --development) METHOD=debugging; shift ;;
+        -h|--help) sed -n '2,19p' "$0"; exit 0 ;;
         *) echo "Unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -57,7 +61,7 @@ cat > "$OUT/ExportOptions.plist" <<EOF
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>method</key><string>release-testing</string>
+    <key>method</key><string>$METHOD</string>
     <key>signingStyle</key><string>automatic</string>
     <key>teamID</key><string>$TEAM</string>
     <key>compileBitcode</key><false/>
@@ -73,7 +77,7 @@ xcodebuild archive -scheme Kakeibo -configuration Release \
     -allowProvisioningUpdates \
     DEVELOPMENT_TEAM="$TEAM" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" -quiet
 
-echo "Exporting Ad Hoc .ipa…"
+echo "Exporting .ipa ($METHOD)…"
 xcodebuild -exportArchive \
     -archivePath "$OUT/Kakeibo.xcarchive" \
     -exportOptionsPlist "$OUT/ExportOptions.plist" \
